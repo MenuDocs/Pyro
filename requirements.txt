@@ -1,0 +1,3 @@
+discord.py>=v1.3.3-final
+aiohttp>=3.6.2
+websockets>=8.1

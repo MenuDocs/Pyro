@@ -163,7 +163,7 @@ class Docs(commands.Cog):
 
         matches = self.finder(obj, cache, key=lambda t: t[0], lazy=False)[:8]
 
-        e = discord.Embed(colour=0x39393f)
+        e = discord.Embed(colour=0xce2029)
         if len(matches) == 0:
             return await ctx.send('Could not find anything. Sorry.')
 

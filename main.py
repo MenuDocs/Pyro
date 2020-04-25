@@ -11,14 +11,22 @@ from cogs._mongo import Document
 with open("config.json", "r") as f:
     config = json.load(f)
 
+async def get_prefix(bot, message):
+    # If dm's
+    if not message.guild:
+        return commands.when_mentioned_or('-')(bot, message)
+
+    data = await bot.db.config.find_one({"_id": message.guild.id})
+    # Make sure we have a useable prefix
+    if not data or 'prefix' not in data:
+        return commands.when_mentioned_or('-')(bot, message)
+    return commands.when_mentioned_or(data['prefix'])(bot, message)
+
 logging.basicConfig(level="INFO")
-bot = commands.Bot(command_prefix=commands.when_mentioned_or(config["prefix"]), description="ok")
+bot = commands.Bot(command_prefix=get_prefix, case_insensitive=True, description="A short sharp bot coded in python to aid the python developers with helping the community with discord.py related issues.")
 
 logger = logging.getLogger(__name__)
 
-
-# Ready event. more should go here for
-# the database initialization.
 @bot.event
 async def on_ready():
     logger.info("I'm all up an ready like mom's spaghetti")
@@ -46,12 +54,6 @@ async def getall(ctx):
 @bot.command()
 async def delete(ctx, id):
     await bot.config.delete(id)
-
-#############################
-###                       ###
-###    REMAINING CODE.    ###
-###                       ###
-#############################
 
 if __name__ == "__main__":
     # Loop over every file in the cogs dir

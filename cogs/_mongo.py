@@ -6,8 +6,9 @@ Class document aims to make using mongo calls easy, saves
 needing to know the syntax for it. Just pass in the db instance
 on init and the document to create an instance on and boom
 """
-class Document:
 
+
+class Document:
     def __init__(self, connection, documentName):
         """
         Our init function, sets up the conenction to the specified document
@@ -68,13 +69,10 @@ class Document:
         Params:
          - dict (Dictionary) : The dict to insert
         """
-        #try:
         if await self.find_by_id(dict["_id"]):
             await self.update_by_id(dict)
         else:
             await self.db.insert_one(dict)
-        #except Exception as e:
-        #    self.logger.error(e)
 
     async def update_by_id(self, dict):
         """

@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import logging
 import asyncio
+import os
 import json
 
 extensions = ["cogs.docs"]
@@ -28,7 +29,13 @@ async def on_ready():
 #############################
 
 # Load all extensions
-for ext in extensions:
-    bot.load_extension(ext)
+if __name__ == "__main__":
+	for ext in os.listdir("./cogs/"):
+		if ext.endswith(".py") and not ext.startswith("_"):
+			try:
+				bot.load_extension(f"cogs.{ext[:-3]}")
+			except Exception as e:
+				logger.error(f"An error occured while loading extension: cogs.{ext[:-3]}")
+				
 
 bot.run(config["token"])

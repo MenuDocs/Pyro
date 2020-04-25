@@ -174,9 +174,12 @@ class Docs(commands.Cog):
     async def on_ready(self):
         self.logger.info("I'm ready!")
     
-    @commands.group(aliases=['rtfd'], invoke_without_command=True)
+    @commands.command(
+    name="rtfm",
+    description="Gives you a documentation link for a d.py entity."
+    aliases=['rtfd'],
+    )
     async def rtfm(self, ctx, *, obj: str = None):
-        """Gives you a documentation link for an entity."""
         key = 'latest'
         await self.do_rtfm(ctx, key, obj)
         

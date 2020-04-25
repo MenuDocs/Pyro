@@ -5,8 +5,6 @@ import asyncio
 import os
 import json
 
-extensions = ["cogs.docs"]
-
 with open("config.json", "r") as f:
     config = json.load(f)
 

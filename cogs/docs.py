@@ -175,9 +175,10 @@ class Docs(commands.Cog):
         self.logger.info("I'm ready!")
     
     @commands.command(
-    name="rtfm",
-    description="Gives you a documentation link for a d.py entity."
-    aliases=['rtfd'],
+    name = "rtfm",
+    description = "Gives you a documentation link for a d.py entity.",
+    aliases = ['rtfd'],
+    usage = "[query]"
     )
     async def rtfm(self, ctx, *, obj: str = None):
         key = 'latest'

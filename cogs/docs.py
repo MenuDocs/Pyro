@@ -1,8 +1,8 @@
 import discord
 from discord.ext import commands
-import re 
-import io 
-import zlib 
+import re
+import io
+import zlib
 import aiohttp
 import asyncio
 import logging
@@ -173,15 +173,12 @@ class Docs(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         self.logger.info("I'm ready!")
-    
+
     @commands.group(aliases=['rtfd'], invoke_without_command=True)
     async def rtfm(self, ctx, *, obj: str = None):
         """Gives you a documentation link for an entity."""
         key = 'latest'
         await self.do_rtfm(ctx, key, obj)
-        
+
 def setup(bot):
 	bot.add_cog(Docs(bot))
-        
-
-                

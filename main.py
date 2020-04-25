@@ -9,7 +9,9 @@ with open("config.json", "r") as f:
     config = json.load(f)
 
 logging.basicConfig(level="INFO")
-bot = commands.Bot(command_prefix=commands.when_mentioned_or(config["prefix"]), description="ok")
+bot = commands.Bot(
+    command_prefix=commands.when_mentioned_or(config["prefix"]), description="ok"
+)
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +21,7 @@ logger = logging.getLogger(__name__)
 @bot.event
 async def on_ready():
     logger.info("I'm all up an ready like mom's spaghetti")
+
 
 #############################
 ###                       ###
@@ -33,7 +36,8 @@ if __name__ == "__main__":
             try:
                 bot.load_extension(f"cogs.{ext[:-3]}")
             except Exception as e:
-                logger.error(f"An error occured while loading extension: cogs.{ext[:-3]}")
-				
+                logger.error(
+                    f"An error occured while loading extension: cogs.{ext[:-3]}"
+                )
 
     bot.run(config["token"])

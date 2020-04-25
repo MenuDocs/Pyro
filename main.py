@@ -28,12 +28,12 @@ async def on_ready():
 
 # Load all extensions
 if __name__ == "__main__":
-	for ext in os.listdir("./cogs/"):
-		if ext.endswith(".py") and not ext.startswith("_"):
-			try:
-				bot.load_extension(f"cogs.{ext[:-3]}")
-			except Exception as e:
-				logger.error(f"An error occured while loading extension: cogs.{ext[:-3]}")
+    for ext in os.listdir("./cogs/"):
+        if ext.endswith(".py") and not ext.startswith("_"):
+            try:
+                bot.load_extension(f"cogs.{ext[:-3]}")
+            except Exception as e:
+                logger.error(f"An error occured while loading extension: cogs.{ext[:-3]}")
 				
 
-bot.run(config["token"])
+    bot.run(config["token"])

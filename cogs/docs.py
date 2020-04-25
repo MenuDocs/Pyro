@@ -178,11 +178,10 @@ class Docs(commands.Cog):
     name = "rtfm",
     description = "Gives you a documentation link for a d.py entity.",
     aliases = ['rtfd'],
-    usage = "[query]"
     )
-    async def rtfm(self, ctx, *, obj: str = None):
+    async def rtfm(self, ctx, *, query: str = None):
         key = 'latest'
-        await self.do_rtfm(ctx, key, obj)
+        await self.do_rtfm(ctx, key, query)
         
 def setup(bot):
 	bot.add_cog(Docs(bot))

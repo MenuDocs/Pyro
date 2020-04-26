@@ -68,6 +68,23 @@ async def on_ready():
 
     bot.config = Document(bot.db, "config")
 
+@bot.event
+async def on_message(message):
+    #Ignore messages sent by yourself
+    if message.author.id == bot.user.id:
+        return
+
+    #Whenever the bot is tagged, respond with its prefix
+    if message.content.startswith(f"<@!{bot.user.id}>"):
+        data = await bot.db.config.find_one({"_id": message.guild.id})
+        if not data or 'prefix' not in data:
+            prefix = '-'
+        else:
+            prefix = data['prefix']
+        await message.channel.send(f"My prefix here is `{prefix}`", delete_after=15)
+
+    await bot.process_commands(message)
+
 
 # Commands used to showcase & test
 @bot.command()

@@ -25,6 +25,23 @@ class Config(commands.Cog):
             f"The guild prefix has been set to `{prefix}`. Use `{prefix}prefix [prefix]` to change it again!"
         )
 
+    @commands.group(
+    name="testing",
+    aliases=['test', 't'],
+    description="Testing groups on the help command",
+    usage=",Sub command"
+    )
+    async def test(self, ctx):
+        pass
+
+    @test.command(
+    name="testtwo",
+    description="group testing",
+    usage="Subsub boi"
+    )
+    async def testtwo(self, ctx):
+        pass
+
 
 def setup(bot):
     bot.add_cog(Config(bot))

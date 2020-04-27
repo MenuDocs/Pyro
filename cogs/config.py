@@ -26,19 +26,15 @@ class Config(commands.Cog):
         )
 
     @commands.group(
-    name="testing",
-    aliases=['test', 't'],
-    description="Testing groups on the help command",
-    usage=",Sub command"
+        name="testing",
+        aliases=["test", "t"],
+        description="Testing groups on the help command",
+        usage=",Sub command",
     )
     async def test(self, ctx):
         pass
 
-    @test.command(
-    name="testtwo",
-    description="group testing",
-    usage="Subsub boi"
-    )
+    @test.command(name="testtwo", description="group testing", usage="Subsub boi")
     async def testtwo(self, ctx):
         pass
 

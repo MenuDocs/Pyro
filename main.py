@@ -6,7 +6,7 @@ import json
 import os
 import motor.motor_asyncio
 
-from cogs._mongo import Document
+from utils.mongo import Document
 
 with open("config.json", "r") as f:
     config = json.load(f)
@@ -15,13 +15,16 @@ with open("config.json", "r") as f:
 async def get_prefix(bot, message):
     # If dm's
     if not message.guild:
-        return commands.when_mentioned_or("-")(bot, message)
+        return commands.when_mentioned_or("py.")(bot, message)
 
-    data = await bot.db.config.find_one({"_id": message.guild.id})
-    # Make sure we have a useable prefix
-    if not data or "prefix" not in data:
-        return commands.when_mentioned_or("-")(bot, message)
-    return commands.when_mentioned_or(data["prefix"])(bot, message)
+    try:
+        data = await bot.config.find(message.guild)
+        # Make sure we have a useable prefix
+        if not data or "prefix" not in data:
+            return commands.when_mentioned_or("py.")(bot, message)
+        return commands.when_mentioned_or(data["prefix"])(bot, message)
+    except:
+        return commands.when_mentioned_or("py.")(bot, message)
 
 
 logging.basicConfig(level="INFO")
@@ -68,22 +71,29 @@ async def on_ready():
 
     bot.config = Document(bot.db, "config")
 
+
 @bot.event
 async def on_message(message):
-    #Ignore messages sent by bots
+    # Ignore messages sent by bots
     if message.author.bot:
         return
 
-    #Whenever the bot is tagged, respond with its prefix
+    # Whenever the bot is tagged, respond with its prefix
     if message.content.startswith(f"<@!{bot.user.id}>"):
         data = await bot.db.config.find_one({"_id": message.guild.id})
-        if not data or 'prefix' not in data:
-            prefix = '-'
+        if not data or "prefix" not in data:
+            prefix = "-"
         else:
-            prefix = data['prefix']
+            prefix = data["prefix"]
         await message.channel.send(f"My prefix here is `{prefix}`", delete_after=15)
 
     await bot.process_commands(message)
+
+
+@bot.command()
+async def add(ctx):
+    await bot.config.increment(1, 5, "count")
+    print("Ye")
 
 
 if __name__ == "__main__":

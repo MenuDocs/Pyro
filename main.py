@@ -70,8 +70,8 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    #Ignore messages sent by yourself
-    if message.author.id == bot.user.id:
+    #Ignore messages sent by bots
+    if message.author.bot:
         return
 
     #Whenever the bot is tagged, respond with its prefix
@@ -84,27 +84,6 @@ async def on_message(message):
         await message.channel.send(f"My prefix here is `{prefix}`", delete_after=15)
 
     await bot.process_commands(message)
-
-
-# Commands used to showcase & test
-@bot.command()
-async def add(ctx, id, *, str):
-    await bot.config.update({"_id": id, "message": str})
-
-
-@bot.command()
-async def find(ctx, id):
-    await ctx.send(await bot.config.find(id))
-
-
-@bot.command()
-async def getall(ctx):
-    print(await bot.config.get_all())
-
-
-@bot.command()
-async def delete(ctx, id):
-    await bot.config.delete(id)
 
 
 if __name__ == "__main__":

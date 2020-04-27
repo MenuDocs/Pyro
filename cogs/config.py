@@ -19,8 +19,8 @@ class Config(commands.Cog):
         usage="[prefix]",
     )
     @commands.has_guild_permissions(administrator=True)
-    async def prefix(self, ctx, *, prefix="-"):
-        self.bot.config.update({"_id": ctx.guild.id, "prefix": prefix})
+    async def prefix(self, ctx, *, prefix="py."):
+        await self.bot.config.update({"_id": ctx.guild.id, "prefix": prefix})
         await ctx.send(
             f"The guild prefix has been set to `{prefix}`. Use `{prefix}prefix [prefix]` to change it again!"
         )

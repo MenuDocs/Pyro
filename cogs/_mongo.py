@@ -9,7 +9,7 @@ on init and the document to create an instance on and boom
 
 
 class Document:
-    def __init__(self, connection, documentName):
+    def __init__(self, connection, document_name):
         """
         Our init function, sets up the conenction to the specified document
 
@@ -17,7 +17,7 @@ class Document:
          - connection (Mongo Connection) : Our database connection
          - documentName (str) : The document this instance should be
         """
-        self.db = connection[documentName]
+        self.db = connection[document_name]
         self.logger = logging.getLogger(__name__)
 
     async def find_by_id(self, id):

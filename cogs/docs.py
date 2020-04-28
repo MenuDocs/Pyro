@@ -183,18 +183,17 @@ class Docs(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         self.logger.info("I'm ready!")
+        
 
     @commands.command(
         name="rtfm",
         description="Gives you a documentation link for a d.py entity.",
         aliases=["rtfd"],
-        usage="[Query]",
     )
-    async def rtfm(self, ctx, *, obj: str = None):
-        """Gives you a documentation link for an entity."""
+    async def rtfm(self, ctx, *, query: str = None):
         key = "latest"
-        await self.do_rtfm(ctx, key, obj)
-
+        await self.do_rtfm(ctx, key, query)
+        
 
 def setup(bot):
     bot.add_cog(Docs(bot))

@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import logging
 import asyncio
+import os
 import json
 import os
 import motor.motor_asyncio
@@ -31,7 +32,7 @@ logging.basicConfig(level="INFO")
 bot = commands.Bot(
     command_prefix=get_prefix,
     case_insensitive=True,
-    description="A short sharp bot coded in python to aid the python developers with helping the community with discord.py related issues.",
+    description="A short sharp bot coded in python to aid the python developers with helping the community with discord.py related issues."
 )
 
 logger = logging.getLogger(__name__)
@@ -89,22 +90,16 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
-
-@bot.command()
-async def add(ctx):
-    await bot.config.increment(1, 5, "count")
-    print("Ye")
-
-
+    
+# Load all extensions
 if __name__ == "__main__":
-    # Loop over every file in the cogs dir
-    for file in os.listdir("./cogs"):
-        # If the file is a python file and does not start with an _
-        # assume it is a cog and attempt to load it
-        if file.endswith(".py") and not file.startswith("_"):
+    for ext in os.listdir("./cogs/"):
+        if ext.endswith(".py") and not ext.startswith("_"):
             try:
-                bot.load_extension(f"cogs.{file[:-3]}")
+                bot.load_extension(f"cogs.{ext[:-3]}")
             except Exception as e:
-                logger.error(f"Failed to load cog: {file[:-3]}\n{e}")
+                logger.error(
+                    f"An error occured while loading extension: cogs.{ext[:-3]}"
+                )
 
     bot.run(config["token"])

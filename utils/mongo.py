@@ -117,7 +117,7 @@ class Document:
         Params:
          - dict (Dictionary) : The dict to insert
         """
-        if await self.find_by_id(dict["_id"]):
+        if await self.__get_raw(dict["_id"]) != None:
             await self.update_by_id(dict)
         else:
             await self.db.insert(dict)

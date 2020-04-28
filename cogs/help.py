@@ -54,9 +54,10 @@ class Help(commands.Cog):
 
             for cog in neededCogs:
                 # Get a list of commands for each cog and put on embed
-                cogCommands = self.bot.get_cog(cog).get_commands()
                 commandList = ""
-                for comm in cogCommands:
+                for comm in self.bot.get_cog(cog).walk_commands():
+                    if comm.hidden:
+                        continue
                     commandList += f"**{comm.name}** - *{comm.description}*\n"
                 commandList += "\n"
 
@@ -66,21 +67,22 @@ class Help(commands.Cog):
         elif re.search("[a-zA-Z]", str(cog)):  # Match any letters
             lowerCogs = [c.lower() for c in cogs]
             if cog.lower() in lowerCogs:
-                # Get a list of all commands in the specified cog
                 help_embed.set_footer(
                     text=f"<> - Required & [] - Optional | Cog {(lowerCogs.index(cog.lower())+1)} of {len(lowerCogs)}"
                 )
-                cogCommands = self.bot.get_cog(
-                    cogs[lowerCogs.index(cog.lower())]
-                ).get_commands()
+                # Get a list of all commands in the specified cog
                 helpText = ""
                 # Add details of each command to the help text
                 # Command Name
                 # Description
+                # Useable by command caller
                 # [Aliases]
                 #
                 # Format
-                for command in cogCommands:
+                for command in self.bot.get_cog(cogs[lowerCogs.index(cog.lower())]).walk_commands():
+                    if command.hidden:
+                        continue
+
                     helpText += (
                         f"```{command.name}```\n" f"**{command.description}**\n\n"
                     )

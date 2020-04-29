@@ -4,7 +4,6 @@ import logging
 import asyncio
 import os
 import json
-import os
 import motor.motor_asyncio
 
 from utils.mongo import Document
@@ -32,7 +31,7 @@ logging.basicConfig(level="INFO")
 bot = commands.Bot(
     command_prefix=get_prefix,
     case_insensitive=True,
-    description="A short sharp bot coded in python to aid the python developers with helping the community with discord.py related issues."
+    description="A short sharp bot coded in python to aid the python developers with helping the community with discord.py related issues.",
 )
 
 logger = logging.getLogger(__name__)
@@ -90,7 +89,7 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
-    
+
 # Load all extensions
 if __name__ == "__main__":
     for ext in os.listdir("./cogs/"):

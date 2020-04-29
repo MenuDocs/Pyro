@@ -79,10 +79,12 @@ async def on_message(message):
         return
 
     # Whenever the bot is tagged, respond with its prefix
-    if message.content.startswith(f"<@!{bot.user.id}>"):
-        data = await bot.db.config.find_one({"_id": message.guild.id})
+    if message.content.startswith(f"<@!{bot.user.id}>") and len(message.content) == len(
+        f"<@!{bot.user.id}>"
+    ):
+        data = await bot.db.config._Document__get_raw(message.guild.id)
         if not data or "prefix" not in data:
-            prefix = "-"
+            prefix = "py."
         else:
             prefix = data["prefix"]
         await message.channel.send(f"My prefix here is `{prefix}`", delete_after=15)

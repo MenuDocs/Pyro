@@ -79,7 +79,9 @@ class Help(commands.Cog):
                 # [Aliases]
                 #
                 # Format
-                for command in self.bot.get_cog(cogs[lowerCogs.index(cog.lower())]).walk_commands():
+                for command in self.bot.get_cog(
+                    cogs[lowerCogs.index(cog.lower())]
+                ).walk_commands():
                     if command.hidden:
                         continue
 
@@ -100,9 +102,9 @@ class Help(commands.Cog):
                     helpText += f"**Useable by {ctx.author.name}:** `{await command.can_run(ctx)}`\n\n"
 
                     # Finally the format
-                    data = await self.bot.config.find(ctx.guild.id)
+                    data = await self.bot.config._Document__get_raw(ctx.guild.id)
                     if not data or "prefix" not in data:
-                        prefix = "-"
+                        prefix = "py."
                     else:
                         prefix = data["prefix"]
                     helpText += f'**Format :** `{prefix}{command.name} {command.usage if command.usage is not None else ""}`\n\n\n\n'  # `@{self.bot.user.name}#{self.bot.user.discriminator}'

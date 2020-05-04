@@ -18,7 +18,8 @@ async def get_prefix(bot, message):
         return commands.when_mentioned_or("py.")(bot, message)
 
     try:
-        data = await bot.config.find(message.guild)
+        data = await bot.config.find(message.guild.id)
+
         # Make sure we have a useable prefix
         if not data or "prefix" not in data:
             return commands.when_mentioned_or("py.")(bot, message)
@@ -82,7 +83,7 @@ async def on_message(message):
     if message.content.startswith(f"<@!{bot.user.id}>") and len(message.content) == len(
         f"<@!{bot.user.id}>"
     ):
-        data = await bot.config.__get_raw(message.guild.id)
+        data = await bot.config._Document__get_raw(message.guild.id)
         if not data or "prefix" not in data:
             prefix = "py."
         else:

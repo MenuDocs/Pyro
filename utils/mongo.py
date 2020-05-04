@@ -73,7 +73,7 @@ class Document:
         # Check if its none because if not data: can raise on more then just None
         if data == None:
             raise IdNotFound()
-        return
+        return data
 
     async def delete_by_id(self, id):
         """

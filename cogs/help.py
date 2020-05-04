@@ -31,8 +31,16 @@ class Help(commands.Cog, name="Help command"):
     async def on_ready(self):
         self.logger.info("I'm ready!")
 
-    async def command_check(self, command):
-                return await command.can_run(ctx.author)
+    async def return_filtered(self, commands, ctx):
+        filtered = []
+        
+        for c in commands:
+            if await c.can_run(ctx):
+                filtered.append(c)
+            else:
+                pass
+            
+        return filtered
             
 
     @commands.command(
@@ -48,7 +56,7 @@ class Help(commands.Cog, name="Help command"):
             
             embeds = []
             
-            filtered_commands = list(filter(self.command_check, self.bot.commands))
+            filtered_commands = await self.return_filtered(self.bot.commands, ctx)
             
             for i in range(0, len(filtered_commands), self.cmds_per_page):
                 
@@ -69,17 +77,17 @@ class Help(commands.Cog, name="Help command"):
             cog = self.bot.get_cog(entity)
             if cog:
                 embeds = []
-                filtered_commands = filter(self.command_check, cog.get_commands())
+                filtered_commands = await self.return_filtered(cog.get_commands(), ctx)
                 
                 for i in range(0, len(filtered_commands), self.cmds_per_page):
                     
-                    embed_page = discord.Embed(title=cog.name, colour=0xCE2029)
+                    embed_page = discord.Embed(title=cog.qualified_name, colour=0xCE2029)
                     
                     next_commands = filtered_commands[i: i + self.cmds_per_page]
                     
                     for cmd in next_commands:
                         
-                        embed_page.add_field(name=cmd.name, value=(cmd.description or 'No description'), inline=False)
+                        embed_page.add_field(name=cmd.qualified_name, value=(cmd.description or 'No description'), inline=False)
                         
                     embeds.append(embed_page)
                 pag.EmbedNavigator(pages=embeds, ctx=ctx).start()

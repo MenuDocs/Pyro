@@ -37,6 +37,10 @@ class Help(commands.Cog, name="Help command"):
         for c in commands:
             if await c.can_run(ctx):
                 filtered.append(c)
+                
+            if c.hidden:
+                pass
+            
             else:
                 pass
             
@@ -67,7 +71,7 @@ class Help(commands.Cog, name="Help command"):
                 for cmd in next_commands:
                     cmd: commands.Command = cmd
                     
-                    embed_page.add_field(name=cmd.name, value=(cmd.description or "No description"), inline=False)
+                    embed_page.add_field(name=cmd.name, value=f"{cmd.description or 'No description'}\n{'Has subcommands' if cmd.all_commands else ''}", inline=False)
                     
                 embeds.append(embed_page)
                 
@@ -95,6 +99,10 @@ class Help(commands.Cog, name="Help command"):
                 command = self.bot.get_command(entity)
                 if command:
                     embed = discord.Embed(title="Help command", description=f"```{self.get_command_signature(command, ctx)}```\n{command.description or 'No description.'}", colour=0xCE2029)
+                    if command.all_commands:
+                        for k, v in command.all_commands:
+                            embed.add_field(name=k, value=f"```{get_command_signature(v)}```\n{v.description}")
+                    
                     await ctx.send(embed=embed)
                 else:
                     await ctx.send("Entity not found.")

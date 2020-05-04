@@ -31,17 +31,17 @@ class Help(commands.Cog, name="Help command"):
     async def on_ready(self):
         self.logger.info("I'm ready!")
 
-    async def return_filtered(self, commands, ctx):
+    async def return_filtered_commands(self, walkable, ctx):
         filtered = []
         
-        for c in commands:
+        for c in walkable.walk_commands():
             if await c.can_run(ctx):
                 filtered.append(c)
                 
-            if c.hidden:
+            elif c.hidden:
                 pass
             
-            else:
+            elif hasattr(c, 'parent'):
                 pass
             
         return filtered
@@ -60,9 +60,9 @@ class Help(commands.Cog, name="Help command"):
             
             embeds = []
             
-            filtered_commands = await self.return_filtered(self.bot.commands, ctx)
+            filtered_commands = await self.return_filtered_commands(self.bot, ctx))
             
-            for i in range(0, len(filtered_commands), self.cmds_per_page):
+            for i in range(0, len(), self.cmds_per_page):
                 
                 embed_page = discord.Embed(title="Command List", description=self.bot.description, colour=0xCE2029)
                 
@@ -71,7 +71,7 @@ class Help(commands.Cog, name="Help command"):
                 for cmd in next_commands:
                     cmd: commands.Command = cmd
                     
-                    embed_page.add_field(name=cmd.name, value=f"{cmd.description or 'No description'}\n{'Has subcommands' if cmd.all_commands else ''}", inline=False)
+                    embed_page.add_field(name=cmd.name, value=f"{cmd.description or 'No description'}\n{'Has subcommands' if hasatrr(cmd, 'all_commands') else ''}", inline=False)
                     
                 embeds.append(embed_page)
                 
@@ -81,7 +81,7 @@ class Help(commands.Cog, name="Help command"):
             cog = self.bot.get_cog(entity)
             if cog:
                 embeds = []
-                filtered_commands = await self.return_filtered(cog.get_commands(), ctx)
+                filtered_commands = await self.return_filtered_commands(cog, ctx)
                 
                 for i in range(0, len(filtered_commands), self.cmds_per_page):
                     
@@ -98,12 +98,17 @@ class Help(commands.Cog, name="Help command"):
             else:
                 command = self.bot.get_command(entity)
                 if command:
+                    embeds = []
                     embed = discord.Embed(title="Help command", description=f"```{self.get_command_signature(command, ctx)}```\n{command.description or 'No description.'}", colour=0xCE2029)
                     if command.all_commands:
-                        for k, v in command.all_commands:
-                            embed.add_field(name=k, value=f"```{get_command_signature(v)}```\n{v.description}")
-                    
-                    await ctx.send(embed=embed)
+                        for i in range(0, len(list(command.all_commands.values())), self.cmds_per_page):
+                            next_commands = filtered_commands[i: i + self.cmds_per_page]
+                            
+                            for cmd in next_commands:
+                                embed.add_field(name=cmd.name, value=f"```\n{self.get_command_signature(cmd)}\n```\n{cmd.description or 'No description'}")
+                                
+                        embeds.append(embed)
+                    pag.EmbedNavigator(pages=embeds, ctx=ctx).start()
                 else:
                     await ctx.send("Entity not found.")
 def setup(bot):

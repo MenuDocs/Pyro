@@ -120,7 +120,7 @@ class Document:
         if await self.__get_raw(dict["_id"]) != None:
             await self.update_by_id(dict)
         else:
-            await self.db.insert(dict)
+            await self.db.insert_one(dict)
 
     async def update_by_id(self, dict):
         """

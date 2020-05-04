@@ -71,7 +71,7 @@ class Help(commands.Cog, name="Help command"):
                 for cmd in next_commands:
                     cmd: commands.Command = cmd
                     
-                    embed_page.add_field(name=cmd.name, value=f"{cmd.description or 'No description'}\n{'Has subcommands' if hasatrr(cmd, 'all_commands') else ''}", inline=False)
+                    embed_page.add_field(name=cmd.name, value=f"{cmd.description or 'No description'}\n{'Has subcommands' if hasattr(cmd, 'all_commands') else ''}", inline=False)
                     
                 embeds.append(embed_page)
                 

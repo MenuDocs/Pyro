@@ -66,7 +66,7 @@ async def on_ready():
     logger.info("I'm all up an ready like mom's spaghetti")
 
     # Database initialization
-    bot.db = motor.motor_asyncio.AsyncIOMotorClient(config["mongo url"]).pyro
+    bot.db = motor.motor_asyncio.AsyncIOMotorClient(config["mongo_url"]).pyro
     logger.info("Database connection established")
 
     bot.config = Document(bot.db, "config")
@@ -100,7 +100,7 @@ if __name__ == "__main__":
                 bot.load_extension(f"cogs.{ext[:-3]}")
             except Exception as e:
                 logger.error(
-                    f"An error occured while loading extension: cogs.{ext[:-3]}"
+                    f"An error occured while loading extension: cogs.{ext[:-3]}, {repr(e)}"
                 )
 
     bot.run(config["token"])

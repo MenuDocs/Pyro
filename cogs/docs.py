@@ -183,7 +183,6 @@ class Docs(commands.Cog, name="Documentation"):
     @commands.Cog.listener()
     async def on_ready(self):
         self.logger.info("I'm ready!")
-        
 
     @commands.command(
         name="rtfm",
@@ -193,7 +192,7 @@ class Docs(commands.Cog, name="Documentation"):
     async def rtfm(self, ctx, *, query: str = None):
         key = "latest"
         await self.do_rtfm(ctx, key, query)
-        
+
 
 def setup(bot):
     bot.add_cog(Docs(bot))

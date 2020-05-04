@@ -25,5 +25,6 @@ class Config(commands.Cog, name="Configuration"):
             f"The guild prefix has been set to `{prefix}`. Use `{prefix}prefix [prefix]` to change it again!"
         )
 
+
 def setup(bot):
     bot.add_cog(Config(bot))

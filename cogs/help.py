@@ -60,7 +60,7 @@ class Help(commands.Cog, name="Help command"):
             
             embeds = []
             
-            filtered_commands = await self.return_filtered_commands(self.bot, ctx))
+            filtered_commands = await self.return_filtered_commands(self.bot, ctx)
             
             for i in range(0, len(), self.cmds_per_page):
                 

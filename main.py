@@ -82,7 +82,7 @@ async def on_message(message):
     if message.content.startswith(f"<@!{bot.user.id}>") and len(message.content) == len(
         f"<@!{bot.user.id}>"
     ):
-        data = await bot.db.config._Document__get_raw(message.guild.id)
+        data = await bot.db.config.__get_raw(message.guild.id)
         if not data or "prefix" not in data:
             prefix = "py."
         else:

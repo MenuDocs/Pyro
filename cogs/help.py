@@ -62,7 +62,7 @@ class Help(commands.Cog, name="Help command"):
             
             filtered_commands = await self.return_filtered_commands(self.bot, ctx)
             
-            for i in range(0, len(), self.cmds_per_page):
+            for i in range(0, len(filtered_commands), self.cmds_per_page):
                 
                 embed_page = discord.Embed(title="Command List", description=self.bot.description, colour=0xCE2029)
                 

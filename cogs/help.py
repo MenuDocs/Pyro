@@ -33,10 +33,6 @@ class Help(commands.Cog, name="Help command"):
             )
             return signature
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.logger.info("I'm ready!")
-
     async def return_filtered_commands(self, walkable, ctx):
         filtered = []
 
@@ -51,6 +47,10 @@ class Help(commands.Cog, name="Help command"):
                 pass
 
         return filtered
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        self.logger.info("I'm ready!")
 
     @commands.command(
         name="help", aliases=["h", "commands"], description="The help command!"

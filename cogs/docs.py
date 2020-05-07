@@ -48,7 +48,7 @@ class SphinxObjectFileReader:
                 pos = buf.find(b"\n")
 
 
-class Docs(commands.Cog):
+class Docs(commands.Cog, name="Documentation"):
     def __init__(self, bot):
         self.bot = bot
         self.logger = logging.getLogger(__name__)

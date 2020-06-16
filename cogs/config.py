@@ -1,6 +1,11 @@
 import discord
 from discord.ext import commands
 import logging
+import os
+import asyncio
+import json
+from git import Repo
+import git
 
 
 class Config(commands.Cog, name="Configuration"):
@@ -86,6 +91,30 @@ class Config(commands.Cog, name="Configuration"):
                 await ctx.send(embed=embed)
         except Exception as e:
             await ctx.send(f"{e}")
+
+    @commands.command(
+        name="update", description="Automatically updates the bot from github!",
+    )
+    @commands.is_owner()
+    async def update_bot(self, ctx):
+        with ctx.typing():
+
+            repo = Repo(os.getcwd())
+            # Clone dev branch to here
+            # repo.clone_from('https://github.com/MenuDocs/Pyro.git', f"{os.getcwd()}/test", branch='development')
+            # Try to pull so it overwrites changes
+            # repo.git.pull(branch='development')
+            repo.git.checkout("development")
+            print(repo.git.branch())
+            # repo.git.pull()
+            # g = git.remote.Remote('https://github.com/MenuDocs/Pyro.git', os.getcwd())
+            # g.pull(branch='development')
+
+            # attempt to pull the latest code from github
+            # os.system('cd && cd ' + os.getcwd() + ' && git pull https://github.com/MenuDocs/Pyro/tree/development')
+            # print(os.system(f"git pull https://{token}:x-oauth-basic@github.com/MenuDocs/Pyro/tree/development"))
+            # attempt to reload all commands
+            # await self.reload(ctx)
 
 
 def setup(bot):

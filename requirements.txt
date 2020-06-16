@@ -3,3 +3,4 @@ aiohttp>=3.6.2
 websockets>=8.1
 motor>=2.1.0
 pre-commit>=2.3.0
+gitpython

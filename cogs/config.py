@@ -103,8 +103,11 @@ class Config(commands.Cog, name="Configuration"):
             # Clone dev branch to here
             # repo.clone_from('https://github.com/MenuDocs/Pyro.git', f"{os.getcwd()}/test", branch='development')
             # Try to pull so it overwrites changes
-            repo.git.checkout("development")
+            # repo.git.checkout("Auto-Reload")
+            print(repo.git.branch())
+            repo.git.fetch()
             repo.git.pull()
+            print("Done")
             # repo.git.checkout("development")
             # print(repo.git.branch())
             # repo.git.pull()

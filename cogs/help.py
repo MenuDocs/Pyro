@@ -60,6 +60,7 @@ class Help(commands.Cog, name="Help command"):
         Sends paginated help command or help for
         an existing entity.
     	"""
+        await ctx.send("More test code")
         # Inspired by nekozilla
         if not entity:
 

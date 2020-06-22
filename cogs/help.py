@@ -37,13 +37,16 @@ class Help(commands.Cog, name="Help command"):
         filtered = []
 
         for c in walkable.walk_commands():
-            if await c.can_run(ctx):
+            try:
+                c.can_run(ctx)
                 filtered.append(c)
 
-            elif c.hidden:
-                pass
+                if c.hidden:
+                    pass
 
-            elif hasattr(c, "parent"):
+                elif hasattr(c, "parent"):
+                    pass
+            except:
                 pass
 
         return filtered
@@ -136,7 +139,7 @@ class Help(commands.Cog, name="Help command"):
                             for cmd in next_commands:
                                 embed.add_field(
                                     name=cmd.name,
-                                    value=f"```\n{self.get_command_signature(cmd)}\n```\n{cmd.description or 'No description'}",
+                                    value=f"```\n{self.get_command_signature(cmd, ctx)}\n```\n{cmd.description or 'No description'}",
                                 )
 
                         embeds.append(embed)

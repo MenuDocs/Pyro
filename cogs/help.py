@@ -38,7 +38,7 @@ class Help(commands.Cog, name="Help command"):
 
         for c in walkable.walk_commands():
             try:
-                c.can_run(ctx)
+                await c.can_run(ctx)
                 filtered.append(c)
 
                 if c.hidden:
@@ -60,7 +60,7 @@ class Help(commands.Cog, name="Help command"):
     )
     async def help_command(self, ctx, *, entity=None):
         """
-        Sends paginated help command or help for
+        Sends a paginated help command or help for
         an existing entity.
     	"""
         # Inspired by nekozilla

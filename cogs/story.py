@@ -1,3 +1,4 @@
+import asyncio
 import discord
 from discord.ext import commands
 
@@ -13,11 +14,11 @@ class Story(commands.Cog):
         Get the current story from #One-word-story
         !story
         """
-        if ctx.guild.id != 566131499506860045:
+        if ctx.guild.id != self.bot.menudocs_projects_id:
             # Only work in projects guild
             return
         async with ctx.typing():
-            channel = self.bot.get_channel(701837038676344915)
+            channel = self.bot.get_channel(self.bot.story_channel_id)
             messages = await channel.history(limit=None, oldest_first=True).flatten()
             story = " ".join([message.content for message in messages])
 
@@ -37,6 +38,7 @@ class Story(commands.Cog):
                     description=chunk,
                 )
                 await ctx.send(embed=embed)
+                await asyncio.sleep(0.5)
 
             em = discord.Embed()
             em.add_field(name="Current Word Count:", value=len(messages))

@@ -38,16 +38,18 @@ class Help(commands.Cog, name="Help command"):
 
         for c in walkable.walk_commands():
             try:
+                if c.hidden:
+                    # command is hidden
+                    continue
+
+                elif c.parent != None:
+                    # Command is a subcommand
+                    continue
+
                 await c.can_run(ctx)
                 filtered.append(c)
-
-                if c.hidden:
-                    pass
-
-                elif hasattr(c, "parent"):
-                    pass
             except:
-                pass
+                continue
 
         return filtered
 
@@ -63,7 +65,6 @@ class Help(commands.Cog, name="Help command"):
         Sends a paginated help command or help for
         an existing entity.
     	"""
-        await ctx.message.delete()
         # Inspired by nekozilla
         if not entity:
 

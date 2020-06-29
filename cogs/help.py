@@ -1,11 +1,12 @@
-import discord
-from discord.ext import commands
-from libneko import pag
 import os
-import random
 import re
 import math
+import random
 import logging
+
+import discord
+from libneko import pag
+from discord.ext import commands
 
 
 class Help(commands.Cog, name="Help command"):
@@ -38,16 +39,18 @@ class Help(commands.Cog, name="Help command"):
 
         for c in walkable.walk_commands():
             try:
+                if c.hidden:
+                    # command is hidden
+                    continue
+
+                elif c.parent != None:
+                    # Command is a subcommand
+                    continue
+
                 await c.can_run(ctx)
                 filtered.append(c)
-
-                if c.hidden:
-                    pass
-
-                elif hasattr(c, "parent"):
-                    pass
             except:
-                pass
+                continue
 
         return filtered
 

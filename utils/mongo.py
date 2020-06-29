@@ -84,7 +84,7 @@ class Document:
         """
         # Raise if the _id does not exist in database
         if not await self.find_by_id(id):
-            pass
+            return
 
         await self.db.delete_many({"_id": id})
 

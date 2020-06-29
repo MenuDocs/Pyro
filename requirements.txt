@@ -7,3 +7,4 @@ libneko==0.24.9
 motor==2.1.0
 pre-commit==2.3.0
 pymongo==3.10.1
+GitPython==3.1.3

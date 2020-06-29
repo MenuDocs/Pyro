@@ -1,10 +1,11 @@
-import discord
-from discord.ext import commands
-import logging
-import asyncio
 import os
 import json
+import logging
+
+import asyncio
+import discord
 import motor.motor_asyncio
+from discord.ext import commands
 
 from utils.mongo import Document
 
@@ -59,6 +60,9 @@ bot.colors = {
     "DARK_NAVY": 0x2C3E50,
 }
 bot.color_list = [c for c in bot.colors.values()]
+bot.menudocs_projects_id = config["menudocs_projects_id"]
+bot.story_channel_id = config["story_channel_id"]
+
 bot.remove_command("help")
 
 

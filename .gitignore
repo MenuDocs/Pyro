@@ -1,3 +1,10 @@
 *.json
 __pycache__
 /__pycache__
+.idea/.gitignore
+.idea/Pyro.iml
+.idea/inspectionProfiles/
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+.idea/

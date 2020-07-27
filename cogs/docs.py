@@ -5,7 +5,6 @@ import zlib
 import logging
 
 import aiohttp
-import asyncio
 import discord
 from discord.ext import commands
 

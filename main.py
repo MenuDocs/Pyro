@@ -2,8 +2,6 @@ import os
 import json
 import logging
 
-import asyncio
-import discord
 import motor.motor_asyncio
 from discord.ext import commands
 
@@ -62,13 +60,14 @@ bot.colors = {
 bot.color_list = [c for c in bot.colors.values()]
 bot.menudocs_projects_id = config["menudocs_projects_id"]
 bot.story_channel_id = config["story_channel_id"]
+bot.dpy_help_channel_id = config["discord.py_help_channel"]
 
 bot.remove_command("help")
 
 
 @bot.event
 async def on_ready():
-    logger.info("I'm all up an ready like mom's spaghetti")
+    logger.info("I'm all up and ready like mom's spaghetti")
 
     # Database initialization
     bot.db = motor.motor_asyncio.AsyncIOMotorClient(config["mongo_url"]).pyro

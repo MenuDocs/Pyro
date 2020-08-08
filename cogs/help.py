@@ -1,11 +1,6 @@
-import os
-import re
-import math
-import random
 import logging
 
-import discord
-from libneko import pag
+from discord.ext import buttons
 from discord.ext import commands
 
 
@@ -15,24 +10,24 @@ class Help(commands.Cog, name="Help command"):
         self.logger = logging.getLogger(__name__)
         self.cmds_per_page = 6
 
-    def get_command_signature(self, command: commands.Command, ctx: commands.Context):
-        parent = command.full_parent_name
-        if len(command.aliases) > 0:
-            aliases = "|".join(command.aliases)
-            cmd_invoke = f"[{command.name}|{aliases}]"
-            signature = (
-                f"{ctx.prefix}{cmd_invoke} {command.signature if command.signature else ''}"
-                if not parent
-                else f"{ctx.prefix}{parent} {cmd_invoke} {command.signature if command.signature else ''}"
-            )
-            return signature
-        else:
-            signature = (
-                f"{ctx.prefix}{command.name} {command.signature if command.signature else ''}"
-                if not parent
-                else f"{ctx.prefix}{parent} {command.name} {command.signature if command.signature else ''}"
-            )
-            return signature
+    def get_command_signature(
+        self,
+        command: commands.Command,
+        ctx: commands.Context
+    ):
+        aliases = "|".join(command.aliases)
+        cmd_invoke = (
+            f"[{command.name}|{aliases}]"
+            if command.aliases
+            else command.name
+        )
+
+        full_invoke = command.qualified_name.replace(command.name, "")
+
+        signature = (
+            f"{ctx.prefix}{full_invoke}{cmd_invoke} {command.signature}"
+        )
+        return signature
 
     async def return_filtered_commands(self, walkable, ctx):
         filtered = []
@@ -43,13 +38,13 @@ class Help(commands.Cog, name="Help command"):
                     # command is hidden
                     continue
 
-                elif c.parent != None:
+                elif c.parent:
                     # Command is a subcommand
                     continue
 
                 await c.can_run(ctx)
                 filtered.append(c)
-            except:
+            except commands.CommandError:
                 continue
 
         return filtered
@@ -65,88 +60,128 @@ class Help(commands.Cog, name="Help command"):
         """
         Sends a paginated help command or help for
         an existing entity.
-    	"""
+        """
         # Inspired by nekozilla
         if not entity:
 
-            embeds = []
+            pages = []
 
-            filtered_commands = await self.return_filtered_commands(self.bot, ctx)
+            filtered_commands = await self.return_filtered_commands(
+                self.bot,
+                ctx
+            )
 
             for i in range(0, len(filtered_commands), self.cmds_per_page):
 
-                embed_page = discord.Embed(
-                    title="Command List",
-                    description=self.bot.description,
-                    colour=0xCE2029,
-                )
-
-                next_commands = filtered_commands[i : i + self.cmds_per_page]
+                next_commands = filtered_commands[i: i + self.cmds_per_page]
+                command_entry = ""
 
                 for cmd in next_commands:
-                    cmd: commands.Command = cmd
 
-                    embed_page.add_field(
-                        name=cmd.name,
-                        value=f"{cmd.description or 'No description'}\n{'Has subcommands' if hasattr(cmd, 'all_commands') else ''}",
-                        inline=False,
+                    desc = cmd.short_doc or cmd.description
+                    subcommand = (
+                        'Has subcommands'
+                        if hasattr(cmd, 'all_commands')
+                        else ''
                     )
 
-                embeds.append(embed_page)
+                    command_entry += (
+                        f"• **__{cmd.name}__**\n{desc}\n    {subcommand}\n"
+                    )
 
-            pag.EmbedNavigator(pages=embeds, ctx=ctx).start()
+                pages.append(command_entry)
+
+            await buttons.Paginator(
+                title=self.bot.description,
+                embed=True,
+                colour=0xCE2029,
+                entries=pages,
+                length=1
+            ).start(ctx)
 
         else:
             cog = self.bot.get_cog(entity)
             if cog:
-                embeds = []
-                filtered_commands = await self.return_filtered_commands(cog, ctx)
+                pages = []
+                filtered_commands = await self.return_filtered_commands(
+                    cog,
+                    ctx
+                )
 
                 for i in range(0, len(filtered_commands), self.cmds_per_page):
 
-                    embed_page = discord.Embed(
-                        title=cog.qualified_name, colour=0xCE2029
-                    )
-
-                    next_commands = filtered_commands[i : i + self.cmds_per_page]
+                    command_entry = ""
+                    next_commands = filtered_commands[
+                        i: i + self.cmds_per_page
+                    ]
 
                     for cmd in next_commands:
 
-                        embed_page.add_field(
-                            name=cmd.qualified_name,
-                            value=(cmd.description or "No description"),
-                            inline=False,
+                        desc = cmd.short_doc or cmd.description
+                        subcommand = (
+                            'Has subcommands'
+                            if hasattr(cmd, 'all_commands')
+                            else ''
                         )
 
-                    embeds.append(embed_page)
-                pag.EmbedNavigator(pages=embeds, ctx=ctx).start()
+                        command_entry += (
+                            f"• **__{cmd.name}__**\n{desc}\n    {subcommand}\n"
+                        )
+
+                pages.append(command_entry)
+
+                await buttons.Paginator(
+                    title=f"{cog.qualified_name}'s commands",
+                    embed=True,
+                    colour=0xCE2029,
+                    entries=pages,
+                    length=1
+                ).start(ctx)
+
             else:
                 command = self.bot.get_command(entity)
                 if command:
-                    embeds = []
-                    embed = discord.Embed(
-                        title="Help command",
-                        description=f"```{self.get_command_signature(command, ctx)}```\n{command.description or 'No description.'}",
-                        colour=0xCE2029,
-                    )
-                    if command.all_commands:
+                    pages = []
+                    desc = command.short_doc or command.description
+                    signature = self.get_command_signature(command, ctx)
+                    command_entry = f"```{signature}```\n{desc}\n\n"
+
+                    if hasattr(command, 'all_commands'):
+
+                        command_list = list(command.all_commands.values())
+
                         for i in range(
                             0,
-                            len(list(command.all_commands.values())),
+                            len(command_list),
                             self.cmds_per_page,
                         ):
-                            next_commands = filtered_commands[
-                                i : i + self.cmds_per_page
+                            next_commands = command_list[
+                                i: i + self.cmds_per_page
                             ]
 
                             for cmd in next_commands:
-                                embed.add_field(
-                                    name=cmd.name,
-                                    value=f"```\n{self.get_command_signature(cmd, ctx)}\n```\n{cmd.description or 'No description'}",
+
+                                signature = self.get_command_signature(
+                                    cmd,
+                                    ctx
                                 )
 
-                        embeds.append(embed)
-                    pag.EmbedNavigator(pages=embeds, ctx=ctx).start()
+                                desc = cmd.short_doc or cmd.description
+
+                                command_entry += (
+                                   f" • **__{cmd.name}__**\n```\n{signature}```\n{desc}\n"
+                                )
+
+                    pages.append(command_entry)
+
+                    await buttons.Paginator(
+                        title=f"{command.qualified_name}",
+                        embed=True,
+                        colour=0xCE2029,
+                        entries=pages,
+                        length=1
+                    ).start(ctx)
+
                 else:
                     await ctx.send("Entity not found.")
 

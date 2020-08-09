@@ -1,9 +1,9 @@
 aiofiles==0.5.0
 aiohttp==3.6.2
 black==19.10b0
-discord.py==1.4.0a2315+g5107583
+discord.py==1.4.1
+buttons==0.1.9
 dnspython==1.16.0
-libneko==0.24.9
 motor==2.1.0
 pre-commit==2.3.0
 pymongo==3.10.1

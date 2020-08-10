@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import re
 
 import motor.motor_asyncio
 from discord.ext import commands
@@ -33,6 +34,12 @@ bot = commands.Bot(
     case_insensitive=True,
     description="A short sharp bot coded in python to aid the python developers with helping the community with discord.py related issues.",
 )
+
+
+# Use regex to parse mentions, much better than only supporting
+# nickname mentions (<@!1234>)
+# This basically ONLY matches a string that only consists of a mention
+mention = re.compile(r"^<@!?(?P<id>\d+)>$")
 
 logger = logging.getLogger(__name__)
 
@@ -83,15 +90,14 @@ async def on_message(message):
         return
 
     # Whenever the bot is tagged, respond with its prefix
-    if message.content.startswith(f"<@!{bot.user.id}>") and len(message.content) == len(
-        f"<@!{bot.user.id}>"
-    ):
-        data = await bot.config._Document__get_raw(message.guild.id)
-        if not data or "prefix" not in data:
-            prefix = "py."
-        else:
-            prefix = data["prefix"]
-        await message.channel.send(f"My prefix here is `{prefix}`", delete_after=15)
+    if (match := mention.match(message.content)):
+        if int(match.group("id")) == bot.user.id:
+            data = await bot.config._Document__get_raw(message.guild.id)
+            if not data or "prefix" not in data:
+                prefix = "py."
+            else:
+                prefix = data["prefix"]
+            await message.channel.send(f"My prefix here is `{prefix}`", delete_after=15)
 
     await bot.process_commands(message)
 

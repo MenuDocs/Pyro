@@ -104,6 +104,69 @@ class Config(commands.Cog, name="Configuration"):
             # attempt to reload all commands
             await self.reload(ctx)
 
+    @commands.group(
+        name="starboard",
+        description="Configure the starboard for your server!",
+        invoke_without_command=True
+    )
+    @commands.has_permissions(manage_messages=True)
+    async def starboard(self, ctx, channel: discord.TextChannel = None):
+        current = await self.bot.config.find(ctx.guild.id)
+        if current.get('starboard_channel') and not channel:
+            await self.bot.config.upsert(
+                {"_id": ctx.guild.id, "starboard_channel": None}
+            )
+
+            await ctx.send("Turned off starboard.")
+        elif channel:
+            await self.bot.config.upsert(
+                {"_id": ctx.guild.id, "starboard_channel": channel.id}
+            )
+
+            await ctx.send(f"Set starboard channel to {channel.mention}")
+        else:
+            await ctx.send("Please specify a channel.")
+
+    @starboard.command(
+        name="emoji",
+        description="Make the starboard work with your own emoji!"
+    )
+    @commands.has_permissions(manage_messages=True)
+    async def sb_emoji(self, ctx, emoji: discord.Emoji = None):
+        if not emoji:
+            await self.bot.config.upsert(
+                {"_id": ctx.guild.id, "emoji": None}
+            )
+            await ctx.send("Reset your server's custom emoji.")
+        else:
+            if not emoji.is_usable():
+                await ctx.send("I can't use that emoji.")
+                return
+
+            await self.bot.config.upsert(
+                {"_id": ctx.guild.id, "emoji": str(emoji)}
+            )
+
+            await ctx.send("Added your emoji.")
+
+    @starboard.command(
+        name="threshold",
+        description="Choose your own emoji threshold."
+    )
+    @commands.has_permissions(manage_messages=True)
+    async def sb_thresh(self, ctx, thresh: int = None):
+        if not thresh:
+            await self.bot.config.upsert(
+                {"_id": ctx.guild.id, "emoji_threshold": None}
+            )
+            await ctx.send("Reset your server's custom emoji threshold.")
+        else:
+            await self.bot.config.upsert(
+                {"_id": ctx.guild.id, "emoji_threshold": thresh}
+            )
+
+            await ctx.send("Added your threshold.")
+
 
 def setup(bot):
     bot.add_cog(Config(bot))

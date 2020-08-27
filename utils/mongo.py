@@ -70,8 +70,9 @@ class Document:
          - If somethings found, return that
         """
         data = await self.db.find_one({"_id": id})
-        # Check if its none because if not data: can raise on more then just None
-        if data == None:
+        # Check if its none because
+        # if not data: can raise on more then just None
+        if not data:
             raise IdNotFound()
         return data
 
@@ -117,7 +118,7 @@ class Document:
         Params:
          - dict (Dictionary) : The dict to insert
         """
-        if await self.__get_raw(dict["_id"]) != None:
+        if await self.__get_raw(dict["_id"]):
             await self.update_by_id(dict)
         else:
             await self.db.insert_one(dict)

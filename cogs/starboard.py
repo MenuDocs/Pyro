@@ -42,9 +42,14 @@ class Starboard(commands.Cog, name="Starboard"):
                         "An error occured while fetching the message"
                     )
                 if reacts:
-                    react = reacts[0]
-                    thresh >= guild["emoji_threshold"] or 3
-                    if react.count > thresh:
+                    react = map(
+                        lambda u: u.id, await reacts[0].users().flatten()
+                    )
+                    if msg.author.id in react:
+                        del react[react.index(msg.author.id)]
+
+                    thresh = guild["emoji_threshold"] or 3
+                    if len(react) >= thresh:
                         starboard = self.bot.get_channel(
                             guild["starboard_channel"]
                         )

@@ -1,8 +1,10 @@
 import os
 import logging
+import typing
 
 import asyncio
 import discord
+import emojis
 from git import Repo
 from discord.ext import commands
 
@@ -132,13 +134,15 @@ class Config(commands.Cog, name="Configuration"):
         description="Make the starboard work with your own emoji!"
     )
     @commands.has_permissions(manage_messages=True)
-    async def sb_emoji(self, ctx, emoji: discord.Emoji = None):
+    async def sb_emoji(
+        self, ctx, emoji: typing.Union[discord.Emoji, str] = None
+    ):
         if not emoji:
             await self.bot.config.upsert(
                 {"_id": ctx.guild.id, "emoji": None}
             )
             await ctx.send("Reset your server's custom emoji.")
-        else:
+        elif isinstance(emoji, discord.Emoji):
             if not emoji.is_usable():
                 await ctx.send("I can't use that emoji.")
                 return
@@ -148,6 +152,16 @@ class Config(commands.Cog, name="Configuration"):
             )
 
             await ctx.send("Added your emoji.")
+        else:
+            emos = emojis.get(emoji)
+            if emos:
+                await self.bot.config.upsert(
+                    {"_id": ctx.guild.id, "emoji": emoji}
+                )
+
+                await ctx.send("Added your emoji.")
+            else:
+                await ctx.send("Please use a proper emoji.")
 
     @starboard.command(
         name="threshold",

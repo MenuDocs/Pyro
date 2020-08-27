@@ -26,7 +26,7 @@ class Starboard(commands.Cog, name="Starboard"):
             guild = guild[0]
             emoji = guild.get("emoji") or "⭐"
 
-            if not guild["starboard_channel"]:
+            if not guild.get("starboard_channel"):
                 return
 
             if str(payload.emoji) == emoji:

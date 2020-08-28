@@ -1,9 +1,9 @@
-def clean_code(content):
-    content = content.replace("\n", " ", 1)
-    i = content.find(" ")
-    j = content.rfind("```")
-    if i > 0 and j > 0:
-        code = content[i:j]
+def cleanup_code(content):
+    """Automatically removes code blocks from the code."""
+    # remove ```py\n```
+    if content.startswith("```") and content.endswith("```"):
+        return "\n".join(content.split("\n")[1:])[:-3]
     else:
-        code = content
-    return code
+        return content
+    # remove `foo`
+    return content.strip("` \n")

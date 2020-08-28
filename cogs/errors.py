@@ -1,6 +1,6 @@
-from discord.ext import commands
-
 import logging
+
+from discord.ext import commands
 
 
 class Errors(commands.Cog, name="Error handler"):

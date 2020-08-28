@@ -1,11 +1,9 @@
-import discord
-from discord.ext import commands
-from utils.util import clean_code
-
-import logging
 import random
 import asyncio
-import aiohttp
+import logging
+
+import discord
+from discord.ext import commands
 
 
 class Choices:

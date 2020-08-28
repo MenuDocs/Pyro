@@ -1,10 +1,10 @@
 import os
-import logging
 import typing
-
+import logging
 import asyncio
-import discord
+
 import emojis
+import discord
 from git import Repo
 from discord.ext import commands
 

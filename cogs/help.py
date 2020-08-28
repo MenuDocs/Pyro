@@ -1,7 +1,6 @@
 import logging
 
-from discord.ext import buttons
-from discord.ext import commands
+from discord.ext import buttons, commands
 
 
 class Help(commands.Cog, name="Help command"):

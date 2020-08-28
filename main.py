@@ -1,19 +1,19 @@
-import os
 import io
+import os
+import re
 import json
 import logging
-import re
-import contextlib
 import textwrap
+import contextlib
+from traceback import format_exception
 
-import motor.motor_asyncio
 import discord
+import motor.motor_asyncio
 from discord.ext import commands
 
-from utils.mongo import Document
 from utils import exceptions
+from utils.mongo import Document
 from utils.util import clean_code
-from traceback import format_exception
 
 with open("config.json", "r") as f:
     config = json.load(f)

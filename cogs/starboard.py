@@ -1,7 +1,7 @@
+import logging
+
 import discord
 from discord.ext import commands
-
-import logging
 
 
 class Starboard(commands.Cog, name="Starboard"):

@@ -39,6 +39,7 @@ class Starboard(commands.Cog, name="Starboard"):
                         del react[react.index(msg.author.id)]
 
                     thresh = guild.get("emoji_threshold") or 3
+                    print(len(react), thresh, len(react) >= thresh)
                     if len(react) >= thresh:
                         starboard = self.bot.get_channel(guild["starboard_channel"])
 

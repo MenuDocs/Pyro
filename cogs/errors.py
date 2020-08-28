@@ -31,12 +31,12 @@ class Errors(commands.Cog, name="Error handler"):
 
         elif isinstance(err, commands.MissingPermissions):
             perms = ", ".join(f"`{perm}`" for perm in err.missing_perms)
-            perms = perms.replace("_", " ").capwords()
+            perms = perms.replace("_", " ")
             await ctx.send(f"You're missing the permissions: {perms}")
 
         elif isinstance(err, commands.BotMissingPermissions):
             perms = ", ".join(f"`{perm}`" for perm in err.missing_perms)
-            perms = perms.replace("_", " ").capwords()
+            perms = perms.replace("_", " ")
             await ctx.send(f"I'm missing the permissions: {perms}")
 
         else:

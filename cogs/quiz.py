@@ -9,7 +9,7 @@ import aiohttp
 
 
 class Choices:
-    def __init__(self, question, answers, timeout=15.0):
+    def __init__(self, question, answers, timeout=30):
         self.question = question
         self.answers = answers
         self.timeout = timeout
@@ -40,11 +40,11 @@ class Choices:
             )
 
             if str(ans[0]) not in answers_dict:
-                return
-
-            self.result = answers_dict[str(ans[0])]
+                self.result = False
+            else:
+                self.result = answers_dict[str(ans[0])]
         except asyncio.TimeoutError:
-            return
+            self.result = False
 
         await msg.delete()
         return self.result
@@ -83,7 +83,7 @@ class Quiz(commands.Cog, name="Quiz"):
             random.shuffle(answers)
 
             index = await Choices(item["question"], answers).start(ctx)
-            if not index:
+            if index is False:
                 await ctx.send("Cancelled quiz.")
                 return
 
@@ -102,7 +102,7 @@ class Quiz(commands.Cog, name="Quiz"):
             title="Python choices quiz",
             description=f"You answered {total_correct} questions out "
             + f"of {len(questions)} correctly.\n"
-            + ("Here are your incorrect answers:" if not wrong_questions else ""),
+            + ("Here are your incorrect answers:" if wrong_questions != {} else ""),
         )
 
         for key, value in wrong_questions.items():

@@ -2,6 +2,7 @@ from discord.ext import commands
 
 import logging
 
+
 class Errors(commands.Cog, name="Error handler"):
     def __init__(self, bot):
         self.bot = bot

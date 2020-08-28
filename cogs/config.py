@@ -109,12 +109,12 @@ class Config(commands.Cog, name="Configuration"):
     @commands.group(
         name="starboard",
         description="Configure the starboard for your server!",
-        invoke_without_command=True
+        invoke_without_command=True,
     )
     @commands.has_permissions(manage_messages=True)
     async def starboard(self, ctx, channel: discord.TextChannel = None):
         current = await self.bot.config.find(ctx.guild.id)
-        if current.get('starboard_channel') and not channel:
+        if current.get("starboard_channel") and not channel:
             await self.bot.config.upsert(
                 {"_id": ctx.guild.id, "starboard_channel": None}
             )
@@ -130,49 +130,35 @@ class Config(commands.Cog, name="Configuration"):
             await ctx.send("Please specify a channel.")
 
     @starboard.command(
-        name="emoji",
-        description="Make the starboard work with your own emoji!"
+        name="emoji", description="Make the starboard work with your own emoji!"
     )
     @commands.has_permissions(manage_messages=True)
-    async def sb_emoji(
-        self, ctx, emoji: typing.Union[discord.Emoji, str] = None
-    ):
+    async def sb_emoji(self, ctx, emoji: typing.Union[discord.Emoji, str] = None):
         if not emoji:
-            await self.bot.config.upsert(
-                {"_id": ctx.guild.id, "emoji": None}
-            )
+            await self.bot.config.upsert({"_id": ctx.guild.id, "emoji": None})
             await ctx.send("Reset your server's custom emoji.")
         elif isinstance(emoji, discord.Emoji):
             if not emoji.is_usable():
                 await ctx.send("I can't use that emoji.")
                 return
 
-            await self.bot.config.upsert(
-                {"_id": ctx.guild.id, "emoji": str(emoji)}
-            )
+            await self.bot.config.upsert({"_id": ctx.guild.id, "emoji": str(emoji)})
 
             await ctx.send("Added your emoji.")
         else:
             emos = emojis.get(emoji)
             if emos:
-                await self.bot.config.upsert(
-                    {"_id": ctx.guild.id, "emoji": emoji}
-                )
+                await self.bot.config.upsert({"_id": ctx.guild.id, "emoji": emoji})
 
                 await ctx.send("Added your emoji.")
             else:
                 await ctx.send("Please use a proper emoji.")
 
-    @starboard.command(
-        name="threshold",
-        description="Choose your own emoji threshold."
-    )
+    @starboard.command(name="threshold", description="Choose your own emoji threshold.")
     @commands.has_permissions(manage_messages=True)
     async def sb_thresh(self, ctx, thresh: int = None):
         if not thresh:
-            await self.bot.config.upsert(
-                {"_id": ctx.guild.id, "emoji_threshold": None}
-            )
+            await self.bot.config.upsert({"_id": ctx.guild.id, "emoji_threshold": None})
             await ctx.send("Reset your server's custom emoji threshold.")
         else:
             await self.bot.config.upsert(

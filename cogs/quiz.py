@@ -19,9 +19,7 @@ class Choices:
     async def start(self, ctx):
         embed = discord.Embed(
             title=self.question,
-            description="\n".join(
-                f"{i+1}: {q}" for i, q in enumerate(self.answers)
-            )
+            description="\n".join(f"{i+1}: {q}" for i, q in enumerate(self.answers)),
         )
 
         msg = await ctx.send(embed=embed)
@@ -36,9 +34,9 @@ class Choices:
         try:
             ans = await ctx.bot.wait_for(
                 "reaction_add",
-                check=lambda react, user: react.message.id == msg.id and
-                user.id == ctx.author.id,
-                timeout=self.timeout
+                check=lambda react, user: react.message.id == msg.id
+                and user.id == ctx.author.id,
+                timeout=self.timeout,
             )
 
             if str(ans[0]) not in answers_dict:
@@ -54,6 +52,7 @@ class Choices:
 
 # TODO: Implement class for quiz questions that require code from author.
 
+
 class Quiz(commands.Cog, name="Quiz"):
     def __init__(self, bot):
         self.bot = bot
@@ -66,7 +65,6 @@ class Quiz(commands.Cog, name="Quiz"):
 
         if errors:
             await ctx.send(f"You have some errors!\n`{errors}`")
-
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -102,21 +100,17 @@ class Quiz(commands.Cog, name="Quiz"):
 
         embed = discord.Embed(
             title="Python choices quiz",
-            description=f"You answered {total_correct} questions out " +
-            f"of {len(questions)} correctly.\n" +
-                        (
-                            "Here are your incorrect answers:"
-                            if not wrong_questions else
-                            ""
-                        )
+            description=f"You answered {total_correct} questions out "
+            + f"of {len(questions)} correctly.\n"
+            + ("Here are your incorrect answers:" if not wrong_questions else ""),
         )
 
         for key, value in wrong_questions.items():
             embed.add_field(
                 name=value[0]["question"],
                 value=f"Your answer: `{value[1]}`.\n Correct answer: "
-                      f"{value[0]['correctAnswer']}",
-                inline=False
+                f"{value[0]['correctAnswer']}",
+                inline=False,
             )
         await ctx.send(embed=embed)
 

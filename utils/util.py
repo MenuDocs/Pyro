@@ -1,4 +1,4 @@
-def cleanup_code(content):
+def clean_code(content):
     """Automatically removes code blocks from the code."""
     # remove ```py\n```
     if content.startswith("```") and content.endswith("```"):

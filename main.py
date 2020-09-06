@@ -70,6 +70,7 @@ async def on_ready():
     bot.keywords = Document(bot.db, "keywords")
     bot.quiz = Document(bot.db, "quiz")
     bot.quiz_answers = Document(bot.db, "quizAnswers")
+    bot.starboard = Document(bot.db, "starboard")
 
     try:
         await bot.config.get_all()

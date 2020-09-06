@@ -76,6 +76,18 @@ class Document:
             raise IdNotFound()
         return data
 
+    async def find_by_custom(self, filter):
+        """
+        Returns data found with the custom filter rather then just id
+
+        Params:
+         - filter (dict) : The filter to search by
+        """
+        if not isinstance(dict, collections.abc.Mapping):
+            raise TypeError("Expected Dictionary.")
+
+        return self.db.find_one(filter)
+
     async def delete_by_id(self, id):
         """
         Deletes all items found with _id: `id`

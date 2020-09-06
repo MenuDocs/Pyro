@@ -1,4 +1,5 @@
 import os
+import traceback
 import typing
 import logging
 import asyncio
@@ -43,21 +44,20 @@ class Config(commands.Cog, name="Configuration"):
                     color=0x808080,
                     timestamp=ctx.message.created_at,
                 )
+                description = ""
                 for ext in os.listdir("./cogs/"):
                     if ext.endswith(".py") and not ext.startswith("_"):
                         try:
                             self.bot.unload_extension(f"cogs.{ext[:-3]}")
                             await asyncio.sleep(0.5)
                             self.bot.load_extension(f"cogs.{ext[:-3]}")
-                            embed.add_field(
-                                name=f"Reloaded: `{ext}`",
-                                value=f"`{ext}` reloaded, but what did you expect to happen? Like really..",
-                            )
+                            description += f"Reloaded: `{ext}`\n"
                         except Exception as e:
                             embed.add_field(
                                 name=f"Failed to reload: `{ext}`", value=e,
                             )
                     await asyncio.sleep(0.5)
+                embed.description = description
                 await ctx.send(embed=embed)
         else:
             async with ctx.typing():
@@ -78,10 +78,7 @@ class Config(commands.Cog, name="Configuration"):
                         self.bot.unload_extension(f"cogs.{ext[:-3]}")
                         await asyncio.sleep(0.5)
                         self.bot.load_extension(f"cogs.{ext[:-3]}")
-                        embed.add_field(
-                            name=f"Reloaded: `{ext}`",
-                            value=f"`{ext}` reloaded, but what did you expect to happen? Like really..",
-                        )
+                        embed.description = f"Reloaded: `{ext}`"
                     except Exception:
                         desired_trace = traceback.format_exc()
                         embed.add_field(
@@ -105,6 +102,8 @@ class Config(commands.Cog, name="Configuration"):
 
             # attempt to reload all commands
             await self.reload(ctx)
+
+            await ctx.send("Update complete!")
 
     @commands.group(
         name="starboard",

@@ -3,6 +3,8 @@ import logging
 import discord
 from discord.ext import commands
 
+from utils.exceptions import IdNotFound
+
 
 class Starboard(commands.Cog, name="Starboard"):
     def __init__(self, bot):
@@ -15,6 +17,10 @@ class Starboard(commands.Cog, name="Starboard"):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
+        if not payload.guild_id:
+            # Only use this in guilds
+            return
+
         entries = await self.bot.config.get_all()
         guilds = list(map(lambda e: e["_id"], entries))
         if payload.guild_id in guilds:
@@ -39,8 +45,18 @@ class Starboard(commands.Cog, name="Starboard"):
                         del react[react.index(msg.author.id)]
 
                     thresh = guild.get("emoji_threshold") or 3
-                    print(len(react), thresh, len(react) >= thresh)
                     if len(react) >= thresh:
+                        # We should now be 'adding' this to our starboard
+                        # So lets just check its not already in it haha
+                        try:
+                            await self.bot.starboard.find(payload.message_id)
+                        except IdNotFound:
+                            # We need to store it, so we are fine
+                            pass
+                        else:
+                            # This message is already in the starboard
+                            return
+
                         starboard = self.bot.get_channel(guild["starboard_channel"])
 
                         embed = discord.Embed(
@@ -63,6 +79,15 @@ class Starboard(commands.Cog, name="Starboard"):
 
                         await starboard.send(
                             content=f"{emoji} {channel.mention}", embed=embed
+                        )
+
+                        self.bot.starboard.upsert(
+                            {
+                                "_id": payload.message_id,
+                                "guildId": payload.guild_id,
+                                "authorId": payload.user_id,
+                                "channelId": payload.channel_id,
+                            }
                         )
 
 

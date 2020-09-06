@@ -1,7 +1,10 @@
 import os
+import traceback
+import typing
 import logging
-
 import asyncio
+
+import emojis
 import discord
 from git import Repo
 from discord.ext import commands
@@ -41,21 +44,20 @@ class Config(commands.Cog, name="Configuration"):
                     color=0x808080,
                     timestamp=ctx.message.created_at,
                 )
+                description = ""
                 for ext in os.listdir("./cogs/"):
                     if ext.endswith(".py") and not ext.startswith("_"):
                         try:
                             self.bot.unload_extension(f"cogs.{ext[:-3]}")
                             await asyncio.sleep(0.5)
                             self.bot.load_extension(f"cogs.{ext[:-3]}")
-                            embed.add_field(
-                                name=f"Reloaded: `{ext}`",
-                                value=f"`{ext}` reloaded, but what did you expect to happen? Like really..",
-                            )
+                            description += f"Reloaded: `{ext}`\n"
                         except Exception as e:
                             embed.add_field(
                                 name=f"Failed to reload: `{ext}`", value=e,
                             )
                     await asyncio.sleep(0.5)
+                embed.description = description
                 await ctx.send(embed=embed)
         else:
             async with ctx.typing():
@@ -76,10 +78,7 @@ class Config(commands.Cog, name="Configuration"):
                         self.bot.unload_extension(f"cogs.{ext[:-3]}")
                         await asyncio.sleep(0.5)
                         self.bot.load_extension(f"cogs.{ext[:-3]}")
-                        embed.add_field(
-                            name=f"Reloaded: `{ext}`",
-                            value=f"`{ext}` reloaded, but what did you expect to happen? Like really..",
-                        )
+                        embed.description = f"Reloaded: `{ext}`"
                     except Exception:
                         desired_trace = traceback.format_exc()
                         embed.add_field(
@@ -103,6 +102,69 @@ class Config(commands.Cog, name="Configuration"):
 
             # attempt to reload all commands
             await self.reload(ctx)
+
+            await ctx.send("Update complete!")
+
+    @commands.group(
+        name="starboard",
+        description="Configure the starboard for your server!",
+        invoke_without_command=True,
+    )
+    @commands.has_permissions(manage_messages=True)
+    async def starboard(self, ctx, channel: discord.TextChannel = None):
+        current = await self.bot.config.find(ctx.guild.id)
+        if current.get("starboard_channel") and not channel:
+            await self.bot.config.upsert(
+                {"_id": ctx.guild.id, "starboard_channel": None}
+            )
+
+            await ctx.send("Turned off starboard.")
+        elif channel:
+            await self.bot.config.upsert(
+                {"_id": ctx.guild.id, "starboard_channel": channel.id}
+            )
+
+            await ctx.send(f"Set starboard channel to {channel.mention}")
+        else:
+            await ctx.send("Please specify a channel.")
+
+    @starboard.command(
+        name="emoji", description="Make the starboard work with your own emoji!"
+    )
+    @commands.has_permissions(manage_messages=True)
+    async def sb_emoji(self, ctx, emoji: typing.Union[discord.Emoji, str] = None):
+        if not emoji:
+            await self.bot.config.upsert({"_id": ctx.guild.id, "emoji": None})
+            await ctx.send("Reset your server's custom emoji.")
+        elif isinstance(emoji, discord.Emoji):
+            if not emoji.is_usable():
+                await ctx.send("I can't use that emoji.")
+                return
+
+            await self.bot.config.upsert({"_id": ctx.guild.id, "emoji": str(emoji)})
+
+            await ctx.send("Added your emoji.")
+        else:
+            emos = emojis.get(emoji)
+            if emos:
+                await self.bot.config.upsert({"_id": ctx.guild.id, "emoji": emoji})
+
+                await ctx.send("Added your emoji.")
+            else:
+                await ctx.send("Please use a proper emoji.")
+
+    @starboard.command(name="threshold", description="Choose your own emoji threshold.")
+    @commands.has_permissions(manage_messages=True)
+    async def sb_thresh(self, ctx, thresh: int = None):
+        if not thresh:
+            await self.bot.config.upsert({"_id": ctx.guild.id, "emoji_threshold": None})
+            await ctx.send("Reset your server's custom emoji threshold.")
+        else:
+            await self.bot.config.upsert(
+                {"_id": ctx.guild.id, "emoji_threshold": thresh}
+            )
+
+            await ctx.send("Added your threshold.")
 
 
 def setup(bot):

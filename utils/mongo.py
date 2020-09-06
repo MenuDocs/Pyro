@@ -83,10 +83,13 @@ class Document:
         Params:
          - filter (dict) : The filter to search by
         """
-        if not isinstance(dict, collections.abc.Mapping):
+        if not isinstance(filter, collections.abc.Mapping):
             raise TypeError("Expected Dictionary.")
 
-        return self.db.find_one(filter)
+        data = await self.db.find_one(filter)
+        if not data:
+            raise IdNotFound()
+        return data
 
     async def delete_by_id(self, id):
         """

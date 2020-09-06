@@ -29,6 +29,7 @@ class Starboard(commands.Cog, name="Starboard"):
             emoji = guild.get("emoji") or "⭐"
 
             if not guild.get("starboard_channel"):
+
                 return
 
             if str(payload.emoji) == emoji:
@@ -49,7 +50,13 @@ class Starboard(commands.Cog, name="Starboard"):
                         # We should now be 'adding' this to our starboard
                         # So lets just check its not already in it haha
                         try:
-                            await self.bot.starboard.find(payload.message_id)
+                            await self.bot.starboard.find_by_custom(
+                                {
+                                    "_id": payload.message_id,
+                                    "guildId": payload.guild_id,
+                                    "channelId": payload.channel_id,
+                                }
+                            )
                         except IdNotFound:
                             # We need to store it, so we are fine
                             pass
@@ -75,13 +82,15 @@ class Starboard(commands.Cog, name="Starboard"):
                         image = attach or msg.embeds[0] if msg.embeds else None
 
                         if image:
-                            embed.set_image(url=image)
+                            embed.description = "View the below for message"
 
                         await starboard.send(
                             content=f"{emoji} {channel.mention}", embed=embed
                         )
+                        if image:
+                            await starboard.send(embed=image)
 
-                        self.bot.starboard.upsert(
+                        await self.bot.starboard.upsert(
                             {
                                 "_id": payload.message_id,
                                 "guildId": payload.guild_id,

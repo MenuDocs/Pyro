@@ -120,6 +120,12 @@ class Config(commands.Cog, name="Configuration"):
 
             await ctx.send("Turned off starboard.")
         elif channel:
+            try:
+                await channel.send("test", delete_after=0.05)
+            except discord.HTTPException:
+                await ctx.send("I can not send a message to that channel!")
+                return
+
             await self.bot.config.upsert(
                 {"_id": ctx.guild.id, "starboard_channel": channel.id}
             )

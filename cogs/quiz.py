@@ -56,10 +56,7 @@ class CodeQuiz:
         self.timeout = timeout
 
     async def start(self, ctx):
-        code_ques = sorted(
-            await ctx.bot.code.get_all(),
-            key=lambda d: d["_id"]
-        )
+        code_ques = sorted(await ctx.bot.code.get_all(), key=lambda d: d["_id"])
 
         for ques in code_ques:
             await ctx.send(ques["question"])
@@ -69,10 +66,10 @@ class CodeQuiz:
 
             try:
                 msg = await ctx.bot.wait_for(
-                    'message',
+                    "message",
                     check=lambda m: m.channel.id == ctx.channel.id
                     and m.author.id == ctx.author.id,
-                    timeout=self.timeout
+                    timeout=self.timeout,
                 )
 
                 content = clean_code(msg.content)
@@ -80,7 +77,9 @@ class CodeQuiz:
                 content = "\n".join([text for text in content.split("\n") if text])
 
                 if not content == code:
-                    await ctx.send("Sorry, but that isn't what we're looking for! Let's see the next one!")
+                    await ctx.send(
+                        "Sorry, but that isn't what we're looking for! Let's see the next one!"
+                    )
                     return
                 else:
                     await ctx.send("Great! That looks good! Let's see the next one...")
@@ -156,13 +155,13 @@ class Quiz(commands.Cog, name="Quiz"):
 
         try:
             msg = await self.bot.wait_for(
-                'message',
+                "message",
                 check=lambda m: m.channel.id == ctx.channel.id
                 and m.author.id == ctx.author.id,
-                timeout=60
+                timeout=60,
             )
 
-            if msg.content.lower() == 'confirm':
+            if msg.content.lower() == "confirm":
                 await msg.add_reaction("👌")
             else:
                 return

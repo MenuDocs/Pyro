@@ -2,6 +2,9 @@ import random
 import asyncio
 import logging
 
+from utils.util import clean_code
+
+import aiohttp
 import discord
 from discord.ext import commands
 
@@ -48,7 +51,44 @@ class Choices:
         return self.result
 
 
-# TODO: Implement class for quiz questions that require code from author.
+class CodeQuiz:
+    def __init__(self, timeout):
+        self.timeout = timeout
+
+    async def start(self, ctx):
+        code_ques = sorted(
+            await ctx.bot.code.get_all(),
+            key=lambda d: d["_id"]
+        )
+
+        for ques in code_ques:
+            await ctx.send(ques["question"])
+            async with aiohttp.ClientSession() as session:
+                async with session.get(ques["bin"]) as resp:
+                    code = await resp.text()
+
+            try:
+                msg = await ctx.bot.wait_for(
+                    'message',
+                    check=lambda m: m.channel.id == ctx.channel.id
+                    and m.author.id == ctx.author.id,
+                    timeout=self.timeout
+                )
+
+                content = clean_code(msg.content)
+                content = content.replace("\t", "    ")
+                content = "\n".join([text for text in content.split("\n") if text])
+
+                if not content == code:
+                    await ctx.send("Sorry, but that isn't what we're looking for! Let's see the next one!")
+                    return
+                else:
+                    await ctx.send("Great! That looks good! Let's see the next one...")
+                    continue
+            except asyncio.TimeoutError:
+                await ctx.send("Whoops! You ran out of time.")
+                return
+        await ctx.send("Whoa! You're all done!")
 
 
 class Quiz(commands.Cog, name="Quiz"):
@@ -98,7 +138,7 @@ class Quiz(commands.Cog, name="Quiz"):
 
         embed = discord.Embed(
             title="Python choices quiz",
-            description=f"You answered {total_correct} questions out "
+            description=f"Starting stage 2.\nYou answered {total_correct} questions out "
             + f"of {len(questions)} correctly.\n"
             + ("Here are your incorrect answers:" if wrong_questions != {} else ""),
         )
@@ -112,7 +152,26 @@ class Quiz(commands.Cog, name="Quiz"):
             )
         await ctx.send(embed=embed)
 
-        # TODO: Add stage 2 using snekbox.
+        await ctx.send("Please send `confirm` to move on to the jext stage.")
+
+        try:
+            msg = await self.bot.wait_for(
+                'message',
+                check=lambda m: m.channel.id == ctx.channel.id
+                and m.author.id == ctx.author.id,
+                timeout=60
+            )
+
+            if msg.content.lower() == 'confirm':
+                await msg.add_reaction("👌")
+            else:
+                return
+        except asyncio.TimeoutError:
+            await ctx.send("Sounds like you're busy! You didn't answer fast enough.")
+
+        code_quiz = CodeQuiz(210)  # 3 minutes and a half
+        await code_quiz.start(ctx)
+        await ctx.send("Alright! This whole quiz is over! Thanks for trying it!")
 
 
 def setup(bot):

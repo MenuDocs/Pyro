@@ -69,6 +69,7 @@ async def on_ready():
     bot.config = Document(bot.db, "config")
     bot.keywords = Document(bot.db, "keywords")
     bot.quiz = Document(bot.db, "quiz")
+    bot.code = Document(bot.db, "code")
     bot.quiz_answers = Document(bot.db, "quizAnswers")
     bot.starboard = Document(bot.db, "starboard")
 

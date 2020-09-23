@@ -10,6 +10,12 @@ from discord.ext import commands
 
 
 class Choices:
+    """
+    This class is supposed to represent part 1 of the quiz,
+    which concerns asking questions to the user and giving them
+    choices to pick from, the bot will check against some already
+    stored answer.
+    """
     def __init__(self, question, answers, timeout=30):
         self.question = question
         self.answers = answers
@@ -27,6 +33,8 @@ class Choices:
 
         answers_dict = {}
 
+        # This for loop is to automate the addition of the reactions
+        # Using the box emote.
         for i, _ in enumerate(self.answers):
             answers_dict[f"{i+1}️⃣"] = i
             await msg.add_reaction(f"{i+1}️⃣")
@@ -40,6 +48,12 @@ class Choices:
                 timeout=self.timeout,
             )
 
+            # This tries to check if the number in the emoji that
+            # was reacted by the user is in the dictionary that has
+            # the answers, this works because the "syntax" of the
+            # emote is "num⃣", num being the number of the choice.
+            # Of course, any other emoji will probably fail.
+            # Probably.
             if str(ans[0]) not in answers_dict:
                 self.result = False
             else:
@@ -52,10 +66,17 @@ class Choices:
 
 
 class CodeQuiz:
+    """
+    This class is supposed to start the stage 2 of the Quiz,
+    which concerns asking for code from the user and checking if it
+    matches some given code from the database.
+    """
     def __init__(self, timeout):
         self.timeout = timeout
 
     async def start(self, ctx):
+        # sort the questions by ID, in this context, ID is the order
+        # of the questions.
         code_ques = sorted(await ctx.bot.code.get_all(), key=lambda d: d["_id"])
 
         for ques in code_ques:
@@ -73,7 +94,13 @@ class CodeQuiz:
                 )
 
                 content = clean_code(msg.content)
+                # Replace tabs with spaces.
                 content = content.replace("\t", "    ")
+                # This line is supposed to clear empty lines in the
+                # User's code, this is to give as much lee-way as
+                # Possible with code formatting.
+                # Of course, because of that, the code in the
+                # database must nkt have any blank lines.
                 content = "\n".join([text for text in content.split("\n") if text])
 
                 if not content == code:

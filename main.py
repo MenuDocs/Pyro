@@ -103,6 +103,9 @@ async def on_message(message):
 
 @bot.command(name="eval", aliases=["exec"])
 async def _eval(ctx, *, code):
+    """
+    Evaluates given code.
+    """
     code = clean_code(code)
 
     local_variables = {

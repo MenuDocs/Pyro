@@ -29,6 +29,9 @@ class Errors(commands.Cog, name="Error handler"):
         elif isinstance(err, commands.PrivateMessageOnly):
             await ctx.send("This command can only be used in PMs.")
 
+        elif isinstance(err, commands.NoPrivateMessage):
+            await ctx.send("This command can only be used in Guilds.")
+
         elif isinstance(err, commands.MissingPermissions):
             perms = ", ".join(f"`{perm}`" for perm in err.missing_perms)
             perms = perms.replace("_", " ")

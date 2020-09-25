@@ -16,6 +16,7 @@ class Choices:
     choices to pick from, the bot will check against some already
     stored answer.
     """
+
     def __init__(self, question, answers, timeout=30):
         self.question = question
         self.answers = answers
@@ -71,6 +72,7 @@ class CodeQuiz:
     which concerns asking for code from the user and checking if it
     matches some given code from the database.
     """
+
     def __init__(self, timeout):
         self.timeout = timeout
 
@@ -137,6 +139,7 @@ class Quiz(commands.Cog, name="Quiz"):
     @commands.command()
     @commands.dm_only()
     async def quiz(self, ctx):
+        """Quiz yourself on relevant Python knowledge!"""
         questions = await self.bot.quiz.get_all()
         questions.sort(key=lambda d: int(d["_id"]))
         user_answers = {}

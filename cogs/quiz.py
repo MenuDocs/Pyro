@@ -102,7 +102,7 @@ class CodeQuiz:
                 # User's code, this is to give as much lee-way as
                 # Possible with code formatting.
                 # Of course, because of that, the code in the
-                # database must nkt have any blank lines.
+                # database must not have any blank lines.
                 content = "\n".join([text for text in content.split("\n") if text])
 
                 if not content == code:

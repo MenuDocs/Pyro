@@ -46,7 +46,10 @@ class Help(commands.Cog, name="Help command"):
             except commands.CommandError:
                 continue
 
-        return filtered
+        return self.return_sorted_commands(filtered)
+
+    def return_sorted_commands(self, commandList):
+        return sorted(commandList, key=lambda x: x.name)
 
     @commands.Cog.listener()
     async def on_ready(self):

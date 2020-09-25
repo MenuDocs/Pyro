@@ -33,6 +33,16 @@ class Help(commands.Cog, name="Help command"):
 
                 await c.can_run(ctx)
                 filtered.append(c)
+            except commands.PrivateMessageOnly:
+                # Add commands to list, just make a
+                # note on the usage that this can
+                # only be used in pms
+                filtered.append(c)
+            except commands.NoPrivateMessage:
+                # Add commands to list, just make a
+                # note on the usage that this can
+                # only be used in guilds
+                filtered.append(c)
             except commands.CommandError:
                 continue
 
@@ -120,11 +130,7 @@ class Help(commands.Cog, name="Help command"):
 
                         command_list = list(command.all_commands.values())
 
-                        for i in range(
-                            0,
-                            len(command_list),
-                            self.cmds_per_page,
-                        ):
+                        for i in range(0, len(command_list), self.cmds_per_page,):
                             next_commands = command_list[i : i + self.cmds_per_page]
 
                             for cmd in next_commands:

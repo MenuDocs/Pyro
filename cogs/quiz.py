@@ -176,7 +176,7 @@ class Quiz(commands.Cog, name="Quiz"):
             embed.add_field(
                 name=value[0]["question"],
                 value=f"Your answer: `{value[1]}`.\n Correct answer: "
-                f"{value[0]['correctAnswer']}",
+                f"`{value[0]['correctAnswer']}`",
                 inline=False,
             )
         await ctx.send(embed=embed)
@@ -197,6 +197,12 @@ class Quiz(commands.Cog, name="Quiz"):
                 return
         except asyncio.TimeoutError:
             await ctx.send("Sounds like you're busy! You didn't answer fast enough.")
+
+        await ctx.send(
+            "Please note, all code should be in accordance with PEP8.\n"
+            "You can find it here <https://www.python.org/dev/peps/pep-0008/>\n"
+            "For simpler adhering, use this tool: <https://pypi.org/project/black/>"
+        )
 
         code_quiz = CodeQuiz(210)  # 3 minutes and a half
         await code_quiz.start(ctx)

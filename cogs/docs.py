@@ -191,27 +191,32 @@ class Docs(commands.Cog, name="Documentation"):
     )
     async def rtfm(self, ctx, *, query: str = None):
         key = "latest"
-        if query.lower() in ["rtfm"]:
-            await ctx.send(
-                embed=discord.Embed.from_dict(
-                    {
-                        "title": "Read The Fucking Manual",
-                        "description": "You expect me to know?",
-                        "footer": {"text": "Imagine including easter eggs"},
-                    }
+        if query is not None:
+            if query.lower() in ["rtfm"]:
+                await ctx.send(
+                    embed=discord.Embed.from_dict(
+                        {
+                            "title": "Read The Fucking Manual",
+                            "description": "You expect me to know?",
+                            "footer": {"text": "Imagine including easter eggs"},
+                        }
+                    )
                 )
-            )
 
-        elif query.lower() in ["developers", "devs"]:
-            await ctx.send(
-                embed=discord.Embed.from_dict(
-                    {
-                        "title": "'It'll be finished before Mandroc still Connor' ~ Kindly, Pyro Devs",
-                        "description": "<@330566541156417536>\n<@271612318947868673>\n<@686846374737739797>\n<@392502749876584448>",
-                        "footer": {"text": "Imagine including easter eggs"},
-                    }
+            elif query.lower() in ["developers", "devs"]:
+                await ctx.send(
+                    embed=discord.Embed.from_dict(
+                        {
+                            "title": "'It'll be finished before Mandroc still Connor' ~ Kindly, Pyro Devs",
+                            "description": "Primary dev:\n<@330566541156417536>\nDevs:\n"
+                            "<@271612318947868673>\n<@686846374737739797> ",
+                            "footer": {"text": "Imagine including easter eggs"},
+                        }
+                    )
                 )
-            )
+
+            else:
+                await self.do_rtfm(ctx, key, query)
 
         else:
             await self.do_rtfm(ctx, key, query)

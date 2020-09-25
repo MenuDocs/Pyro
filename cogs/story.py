@@ -42,7 +42,7 @@ class Story(commands.Cog):
                 await asyncio.sleep(0.5)
 
             em = discord.Embed()
-            em.add_field(name="Current Word Count:", value=len(messages))
+            em.add_field(name="Current Word Count:", value=str(len(messages)))
             for i in range(len(data)):
                 em.add_field(
                     name=data[i][0],

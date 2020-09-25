@@ -181,7 +181,7 @@ class Quiz(commands.Cog, name="Quiz"):
             )
         await ctx.send(embed=embed)
 
-        await ctx.send("Please send `confirm` to move on to the jext stage.")
+        await ctx.send("Please send `confirm` to move on to the next stage.")
 
         try:
             msg = await self.bot.wait_for(

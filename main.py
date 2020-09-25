@@ -20,14 +20,14 @@ with open("config.json", "r") as f:
 
 
 async def get_prefix(bot, message):
-    # If dm's
+    # If private messages
     if not message.guild:
         return commands.when_mentioned_or(bot.DEFAULTPREFIX)(bot, message)
 
     try:
         data = await bot.config.find(message.guild.id)
 
-        # Make sure we have a useable prefix
+        # Make sure we have a use able prefix
         if not data or "prefix" not in data:
             return commands.when_mentioned_or(bot.DEFAULTPREFIX)(bot, message)
         return commands.when_mentioned_or(data["prefix"])(bot, message)
@@ -62,16 +62,6 @@ bot.remove_command("help")
 @bot.event
 async def on_ready():
     logger.info("I'm all up and ready like mom's spaghetti")
-
-    # Database initialization
-    bot.db = motor.motor_asyncio.AsyncIOMotorClient(config["mongo_url"]).pyro
-
-    bot.config = Document(bot.db, "config")
-    bot.keywords = Document(bot.db, "keywords")
-    bot.quiz = Document(bot.db, "quiz")
-    bot.code = Document(bot.db, "code")
-    bot.quiz_answers = Document(bot.db, "quizAnswers")
-    bot.starboard = Document(bot.db, "starboard")
 
     try:
         await bot.config.get_all()
@@ -134,6 +124,16 @@ async def _eval(ctx, *, code):
 
 # Load all extensions
 if __name__ == "__main__":
+    # Database initialization
+    bot.db = motor.motor_asyncio.AsyncIOMotorClient(config["mongo_url"]).pyro
+
+    bot.config = Document(bot.db, "config")
+    bot.keywords = Document(bot.db, "keywords")
+    bot.quiz = Document(bot.db, "quiz")
+    bot.code = Document(bot.db, "code")
+    bot.quiz_answers = Document(bot.db, "quizAnswers")
+    bot.starboard = Document(bot.db, "starboard")
+
     for ext in os.listdir("./cogs/"):
         if ext.endswith(".py") and not ext.startswith("_"):
             try:

@@ -9,10 +9,6 @@ import discord
 from discord.ext import commands
 
 
-# DEMO. THIS IS GOING TO BE CHANGED WHEN WE KNOW
-# WHAT WE EXACTLY NEED AND IN WHICH WAY TO IMPROVE THIS
-
-
 # Sphinx reader pbject because d.py docs
 # are written in sphinx.
 class SphinxObjectFileReader:
@@ -84,18 +80,17 @@ class Docs(commands.Cog, name="Documentation"):
         if inv_version != "# Sphinx inventory version 2":
             raise RuntimeError("Invalid objects.inv file version.")
 
-        # next line is "# Project: <name>"
-        # then after that is "# Version: <version>"
-        projname = stream.readline().rstrip()[11:]
-        version = stream.readline().rstrip()[11:]
-
         # next line says if it's a zlib header
         line = stream.readline()
         if "zlib" not in line:
-            raise RuntimeError("Invalid objects.inv file, not z-lib compatible.")
+            raise RuntimeError(
+                "Invalid objects.inv file, not z-lib compatible."
+            )
 
         # This code mostly comes from the Sphinx repository.
-        entry_regex = re.compile(r"(?x)(.+?)\s+(\S*:\S*)\s+(-?\d+)\s+(\S+)\s+(.*)")
+        entry_regex = re.compile(
+            r"(?x)(.+?)\s+(\S*:\S*)\s+(-?\d+)\s+(\S+)\s+(.*)"
+        )
         for line in stream.read_compressed_lines():
             match = entry_regex.match(line.rstrip())
             if not match:
@@ -121,18 +116,6 @@ class Docs(commands.Cog, name="Documentation"):
             key = name if dispname == "-" else dispname
             prefix = f"{subdirective}:" if domain == "std" else ""
 
-            to_remove = [
-                "lawf.",
-                "errors.",
-                "serving.",
-                "request.",
-                "response.",
-                "server.",
-                "filetypes.",
-            ]
-            for s in to_remove:
-                key = key.replace(s, "")
-
             result[f"{prefix}{key}"] = os.path.join(url, location)
 
         return result
@@ -140,7 +123,6 @@ class Docs(commands.Cog, name="Documentation"):
     async def build_rtfm_lookup_table(self, page_types):
         cache = {}
         for key, page in page_types.items():
-            sub = cache[key] = {}
             async with aiohttp.ClientSession() as session:
                 async with session.get(page + "/objects.inv") as resp:
                     if resp.status != 200:
@@ -198,7 +180,9 @@ class Docs(commands.Cog, name="Documentation"):
                         {
                             "title": "Read The Fucking Manual",
                             "description": "You expect me to know?",
-                            "footer": {"text": "Imagine including easter eggs"},
+                            "footer": {
+                                "text": "Imagine including easter eggs"
+                            },
                         }
                     )
                 )
@@ -210,7 +194,9 @@ class Docs(commands.Cog, name="Documentation"):
                             "title": "'It'll be finished before Mandroc still Connor' ~ Kindly, Pyro Devs",
                             "description": "Primary dev:\n<@330566541156417536>\nDevs:\n"
                             "<@271612318947868673>\n<@686846374737739797> ",
-                            "footer": {"text": "Imagine including easter eggs"},
+                            "footer": {
+                                "text": "Imagine including easter eggs"
+                            },
                         }
                     )
                 )

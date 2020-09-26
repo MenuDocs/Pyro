@@ -109,7 +109,7 @@ class CodeQuiz:
                     await ctx.send(
                         "Sorry, but that isn't what we're looking for! Let's see the next one!"
                     )
-                    return
+                    continue
                 else:
                     await ctx.send("Great! That looks good! Let's see the next one...")
                     continue

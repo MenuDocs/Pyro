@@ -123,6 +123,43 @@ async def _eval(ctx, *, code):
         await ctx.send("".join(format_exception(e, e, e.__traceback__)))
 
 
+@bot.command()
+@commands.is_owner()
+async def dbbackup(ctx):
+    """Back up the database"""
+    await ctx.send("https://giphy.com/gifs/christmas-3P0oEX5oTmrkY")
+
+    backupDB = motor.motor_asyncio.AsyncIOMotorClient(config["mongo_url"]).backup
+    backupConfig = Document(backupDB, "config")
+    backupKeywords = Document(backupDB, "keywords")
+    backupQuiz = Document(backupDB, "quiz")
+    backupCode = Document(backupDB, "code")
+    backupQuizAnswers = Document(backupDB, "quizAnswers")
+    backupStarboard = Document(backupDB, "starboard")
+
+    for item in await bot.config.get_all():
+        await backupConfig.upsert(item)
+
+    for item in await bot.keywords.get_all():
+        await backupKeywords.upsert(item)
+
+    for item in await bot.quiz.get_all():
+        await backupQuiz.upsert(item)
+
+    for item in await bot.code.get_all():
+        await backupCode.upsert(item)
+
+    for item in await bot.quiz_answers.get_all():
+        await backupQuizAnswers.upsert(item)
+
+    for item in await bot.starboard.get_all():
+        await backupStarboard.upsert(item)
+
+    await ctx.send(
+        "https://giphy.com/gifs/deliverance-vN3fMMSAmVwoo\n\n*Database backup complete*"
+    )
+
+
 # Load all extensions
 if __name__ == "__main__":
     # Database initialization

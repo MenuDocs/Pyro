@@ -24,7 +24,9 @@ class Starboard(commands.Cog, name="Starboard"):
         entries = await self.bot.config.get_all()
         guilds = list(map(lambda e: e["_id"], entries))
         if payload.guild_id in guilds:
-            guild = list(filter(lambda e: e["_id"] == payload.guild_id, entries))
+            guild = list(
+                filter(lambda e: e["_id"] == payload.guild_id, entries)
+            )
             guild = guild[0]
             emoji = guild.get("emoji") or "⭐"
 
@@ -37,11 +39,17 @@ class Starboard(commands.Cog, name="Starboard"):
                     channel = self.bot.get_channel(payload.channel_id)
                     msg = await channel.fetch_message(payload.message_id)
                     reacts = msg.reactions
-                    reacts = list(filter(lambda r: str(r.emoji) == emoji, reacts))
+                    reacts = list(
+                        filter(lambda r: str(r.emoji) == emoji, reacts)
+                    )
                 except discord.HTTPException:
-                    await channel.send("An error occurred while fetching the message")
+                    await channel.send(
+                        "An error occurred while fetching the message"
+                    )
                 if reacts:
-                    react = list(map(lambda u: u.id, await reacts[0].users().flatten()))
+                    react = list(
+                        map(lambda u: u.id, await reacts[0].users().flatten())
+                    )
                     if msg.author.id in react:
                         del react[react.index(msg.author.id)]
 
@@ -64,7 +72,9 @@ class Starboard(commands.Cog, name="Starboard"):
                             # This message is already in the starboard
                             return
 
-                        starboard = self.bot.get_channel(guild["starboard_channel"])
+                        starboard = self.bot.get_channel(
+                            guild["starboard_channel"]
+                        )
 
                         embed = discord.Embed(
                             title="Jump to message",
@@ -74,10 +84,13 @@ class Starboard(commands.Cog, name="Starboard"):
                         )
 
                         embed.set_author(
-                            name=msg.author.display_name, icon_url=msg.author.avatar_url
+                            name=msg.author.display_name,
+                            icon_url=msg.author.avatar_url,
                         )
 
-                        attach = msg.attachments[0] if msg.attachments else None
+                        attach = (
+                            msg.attachments[0] if msg.attachments else None
+                        )
 
                         image = attach or msg.embeds[0] if msg.embeds else None
 

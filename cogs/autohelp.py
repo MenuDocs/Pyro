@@ -6,12 +6,12 @@ from discord.ext import commands
 class AutoHelp(commands.Cog, name="Autohelp"):
     def __init__(self, bot):
         self.bot = bot
+        self.keywords = self.bot.keywords
         self.logger = logging.getLogger(__name__)
 
     @commands.Cog.listener()
     async def on_ready(self):
         self.logger.info("I'm ready!")
-        self.keywords = self.bot.keywords
 
     @commands.Cog.listener()
     async def on_message(self, msg):

@@ -29,14 +29,23 @@ class Errors(commands.Cog, name="Error handler"):
         elif isinstance(err, commands.PrivateMessageOnly):
             await ctx.send("This command can only be used in PMs.")
 
+        elif isinstance(err, commands.NoPrivateMessage):
+            await ctx.send("This command can only be used in Guilds.")
+
         elif isinstance(err, commands.MissingPermissions):
-            perms = ", ".join(f"`{perm}`" for perm in err.missing_perms)
-            perms = perms.replace("_", " ")
+            perms = ", ".join(
+                f"`{perm.replace('_', ' ').title()}`"
+                for perm in err.missing_perms
+            )
+
             await ctx.send(f"You're missing the permissions: {perms}")
 
         elif isinstance(err, commands.BotMissingPermissions):
-            perms = ", ".join(f"`{perm}`" for perm in err.missing_perms)
-            perms = perms.replace("_", " ")
+            perms = ", ".join(
+                f"`{perm.replace('_', ' ').title()}`"
+                for perm in err.missing_perms
+            )
+
             await ctx.send(f"I'm missing the permissions: {perms}")
 
         else:

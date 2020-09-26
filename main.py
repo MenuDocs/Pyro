@@ -20,14 +20,14 @@ with open("config.json", "r") as f:
 
 
 async def get_prefix(bot, message):
-    # If dm's
+    # If private messages
     if not message.guild:
         return commands.when_mentioned_or(bot.DEFAULTPREFIX)(bot, message)
 
     try:
         data = await bot.config.find(message.guild.id)
 
-        # Make sure we have a useable prefix
+        # Make sure we have a use able prefix
         if not data or "prefix" not in data:
             return commands.when_mentioned_or(bot.DEFAULTPREFIX)(bot, message)
         return commands.when_mentioned_or(data["prefix"])(bot, message)
@@ -63,15 +63,6 @@ bot.remove_command("help")
 async def on_ready():
     logger.info("I'm all up and ready like mom's spaghetti")
 
-    # Database initialization
-    bot.db = motor.motor_asyncio.AsyncIOMotorClient(config["mongo_url"]).pyro
-
-    bot.config = Document(bot.db, "config")
-    bot.keywords = Document(bot.db, "keywords")
-    bot.quiz = Document(bot.db, "quiz")
-    bot.quiz_answers = Document(bot.db, "quizAnswers")
-    bot.starboard = Document(bot.db, "starboard")
-
     try:
         await bot.config.get_all()
     except exceptions.PyMongoError as e:
@@ -95,13 +86,19 @@ async def on_message(message):
             else:
                 prefix = data["prefix"]
 
-            await message.channel.send(f"My prefix here is `{prefix}`", delete_after=15)
+            await message.channel.send(
+                f"My prefix here is `{prefix}`", delete_after=15
+            )
 
     await bot.process_commands(message)
 
 
 @bot.command(name="eval", aliases=["exec"])
+@commands.is_owner()
 async def _eval(ctx, *, code):
+    """
+    Evaluates given code.
+    """
     code = clean_code(code)
 
     local_variables = {
@@ -119,7 +116,10 @@ async def _eval(ctx, *, code):
 
     try:
         with contextlib.redirect_stdout(stdout):
-            exec(f"async def func():\n{textwrap.indent(code, '    ')}", local_variables)
+            exec(
+                f"async def func():\n{textwrap.indent(code, '    ')}",
+                local_variables,
+            )
 
             obj = await local_variables["func"]()
             result = f"```py\n{stdout.getvalue()}\n-- {obj}```"
@@ -128,8 +128,57 @@ async def _eval(ctx, *, code):
         await ctx.send("".join(format_exception(e, e, e.__traceback__)))
 
 
+@bot.command()
+@commands.is_owner()
+async def dbbackup(ctx):
+    """Back up the database"""
+    await ctx.send("https://giphy.com/gifs/christmas-3P0oEX5oTmrkY")
+
+    backupDB = motor.motor_asyncio.AsyncIOMotorClient(
+        config["mongo_url"]
+    ).backup
+    backupConfig = Document(backupDB, "config")
+    backupKeywords = Document(backupDB, "keywords")
+    backupQuiz = Document(backupDB, "quiz")
+    backupCode = Document(backupDB, "code")
+    backupQuizAnswers = Document(backupDB, "quizAnswers")
+    backupStarboard = Document(backupDB, "starboard")
+
+    for item in await bot.config.get_all():
+        await backupConfig.upsert(item)
+
+    for item in await bot.keywords.get_all():
+        await backupKeywords.upsert(item)
+
+    for item in await bot.quiz.get_all():
+        await backupQuiz.upsert(item)
+
+    for item in await bot.code.get_all():
+        await backupCode.upsert(item)
+
+    for item in await bot.quiz_answers.get_all():
+        await backupQuizAnswers.upsert(item)
+
+    for item in await bot.starboard.get_all():
+        await backupStarboard.upsert(item)
+
+    await ctx.send(
+        "https://giphy.com/gifs/deliverance-vN3fMMSAmVwoo\n\n*Database backup complete*"
+    )
+
+
 # Load all extensions
 if __name__ == "__main__":
+    # Database initialization
+    bot.db = motor.motor_asyncio.AsyncIOMotorClient(config["mongo_url"]).pyro
+
+    bot.config = Document(bot.db, "config")
+    bot.keywords = Document(bot.db, "keywords")
+    bot.quiz = Document(bot.db, "quiz")
+    bot.code = Document(bot.db, "code")
+    bot.quiz_answers = Document(bot.db, "quizAnswers")
+    bot.starboard = Document(bot.db, "starboard")
+
     for ext in os.listdir("./cogs/"):
         if ext.endswith(".py") and not ext.startswith("_"):
             try:

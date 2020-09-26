@@ -133,7 +133,11 @@ class Help(commands.Cog, name="Help command"):
 
                         command_list = list(command.all_commands.values())
 
-                        for i in range(0, len(command_list), self.cmds_per_page,):
+                        for i in range(
+                            0,
+                            len(command_list),
+                            self.cmds_per_page,
+                        ):
                             next_commands = command_list[i : i + self.cmds_per_page]
 
                             for cmd in next_commands:

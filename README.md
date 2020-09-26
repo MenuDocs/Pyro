@@ -12,18 +12,14 @@ The bot expects there to be a configuration file named `config.json` to grab mul
 ```json
 {
   "token": "YOUR TOKEN",
-  "menudocs_projects_id": Integer representing the menudocs projects ID,
-  "story_channel_id": Integer representing the story channel ID,
-  "discord.py_help_channel": Integer representing the Discord.py help channel ID,
+  "menudocs_projects_id": 12345,
+  "story_channel_id": 12345,
+  "discord.py_help_channel": 12345,
   "mongo_url": "THE URL TO ACCESS THE MONGODB DATABASE "
 }
 ```
 
+Mind that the fields that have `id` in their name need an actual ID as the value.
+
 with that inside the bot's directory, running `python3.8 main.py` should run the bot without any problem, if the ID's are valid.
 
-Ideas for things bot will contain:
-+ Python Quiz -> With a winnable role, read dpy help for how that would work
-+ ~~Documentation -> For dpy we need it to help anyway~~
-+ Starboard -> Expect it works with emojis
-+ Auto Helper bot -> basically if a message is sent in #dpy channel in menudocs check the keywords and if it is something included then spit out the response with a ping to the user (not hard)
-+ More

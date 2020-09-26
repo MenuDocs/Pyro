@@ -74,7 +74,8 @@ class Starboard(commands.Cog, name="Starboard"):
                         )
 
                         embed.set_author(
-                            name=msg.author.display_name, icon_url=msg.author.avatar_url
+                            name=msg.author.display_name,
+                            icon_url=msg.author.avatar_url,
                         )
 
                         attach = msg.attachments[0] if msg.attachments else None

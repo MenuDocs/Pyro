@@ -33,9 +33,7 @@ class Config(commands.Cog, name="Configuration"):
         )
 
     @commands.command(
-        name="reload",
-        description="Reload all/one of the bots cogs!",
-        usage="[cog]",
+        name="reload", description="Reload all/one of the bots cogs!", usage="[cog]",
     )
     @commands.is_owner()
     async def reload(self, ctx, cog=None):
@@ -56,8 +54,7 @@ class Config(commands.Cog, name="Configuration"):
                             description += f"Reloaded: `{ext}`\n"
                         except Exception as e:
                             embed.add_field(
-                                name=f"Failed to reload: `{ext}`",
-                                value=e,
+                                name=f"Failed to reload: `{ext}`", value=e,
                             )
                     await asyncio.sleep(0.5)
                 embed.description = description
@@ -85,15 +82,13 @@ class Config(commands.Cog, name="Configuration"):
                     except Exception:
                         desired_trace = traceback.format_exc()
                         embed.add_field(
-                            name=f"Failed to reload: `{ext}`",
-                            value=desired_trace,
+                            name=f"Failed to reload: `{ext}`", value=desired_trace,
                         )
                 await asyncio.sleep(0.5)
             await ctx.send(embed=embed)
 
     @commands.command(
-        name="update",
-        description="Automatically updates the bot from github!",
+        name="update", description="Automatically updates the bot from github!",
     )
     @commands.is_owner()
     async def update_bot(self, ctx):
@@ -140,7 +135,7 @@ class Config(commands.Cog, name="Configuration"):
             await ctx.send("Please specify a channel.")
 
     @starboard.command(
-        name="emoji", description="Make the starboard work with your own emoji!"
+        name="emoji", description="Make the starboard work with your own emoji!",
     )
     @commands.has_permissions(manage_messages=True)
     async def sb_emoji(self, ctx, emoji: typing.Union[discord.Emoji, str] = None):

@@ -118,7 +118,7 @@ async def logout(ctx):
     await bot.logout()
 
 
-@bot.command(name="eval", aliases=["exec"])
+@bot.command(name="eval", aliases=["exec"], enabled=False)
 @commands.is_owner()
 async def _eval(ctx, *, code):
     """

@@ -20,9 +20,7 @@ class Story(commands.Cog):
             return
         async with ctx.typing():
             channel = self.bot.get_channel(self.bot.story_channel_id)
-            messages = await channel.history(
-                limit=None, oldest_first=True
-            ).flatten()
+            messages = await channel.history(limit=None, oldest_first=True).flatten()
             story = " ".join([message.content for message in messages])
 
             # Stats
@@ -35,9 +33,7 @@ class Story(commands.Cog):
 
             data = sorted(data.items(), key=lambda x: x[1], reverse=True)
 
-            for chunk in [
-                story[i : i + 2000] for i in range(0, len(story), 2000)
-            ]:
+            for chunk in [story[i : i + 2000] for i in range(0, len(story), 2000)]:
                 embed = discord.Embed(
                     title=f"Here is the current story from {channel.name}",
                     description=chunk,

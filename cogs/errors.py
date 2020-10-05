@@ -34,19 +34,20 @@ class Errors(commands.Cog, name="Error handler"):
 
         elif isinstance(err, commands.MissingPermissions):
             perms = ", ".join(
-                f"`{perm.replace('_', ' ').title()}`"
-                for perm in err.missing_perms
+                f"`{perm.replace('_', ' ').title()}`" for perm in err.missing_perms
             )
 
             await ctx.send(f"You're missing the permissions: {perms}")
 
         elif isinstance(err, commands.BotMissingPermissions):
             perms = ", ".join(
-                f"`{perm.replace('_', ' ').title()}`"
-                for perm in err.missing_perms
+                f"`{perm.replace('_', ' ').title()}`" for perm in err.missing_perms
             )
 
             await ctx.send(f"I'm missing the permissions: {perms}")
+
+        elif isinstance(err, commands.DisabledCommand):
+            await ctx.send(f"`{ctx.command.qualified_name}` is currently disabled.")
 
         else:
             self.logger.error(err)

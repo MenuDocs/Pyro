@@ -121,7 +121,6 @@ class Docs(commands.Cog, name="Documentation"):
             key = name if dispname == "-" else dispname
             prefix = f"{subdirective}:" if domain == "std" else ""
 
-
             result[f"{prefix}{key}"] = os.path.join(url, location)
 
         return result

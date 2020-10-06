@@ -22,4 +22,3 @@ The bot expects there to be a configuration file named `config.json` to grab mul
 Mind that the fields that have `id` in their name need an actual ID as the value.
 
 with that inside the bot's directory, running `python3.8 main.py` should run the bot without any problem, if the ID's are valid.
-

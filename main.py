@@ -86,11 +86,16 @@ async def on_message(message):
             else:
                 prefix = data["prefix"]
 
-            await message.channel.send(
-                f"My prefix here is `{prefix}`", delete_after=15
-            )
+            await message.channel.send(f"My prefix here is `{prefix}`", delete_after=15)
 
     await bot.process_commands(message)
+
+
+@bot.command(name="logout")
+@commands.is_owner()
+async def logout(ctx):
+    await ctx.send("Cya :wave:")
+    await bot.logout()
 
 
 @bot.command(name="eval", aliases=["exec"])
@@ -117,8 +122,7 @@ async def _eval(ctx, *, code):
     try:
         with contextlib.redirect_stdout(stdout):
             exec(
-                f"async def func():\n{textwrap.indent(code, '    ')}",
-                local_variables,
+                f"async def func():\n{textwrap.indent(code, '    ')}", local_variables,
             )
 
             obj = await local_variables["func"]()
@@ -134,9 +138,7 @@ async def dbbackup(ctx):
     """Back up the database"""
     await ctx.send("https://giphy.com/gifs/christmas-3P0oEX5oTmrkY")
 
-    backupDB = motor.motor_asyncio.AsyncIOMotorClient(
-        config["mongo_url"]
-    ).backup
+    backupDB = motor.motor_asyncio.AsyncIOMotorClient(config["mongo_url"]).backup
     backupConfig = Document(backupDB, "config")
     backupKeywords = Document(backupDB, "keywords")
     backupQuiz = Document(backupDB, "quiz")

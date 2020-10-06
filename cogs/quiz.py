@@ -27,9 +27,7 @@ class Choices:
     async def start(self, ctx):
         embed = discord.Embed(
             title=self.question,
-            description="\n".join(
-                f"{i+1}: {q}" for i, q in enumerate(self.answers)
-            ),
+            description="\n".join(f"{i+1}: {q}" for i, q in enumerate(self.answers)),
         )
 
         msg = await ctx.send(embed=embed)
@@ -81,9 +79,7 @@ class CodeQuiz:
     async def start(self, ctx):
         # sort the questions by ID, in this context, ID is the order
         # of the questions.
-        code_ques = sorted(
-            await ctx.bot.code.get_all(), key=lambda d: d["_id"]
-        )
+        code_ques = sorted(await ctx.bot.code.get_all(), key=lambda d: d["_id"])
 
         for ques in code_ques:
             await ctx.send(ques["question"])
@@ -107,9 +103,7 @@ class CodeQuiz:
                 # Possible with code formatting.
                 # Of course, because of that, the code in the
                 # database must not have any blank lines.
-                content = "\n".join(
-                    [text for text in content.split("\n") if text]
-                )
+                content = "\n".join([text for text in content.split("\n") if text])
 
                 if not content == code:
                     await ctx.send(
@@ -117,9 +111,7 @@ class CodeQuiz:
                     )
                     continue
                 else:
-                    await ctx.send(
-                        "Great! That looks good! Let's see the next one..."
-                    )
+                    await ctx.send("Great! That looks good! Let's see the next one...")
                     continue
             except asyncio.TimeoutError:
                 await ctx.send("Whoops! You ran out of time.")
@@ -177,11 +169,7 @@ class Quiz(commands.Cog, name="Quiz"):
             title="Python choices quiz",
             description=f"Starting stage 2.\nYou answered {total_correct} questions out "
             + f"of {len(questions)} correctly.\n"
-            + (
-                "Here are your incorrect answers:"
-                if wrong_questions != {}
-                else ""
-            ),
+            + ("Here are your incorrect answers:" if wrong_questions != {} else ""),
         )
 
         for key, value in wrong_questions.items():
@@ -208,9 +196,7 @@ class Quiz(commands.Cog, name="Quiz"):
             else:
                 return
         except asyncio.TimeoutError:
-            await ctx.send(
-                "Sounds like you're busy! You didn't answer fast enough."
-            )
+            await ctx.send("Sounds like you're busy! You didn't answer fast enough.")
 
         await ctx.send(
             "Please note, all code should be in accordance with PEP8.\n"
@@ -220,9 +206,7 @@ class Quiz(commands.Cog, name="Quiz"):
 
         code_quiz = CodeQuiz(210)  # 3 minutes and a half
         await code_quiz.start(ctx)
-        await ctx.send(
-            "Alright! This whole quiz is over! Thanks for trying it!"
-        )
+        await ctx.send("Alright! This whole quiz is over! Thanks for trying it!")
 
 
 def setup(bot):

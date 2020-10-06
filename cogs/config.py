@@ -9,6 +9,9 @@ import discord
 from git import Repo
 from discord.ext import commands
 
+import cogs.help
+from utils.exceptions import IdNotFound
+
 
 class Config(commands.Cog, name="Configuration"):
     def __init__(self, bot):
@@ -33,9 +36,7 @@ class Config(commands.Cog, name="Configuration"):
         )
 
     @commands.command(
-        name="reload",
-        description="Reload all/one of the bots cogs!",
-        usage="[cog]",
+        name="reload", description="Reload all/one of the bots cogs!", usage="[cog]",
     )
     @commands.is_owner()
     async def reload(self, ctx, cog=None):
@@ -56,8 +57,7 @@ class Config(commands.Cog, name="Configuration"):
                             description += f"Reloaded: `{ext}`\n"
                         except Exception as e:
                             embed.add_field(
-                                name=f"Failed to reload: `{ext}`",
-                                value=e,
+                                name=f"Failed to reload: `{ext}`", value=e,
                             )
                     await asyncio.sleep(0.5)
                 embed.description = description
@@ -85,15 +85,13 @@ class Config(commands.Cog, name="Configuration"):
                     except Exception:
                         desired_trace = traceback.format_exc()
                         embed.add_field(
-                            name=f"Failed to reload: `{ext}`",
-                            value=desired_trace,
+                            name=f"Failed to reload: `{ext}`", value=desired_trace,
                         )
                 await asyncio.sleep(0.5)
             await ctx.send(embed=embed)
 
     @commands.command(
-        name="update",
-        description="Automatically updates the bot from github!",
+        name="update", description="Automatically updates the bot from github!",
     )
     @commands.is_owner()
     async def update_bot(self, ctx):
@@ -112,41 +110,78 @@ class Config(commands.Cog, name="Configuration"):
 
     @commands.group(
         name="starboard",
+        aliases=["sb"],
         description="Configure the starboard for your server!",
         invoke_without_command=True,
     )
+    @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
-    async def starboard(self, ctx, channel: discord.TextChannel = None):
-        current = await self.bot.config.find(ctx.guild.id)
-        if current.get("starboard_channel") and not channel:
-            await self.bot.config.upsert(
-                {"_id": ctx.guild.id, "starboard_channel": None}
-            )
-
-            await ctx.send("Turned off starboard.")
-        elif channel:
-            try:
-                await channel.send("test", delete_after=0.05)
-            except discord.HTTPException:
-                await ctx.send("I can not send a message to that channel!")
-                return
-
-            await self.bot.config.upsert(
-                {"_id": ctx.guild.id, "starboard_channel": channel.id}
-            )
-
-            await ctx.send(f"Set starboard channel to {channel.mention}")
-        else:
-            await ctx.send("Please specify a channel.")
+    async def starboard(self, ctx):
+        await ctx.invoke(self.bot.get_command("help"), entity="starboard")
 
     @starboard.command(
-        name="emoji",
-        description="Make the starboard work with your own emoji!",
+        name="toggle", description="Turn the starboard on or off for your guild."
     )
+    @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
-    async def sb_emoji(
-        self, ctx, emoji: typing.Union[discord.Emoji, str] = None
-    ):
+    async def sb_toggle(self, ctx):
+        try:
+            data = await self.bot.config.find(ctx.guild.id)
+        except IdNotFound:
+            await ctx.send(
+                "You have not setup the starboard for this guild, please use the `starboard channel` command to do so."
+                "\nI did however disable the starboard."
+            )
+            data = {"_id": ctx.guild.id, "starboard_toggle": False}
+        else:
+            if not data.get("starboard_toggle"):
+                data = {"_id": ctx.guild.id, "starboard_toggle": True}
+                await ctx.send("I have turned the starboard `on` for you.")
+            else:
+                data = {"_id": ctx.guild.id, "starboard_toggle": False}
+                await ctx.send("I have turned the starboard `off` for you.")
+        finally:
+            await self.bot.config.upsert(data)
+
+    @starboard.command(
+        name="channel",
+        description="Set the starboard channel for this guild!",
+        aliases=["setchannel"],
+    )
+    @commands.guild_only()
+    @commands.has_permissions(manage_messages=True)
+    async def sb_channel(self, ctx, channel: discord.TextChannel = None):
+        if channel is None:
+            await ctx.send(
+                "I will attempt to set this guilds starboard channel to this channel as you failed to give me another "
+                "channel. "
+            )
+
+        channel = channel or ctx.channel
+        try:
+            await channel.send("test", delete_after=0.05)
+        except discord.HTTPException:
+            await ctx.send(
+                "I can not send a message to that channel! Please give me permissions and try again."
+            )
+            return
+
+        try:
+            data = await self.bot.config.find(ctx.guild.id)
+        except IdNotFound:
+            data = {"_id": ctx.guild.id, "starboard_channel": channel.id}
+        else:
+            data["starboard_channel"] = channel.id
+        finally:
+            await self.bot.config.upsert(data)
+            await ctx.send("I have set the starboard channel for this guild!")
+
+    @starboard.command(
+        name="emoji", description="Make the starboard work with your own emoji!",
+    )
+    @commands.guild_only()
+    @commands.has_permissions(manage_messages=True)
+    async def sb_emoji(self, ctx, emoji: typing.Union[discord.Emoji, str] = None):
         if not emoji:
             await self.bot.config.upsert({"_id": ctx.guild.id, "emoji": None})
             await ctx.send("Reset your server's custom emoji.")
@@ -155,31 +190,24 @@ class Config(commands.Cog, name="Configuration"):
                 await ctx.send("I can't use that emoji.")
                 return
 
-            await self.bot.config.upsert(
-                {"_id": ctx.guild.id, "emoji": str(emoji)}
-            )
+            await self.bot.config.upsert({"_id": ctx.guild.id, "emoji": str(emoji)})
 
             await ctx.send("Added your emoji.")
         else:
             emos = emojis.get(emoji)
             if emos:
-                await self.bot.config.upsert(
-                    {"_id": ctx.guild.id, "emoji": emoji}
-                )
+                await self.bot.config.upsert({"_id": ctx.guild.id, "emoji": emoji})
 
                 await ctx.send("Added your emoji.")
             else:
                 await ctx.send("Please use a proper emoji.")
 
-    @starboard.command(
-        name="threshold", description="Choose your own emoji threshold."
-    )
+    @starboard.command(name="threshold", description="Choose your own emoji threshold.")
+    @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
     async def sb_thresh(self, ctx, thresh: int = None):
         if not thresh:
-            await self.bot.config.upsert(
-                {"_id": ctx.guild.id, "emoji_threshold": None}
-            )
+            await self.bot.config.upsert({"_id": ctx.guild.id, "emoji_threshold": None})
             await ctx.send("Reset your server's custom emoji threshold.")
         else:
             await self.bot.config.upsert(

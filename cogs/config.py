@@ -130,9 +130,8 @@ class Config(commands.Cog, name="Configuration"):
         except IdNotFound:
             await ctx.send(
                 "You have not setup the starboard for this guild, please use the `starboard channel` command to do so."
-                "\nI did however disable the starboard."
             )
-            data = {"_id": ctx.guild.id, "starboard_toggle": False}
+            return
         else:
             if not data.get("starboard_toggle"):
                 data = {"_id": ctx.guild.id, "starboard_toggle": True}
@@ -140,13 +139,10 @@ class Config(commands.Cog, name="Configuration"):
             else:
                 data = {"_id": ctx.guild.id, "starboard_toggle": False}
                 await ctx.send("I have turned the starboard `off` for you.")
-        finally:
             await self.bot.config.upsert(data)
 
     @starboard.command(
-        name="channel",
-        description="Set the starboard channel for this guild!",
-        aliases=["setchannel"],
+        name="channel", description="Set the starboard channel for this guild!",
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
@@ -169,7 +165,11 @@ class Config(commands.Cog, name="Configuration"):
         try:
             data = await self.bot.config.find(ctx.guild.id)
         except IdNotFound:
-            data = {"_id": ctx.guild.id, "starboard_channel": channel.id}
+            data = {
+                "_id": ctx.guild.id,
+                "starboard_channel": channel.id,
+                "starboard_toggle": True,
+            }
         else:
             data["starboard_channel"] = channel.id
         finally:

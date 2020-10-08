@@ -29,7 +29,6 @@ class Starboard(commands.Cog, name="Starboard"):
             emoji = guild.get("emoji") or "⭐"
 
             if not guild.get("starboard_channel"):
-
                 return
 
             if str(payload.emoji) == emoji:
@@ -40,6 +39,7 @@ class Starboard(commands.Cog, name="Starboard"):
                     reacts = list(filter(lambda r: str(r.emoji) == emoji, reacts))
                 except discord.HTTPException:
                     await channel.send("An error occurred while fetching the message")
+
                 if reacts:
                     react = list(map(lambda u: u.id, await reacts[0].users().flatten()))
                     if msg.author.id in react:

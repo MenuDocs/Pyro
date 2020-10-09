@@ -1,6 +1,8 @@
 import logging
 
-from discord.ext import buttons, commands
+from discord.ext import commands
+
+from utils.util import Pag
 
 
 class Help(commands.Cog, name="Help command"):
@@ -86,7 +88,7 @@ class Help(commands.Cog, name="Help command"):
 
                 pages.append(command_entry)
 
-            await buttons.Paginator(
+            await Pag(
                 title=self.bot.description, colour=0xCE2029, entries=pages, length=1,
             ).start(ctx)
 
@@ -114,7 +116,7 @@ class Help(commands.Cog, name="Help command"):
 
                 pages.append(command_entry)
 
-                await buttons.Paginator(
+                await Pag(
                     title=f"{cog.qualified_name}'s commands",
                     colour=0xCE2029,
                     entries=pages,
@@ -146,7 +148,7 @@ class Help(commands.Cog, name="Help command"):
 
                     pages.append(command_entry)
 
-                    await buttons.Paginator(
+                    await Pag(
                         title=f"{command.qualified_name}",
                         colour=0xCE2029,
                         entries=pages,

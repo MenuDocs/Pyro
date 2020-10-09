@@ -1,6 +1,7 @@
-import random
 import asyncio
+import difflib
 import logging
+import random
 
 from utils.util import clean_code
 
@@ -75,17 +76,22 @@ class CodeQuiz:
 
     def __init__(self, timeout):
         self.timeout = timeout
+        self.logger = logging.getLogger(__name__)
 
     async def start(self, ctx):
         # sort the questions by ID, in this context, ID is the order
         # of the questions.
+        correct_answers = dict()
         code_ques = sorted(await ctx.bot.code.get_all(), key=lambda d: d["_id"])
 
         for ques in code_ques:
+            ques_id = ques["_id"]
+
             await ctx.send(ques["question"])
             async with aiohttp.ClientSession() as session:
                 async with session.get(ques["bin"]) as resp:
                     code = await resp.text()
+                    code = code.replace("\t", "    ").replace("\r\n", "\n")
 
             try:
                 msg = await ctx.bot.wait_for(
@@ -97,7 +103,7 @@ class CodeQuiz:
 
                 content = clean_code(msg.content)
                 # Replace tabs with spaces.
-                content = content.replace("\t", "    ")
+                content = content.replace("\t", "    ").replace("\r\n", "\n")
                 # This line is supposed to clear empty lines in the
                 # User's code, this is to give as much lee-way as
                 # Possible with code formatting.
@@ -106,17 +112,29 @@ class CodeQuiz:
                 content = "\n".join([text for text in content.split("\n") if text])
 
                 if not content == code:
-                    await ctx.send(
-                        "Sorry, but that isn't what we're looking for! Let's see the next one!"
+                    self.logger.info(
+                        "\n".join(
+                            [li for li in difflib.ndiff(content, code) if li[0] != " "]
+                        )
                     )
+                    await ctx.send(
+                        "Sorry, but that isn't what we're looking for! Remember that Python and the way we're "
+                        "detecting code needs you to be accurate with your capitalization as well! "
+                        "Make sure you're using correct python conventions and grammar. "
+                        "Let's see the next one!"
+                    )
+                    correct_answers[ques_id] = False
                     continue
                 else:
                     await ctx.send("Great! That looks good! Let's see the next one...")
+                    correct_answers[ques_id] = True
                     continue
             except asyncio.TimeoutError:
                 await ctx.send("Whoops! You ran out of time.")
+                correct_answers[ques_id] = False
                 return
         await ctx.send("Whoa! You're all done!")
+        return correct_answers
 
 
 class Quiz(commands.Cog, name="Quiz"):
@@ -205,8 +223,26 @@ class Quiz(commands.Cog, name="Quiz"):
         )
 
         code_quiz = CodeQuiz(210)  # 3 minutes and a half
-        await code_quiz.start(ctx)
+        correct_answers = await code_quiz.start(ctx)
         await ctx.send("Alright! This whole quiz is over! Thanks for trying it!")
+        correct_choices = total_correct == len(questions)
+
+        if all(correct_answers.values()) and correct_choices:
+            try:
+                member = await self.bot.menudocs_guild.fetch_member(ctx.author.id)
+            except discord.HTTPException:
+                self.logger.error(
+                    f"Failed to fetch {ctx.author.display_name}({ctx.author.id}) from the Menudocs Guild."
+                )
+            else:
+                if self.bot.quiz_role in member.roles:
+                    await ctx.send("You already have the quiz role!")
+                    return
+
+                await member.add_roles(
+                    self.bot.quiz_role, reason="Correctly finished the quiz."
+                )
+                await ctx.send("Congratulations on getting everything correct!")
 
 
 def setup(bot):

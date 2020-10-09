@@ -9,7 +9,6 @@ import discord
 from git import Repo
 from discord.ext import commands
 
-import cogs.help
 from utils.exceptions import IdNotFound
 
 
@@ -120,7 +119,7 @@ class Config(commands.Cog, name="Configuration"):
         await ctx.invoke(self.bot.get_command("help"), entity="starboard")
 
     @starboard.command(
-        name="toggle", description="Turn the starboard on or off for your guild."
+        name="toggle", description="Turn the starboard on or off for your guild.",
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)

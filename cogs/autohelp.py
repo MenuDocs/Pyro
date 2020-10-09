@@ -15,7 +15,7 @@ class AutoHelp(commands.Cog, name="Autohelp"):
 
     @commands.Cog.listener()
     async def on_message(self, msg):
-        if msg.channel.id != self.bot.dpy_help_channel_id or msg.author.bot:
+        if msg.channel.id != self.bot.dpy_help_channel.id or msg.author.bot:
             return
 
         tokens = msg.content.split()

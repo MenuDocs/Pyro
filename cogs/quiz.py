@@ -242,7 +242,7 @@ class Quiz(commands.Cog, name="Quiz"):
                 await member.add_roles(
                     self.bot.quiz_role, reason="Correctly finished the quiz."
                 )
-                await ctx.send("Congratulations on getting everything correct,")
+                await ctx.send("Congratulations on getting everything correct!")
 
 
 def setup(bot):

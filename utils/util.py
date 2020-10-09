@@ -1,3 +1,14 @@
+from discord.ext.buttons import Paginator
+
+
+class Pag(Paginator):
+    async def teardown(self):
+        try:
+            await self.page.clear_reactions()
+        except discord.HTTPException:
+            pass
+
+
 def clean_code(content):
     """Automatically removes code blocks from the code."""
     # remove ```py\n```

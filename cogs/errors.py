@@ -1,5 +1,6 @@
 import logging
 
+import discord
 from discord.ext import commands
 
 
@@ -19,6 +20,9 @@ class Errors(commands.Cog, name="Error handler"):
 
         elif isinstance(err, commands.MissingRequiredArgument):
             await ctx.send(f"Missing required argument: `{err.param}`")
+
+        elif isinstance(err, commands.CommandInvokeError):
+            await ctx.send(err)
 
         elif isinstance(err, commands.BadArgument):
             await ctx.send(err)
@@ -48,6 +52,9 @@ class Errors(commands.Cog, name="Error handler"):
 
         elif isinstance(err, commands.DisabledCommand):
             await ctx.send(f"`{ctx.command.qualified_name}` is currently disabled.")
+
+        elif isinstance(err, discord.HTTPException):
+            await ctx.send("An error occurred while I was trying to execute a task. Are you sure I have the correct permissions?")
 
         else:
             self.logger.error(err)

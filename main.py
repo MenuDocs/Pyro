@@ -44,23 +44,24 @@ bot = commands.Bot(
     "with discord.py related issues.",
 )
 
+logger = logging.getLogger(__name__)
+
 # Use regex to parse mentions, much better than only supporting
 # nickname mentions (<@!1234>)
 # This basically ONLY matches a string that only consists of a mention
 mention = re.compile(r"^<@!?(?P<id>\d+)>$")
-
-logger = logging.getLogger(__name__)
-
-bot.DEFAULTPREFIX = "py."
-bot.menudocs_projects_id = config["menudocs_projects_id"]
-bot.story_channel_id = config["story_channel_id"]
-bot.dpy_help_channel_id = config["discord.py_help_channel"]
 
 bot.remove_command("help")
 
 
 @bot.event
 async def on_ready():
+
+    bot.DEFAULTPREFIX = "py."
+    bot.menudocs_guild = bot.get_guild(config["menudocs_guild_id"])
+    bot.dpy_help_channel = bot.menudocs_guild.get_channel(config["dpy_help_channel_id"])
+    bot.quiz_role = bot.menudocs_guild.get_role(config["quiz_role_id"])
+
     logger.info("I'm all up and ready like mom's spaghetti")
 
     try:

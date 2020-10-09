@@ -12,9 +12,9 @@ The bot expects there to be a configuration file named `config.json` to grab mul
 ```json
 {
   "token": "YOUR TOKEN",
-  "menudocs_projects_id": 12345,
-  "story_channel_id": 12345,
-  "discord.py_help_channel": 12345,
+  "discord.py_help_channel_id": 12345,
+  "menudocs_guild_id": 12345,
+  "quiz_role_id": 12345,
   "mongo_url": "THE URL TO ACCESS THE MONGODB DATABASE "
 }
 ```

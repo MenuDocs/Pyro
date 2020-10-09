@@ -54,7 +54,9 @@ class Errors(commands.Cog, name="Error handler"):
             await ctx.send(f"`{ctx.command.qualified_name}` is currently disabled.")
 
         elif isinstance(err, discord.HTTPException):
-            await ctx.send("An error occurred while I was trying to execute a task. Are you sure I have the correct permissions?")
+            await ctx.send(
+                "An error occurred while I was trying to execute a task. Are you sure I have the correct permissions?"
+            )
 
         else:
             self.logger.error(err)

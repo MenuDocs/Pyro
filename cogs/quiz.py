@@ -112,7 +112,11 @@ class CodeQuiz:
                 content = "\n".join([text for text in content.split("\n") if text])
 
                 if not content == code:
-                    self.logger.info("\n".join([li for li in difflib.ndiff(content, code) if li[0] != ' ']))
+                    self.logger.info(
+                        "\n".join(
+                            [li for li in difflib.ndiff(content, code) if li[0] != " "]
+                        )
+                    )
                     await ctx.send(
                         "Sorry, but that isn't what we're looking for! Remember that Python and the way we're "
                         "detecting code needs you to be accurate with your capitalization as well! "
@@ -224,12 +228,21 @@ class Quiz(commands.Cog, name="Quiz"):
         correct_choices = total_correct == len(questions)
 
         if all(correct_answers.values()) and correct_choices:
-            member = await self.bot.menudocs_guild.fetch_member(ctx.author.id)
-            if self.bot.quiz_role in member.roles:
-                await ctx.send("You already have the quiz role!")
-                return
+            try:
+                member = await self.bot.menudocs_guild.fetch_member(ctx.author.id)
+            except discord.HTTPException:
+                self.logger.error(
+                    f"Failed to fetch {ctx.author.display_name}({ctx.author.id}) from the Menudocs Guild."
+                )
+            else:
+                if self.bot.quiz_role in member.roles:
+                    await ctx.send("You already have the quiz role!")
+                    return
 
-            await member.add_roles(self.bot.quiz_role, reason="Correctly finished the quiz.")
+                await member.add_roles(
+                    self.bot.quiz_role, reason="Correctly finished the quiz."
+                )
+                await ctx.send("Congratulations on getting everything correct,")
 
 
 def setup(bot):

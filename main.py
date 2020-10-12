@@ -56,6 +56,7 @@ bot.remove_command("help")
 
 @bot.event
 async def on_ready():
+    await bot.change_presence(activity=discord.Game(name="py.help"))
 
     bot.DEFAULTPREFIX = "py."
     bot.menudocs_guild = bot.get_guild(config["menudocs_guild_id"])

@@ -136,10 +136,10 @@ async def _eval(ctx, *, code):
     pager = Pag(
         timeout=180,
         use_defaults=True,
-        entries=[result[i:i+2000] for i in range(0, len(result), 2000)],
+        entries=[result[i : i + 2000] for i in range(0, len(result), 2000)],
         length=1,
         prefix="```py\n",
-        suffix="```"
+        suffix="```",
     )
 
     await pager.start(ctx)

@@ -14,6 +14,7 @@ from discord.ext import commands
 from utils import exceptions
 from utils.mongo import Document
 from utils.util import clean_code
+from utils.util import Pag
 
 with open("config.json", "r") as f:
     config = json.load(f)
@@ -128,10 +129,21 @@ async def _eval(ctx, *, code):
             )
 
             obj = await local_variables["func"]()
-            result = f"```py\n{stdout.getvalue()}\n-- {obj}```"
-            await ctx.send(result)
+            result = f"{stdout.getvalue()}\n-- {obj}\n```"
+
     except Exception as e:
-        await ctx.send("".join(format_exception(e, e, e.__traceback__)))
+        result = "".join(format_exception(e, e, e.__traceback__))
+
+    pager = Pag(
+        timeout=180,
+        use_defaults=True,
+        entries=[result[i : i + 2000] for i in range(0, len(result), 2000)],
+        length=1,
+        prefix="```py\n",
+        suffix="```",
+    )
+
+    await pager.start(ctx)
 
 
 @bot.command()

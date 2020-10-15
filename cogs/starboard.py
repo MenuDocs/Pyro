@@ -86,7 +86,8 @@ class Starboard(commands.Cog, name="Starboard"):
                             embed.description = "View the below for message"
 
                         await starboard.send(
-                            content=f"{emoji} {channel.mention}", embed=embed
+                            content=f"{len(react)} {emoji} {channel.mention}",
+                            embed=embed,
                         )
                         if image:
                             await starboard.send(embed=image)

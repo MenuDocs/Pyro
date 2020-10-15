@@ -101,8 +101,7 @@ async def on_message(message):
     await bot.process_commands(message)
 
 
-@bot.command()
-@commands.is_owner()
+@bot.command(description="Log the bot out.")
 async def logout(ctx):
     await ctx.send("Cya :wave:")
     await bot.logout()
@@ -144,10 +143,10 @@ async def _eval(ctx, *, code):
     pager = Pag(
         timeout=180,
         use_defaults=True,
-        entries=[result[i:i+2000] for i in range(0, len(result), 2000)],
+        entries=[result[i : i + 2000] for i in range(0, len(result), 2000)],
         length=1,
         prefix="```py\n",
-        suffix="```"
+        suffix="```",
     )
 
     await pager.start(ctx)

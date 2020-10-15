@@ -86,8 +86,8 @@ class Docs(commands.Cog, name="Documentation"):
 
         # next line is "# Project: <name>"
         # then after that is "# Version: <version>"
-        projname = stream.readline().rstrip()[11:]
-        version = stream.readline().rstrip()[11:]
+        stream.readline().rstrip()[11:]
+        stream.readline().rstrip()[11:]
 
         # next line says if it's a zlib header
         line = stream.readline()
@@ -128,7 +128,6 @@ class Docs(commands.Cog, name="Documentation"):
     async def build_rtfm_lookup_table(self, page_types):
         cache = {}
         for key, page in page_types.items():
-            sub = cache[key] = {}
             async with aiohttp.ClientSession() as session:
                 async with session.get(page + "/objects.inv") as resp:
                     if resp.status != 200:
@@ -180,7 +179,7 @@ class Docs(commands.Cog, name="Documentation"):
     async def rtfm(self, ctx, *, query: str = None):
         key = "latest"
         if query is not None:
-            if query.lower() in ["rtfm"]:
+            if query.lower() == "rtfm":
                 await ctx.send(
                     embed=discord.Embed.from_dict(
                         {
@@ -203,11 +202,7 @@ class Docs(commands.Cog, name="Documentation"):
                     )
                 )
 
-            else:
-                await self.do_rtfm(ctx, key, query)
-
-        else:
-            await self.do_rtfm(ctx, key, query)
+        await self.do_rtfm(ctx, key, query)
 
 
 def setup(bot):

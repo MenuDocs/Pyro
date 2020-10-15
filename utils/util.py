@@ -1,3 +1,4 @@
+import discord
 from discord.ext.buttons import Paginator
 
 

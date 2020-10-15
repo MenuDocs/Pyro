@@ -1,7 +1,7 @@
 import logging
 import collections
 
-from utils.exceptions import *
+from utils.exceptions import IdNotFound
 
 """
 A helper file for using mongo db
@@ -24,20 +24,17 @@ class Document:
         self.logger = logging.getLogger(__name__)
 
     # <-- Pointer Methods -->
-    async def update(self, dict):
+    async def update(self, dict, *args, **kwargs):
         """
         For simpler calls, points to self.update_by_id
         """
-        await self.update_by_id(dict)
+        await self.update_by_id(dict, *args, **kwargs)
 
-    async def get_all(self):
+    async def get_all(self, filter={}, *args, **kwargs):
         """
         Returns a list of all data in the document
         """
-        data = []
-        async for document in self.db.find({}):
-            data.append(document)
-        return data
+        return await self.db.find(filter, *args, **kwargs).to_list(None)
 
     async def get_by_id(self, id):
         """
@@ -121,7 +118,7 @@ class Document:
 
         await self.db.insert_one(dict)
 
-    async def upsert(self, dict):
+    async def upsert(self, dict, option="set", *args, **kwargs):
         """
         Makes a new item in the document, if it already exists
         it will update that item instead
@@ -133,12 +130,9 @@ class Document:
         Params:
          - dict (Dictionary) : The dict to insert
         """
-        if await self.__get_raw(dict["_id"]):
-            await self.update_by_id(dict)
-        else:
-            await self.db.insert_one(dict)
+        await self.update_by_id(dict, option, upsert=True, *args, **kwargs)
 
-    async def update_by_id(self, dict):
+    async def update_by_id(self, dict, option="set", *args, **kwargs):
         """
         For when a document already exists in the data
         and you want to update something in it
@@ -163,7 +157,7 @@ class Document:
 
         id = dict["_id"]
         dict.pop("_id")
-        await self.db.update_one({"_id": id}, {"$set": dict})
+        await self.db.update_one({"_id": id}, {f"${option}": dict}, *args, **kwargs)
 
     async def unset(self, dict):
         """

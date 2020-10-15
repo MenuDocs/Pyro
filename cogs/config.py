@@ -1,4 +1,5 @@
 import os
+import random
 import traceback
 import typing
 import logging
@@ -214,6 +215,82 @@ class Config(commands.Cog, name="Configuration"):
             )
 
             await ctx.send("Added your threshold.")
+
+    @commands.command(
+        description="Ignore a specified channel. This does not respond to commands in the specified channel."
+    )
+    @commands.has_permissions(manage_messages=True)
+    async def ignore(self, ctx, channel: discord.TextChannel = None):
+        channel = channel or ctx.channel
+
+        try:
+            data = await self.bot.config.find(ctx.guild.id)
+            if channel.id in data["ignored_channels"]:
+                await ctx.send(
+                    "This channel is already ignored. Use the `unignore` command to unignore it."
+                )
+                return
+        except IdNotFound:
+            await self.bot.config.insert(
+                {"_id": ctx.guild.id, "ignored_channels": [channel.id]}
+            )
+            await ctx.send(
+                "This channel has been ignored. You can use the `unignore` command to unignore it."
+            )
+            return
+
+        await self.bot.config.upsert(
+            {"_id": ctx.guild.id, "ignored_channels": channel.id}, option="push"
+        )
+        await ctx.send(
+            "This channel has been ignored. You can use the `unignore` command to unignore it."
+        )
+
+    @commands.command(
+        description="Ungignores a previously ignored channel. Allows commands to be ran."
+    )
+    @commands.has_permissions(manage_messages=True)
+    async def unignore(self, ctx, channel: discord.TextChannel):
+        try:
+            data = await self.bot.config.find(ctx.guild.id)
+            if channel.id not in data["ignored_channels"]:
+                await ctx.send(
+                    "This channel is not ignored. You can use the `ignore` command to ignore it."
+                )
+                return
+
+            await self.bot.config.upsert(
+                {"_id": ctx.guild.id, "ignored_channels": channel.id}, option="pull"
+            )
+            await ctx.send("This channel has been unignored.")
+        except IdNotFound:
+            await ctx.send(
+                "This channel is not ignored. You can use the `ignore` command to ignore it."
+            )
+
+    @commands.command(
+        aliases=["gc"],
+        description="Views the guild's config. Shows the starboard channels, ignored channels, prefix, starboard data, etc.",
+    )
+    @commands.has_permissions(manage_channels=True)
+    async def guild_config(self, ctx):
+        """
+
+        """
+        embed = discord.Embed(
+            title=f"Configuration of {ctx.guild.name}",
+            color=random.randint(0, 0xFFFFFF),
+        )
+        data = await self.bot.config.find(ctx.guild.id)
+        channels = map(
+            lambda c: self.bot.get_channel(c).mention, data["ignored_channels"]
+        )
+        data["ignored_channels"] = channels
+
+        embed.description = "\n".join(
+            (f"{attr}: {val}".replace("_", " ").title() for attr, val in data.items())
+        )
+        await ctx.send(embed=embed)
 
 
 def setup(bot):

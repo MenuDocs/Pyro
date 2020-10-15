@@ -79,6 +79,14 @@ async def on_message(message):
     if message.author.bot:
         return
 
+    if message.guild:
+        try:
+            guild_config = await bot.config.find(message.guild.id)
+            if message.channel.id in guild_config["ignored_channels"]:
+                return
+        except exceptions.IdNotFound:
+            pass
+
     # Whenever the bot is tagged, respond with its prefix
     if match := mention.match(message.content):
         if int(match.group("id")) == bot.user.id:
@@ -93,7 +101,7 @@ async def on_message(message):
     await bot.process_commands(message)
 
 
-@bot.command(name="logout")
+@bot.command()
 @commands.is_owner()
 async def logout(ctx):
     await ctx.send("Cya :wave:")
@@ -128,7 +136,7 @@ async def _eval(ctx, *, code):
             )
 
             obj = await local_variables["func"]()
-            result = f"{stdout.getvalue()}\n-- {obj}\n```"
+            result = f"{stdout.getvalue()}\n-- {obj}\n"
 
     except Exception as e:
         result = "".join(format_exception(e, e, e.__traceback__))

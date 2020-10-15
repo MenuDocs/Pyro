@@ -102,6 +102,7 @@ async def on_message(message):
 
 
 @bot.command(description="Log the bot out.")
+@commands.is_owner()
 async def logout(ctx):
     await ctx.send("Cya :wave:")
     await bot.logout()

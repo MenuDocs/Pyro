@@ -130,8 +130,7 @@ class Document:
         Params:
          - dict (Dictionary) : The dict to insert
         """
-        if await self.__get_raw(dict["_id"]):
-            await self.update_by_id(dict, option, upsert=True, *args, **kwargs)
+        await self.update_by_id(dict, option, upsert=True, *args, **kwargs)
 
     async def update_by_id(self, dict, option="set", *args, **kwargs):
         """

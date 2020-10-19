@@ -37,12 +37,21 @@ async def get_prefix(bot, message):
 
 
 logging.basicConfig(level="INFO")
+
+intents = discord.Intents.none()
+intents.messages = True
+intents.reactions = True
+intents.guilds = True
+intents.members = True
+intents.emojis = True
+
 bot = commands.Bot(
     command_prefix=get_prefix,
     case_insensitive=True,
     description="A short sharp bot coded in python to aid the python "
     "developers with helping the community "
     "with discord.py related issues.",
+    intents=intents,
 )
 
 logger = logging.getLogger(__name__)
@@ -57,7 +66,6 @@ bot.remove_command("help")
 
 @bot.event
 async def on_ready():
-
     bot.DEFAULTPREFIX = "py."
     bot.menudocs_guild = bot.get_guild(config["menudocs_guild_id"])
     bot.dpy_help_channel = bot.menudocs_guild.get_channel(config["dpy_help_channel_id"])

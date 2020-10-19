@@ -3,14 +3,12 @@ import os
 import re
 import zlib
 import logging
+import sys
+import inspect
 
 import aiohttp
 import discord
 from discord.ext import commands
-
-
-# DEMO. THIS IS GOING TO BE CHANGED WHEN WE KNOW
-# WHAT WE EXACTLY NEED AND IN WHICH WAY TO IMPROVE THIS
 
 
 # Sphinx reader pbject because d.py docs
@@ -155,16 +153,13 @@ class Docs(commands.Cog, name="Documentation"):
 
         cache = list(self._rtfm_cache[key].items())
 
-        def transform(tup):
-            return tup[0]
-
-        matches = self.finder(obj, cache, key=lambda t: t[0], lazy=False)[:8]
+        self.matches = self.finder(obj, cache, key=lambda t: t[0], lazy=False)[:8]
 
         e = discord.Embed(colour=0xCE2029)
-        if len(matches) == 0:
+        if len(self.matches) == 0:
             return await ctx.send("Could not find anything. Sorry.")
 
-        e.description = "\n".join(f"[`{key}`]({url})" for key, url in matches)
+        e.description = "\n".join(f"[`{key}`]({url})" for key, url in self.matches)
         await ctx.send(embed=e)
 
     @commands.Cog.listener()

@@ -53,6 +53,39 @@ class Help(commands.Cog, name="Help command"):
     def return_sorted_commands(self, commandList):
         return sorted(commandList, key=lambda x: x.name)
 
+    async def setup_help_pag(self, ctx, entity=None, title=None):
+        entity = entity or self.bot
+        title = title or self.bot.description
+
+        pages = []
+
+        if isinstance(entity, commands.Command):
+            filtered_commands = list(set(entity.all_commands.values())) if hasattr(entity, "all_commands") else []
+            filtered_commands.insert(0, entity)
+
+        else:
+            filtered_commands = await self.return_filtered_commands(entity, ctx)
+
+        for i in range(0, len(filtered_commands), self.cmds_per_page):
+
+            next_commands = filtered_commands[i: i + self.cmds_per_page]
+            command_entry = ""
+
+            for cmd in next_commands:
+
+                desc = cmd.short_doc or cmd.description
+                signature = self.get_command_signature(cmd, ctx)
+                subcommand = "Has subcommands" if hasattr(cmd, "all_commands") else ""
+
+                command_entry += (
+                    f"• **__{cmd.name}__**\n```\n{signature}\n```\n{desc}\n" if isinstance(entity, commands.Command)
+                    else f"• **__{cmd.name}__**\n{desc}\n    {subcommand}\n"
+                )
+
+            pages.append(command_entry)
+
+        await Pag(title=title, colour=0xCE2029, entries=pages, length=1,).start(ctx)
+
     @commands.Cog.listener()
     async def on_ready(self):
         self.logger.info("I'm ready!")
@@ -66,94 +99,19 @@ class Help(commands.Cog, name="Help command"):
         an existing entity.
         """
         # Inspired by nekozilla
+
         if not entity:
-
-            pages = []
-
-            filtered_commands = await self.return_filtered_commands(self.bot, ctx)
-
-            for i in range(0, len(filtered_commands), self.cmds_per_page):
-
-                next_commands = filtered_commands[i : i + self.cmds_per_page]
-                command_entry = ""
-
-                for cmd in next_commands:
-
-                    desc = cmd.short_doc or cmd.description
-                    subcommand = (
-                        "Has subcommands" if hasattr(cmd, "all_commands") else ""
-                    )
-
-                    command_entry += f"• **__{cmd.name}__**\n{desc}\n    {subcommand}\n"
-
-                pages.append(command_entry)
-
-            await Pag(
-                title=self.bot.description, colour=0xCE2029, entries=pages, length=1,
-            ).start(ctx)
+            await self.setup_help_pag(ctx)
 
         else:
             cog = self.bot.get_cog(entity)
             if cog:
-                pages = []
-                filtered_commands = await self.return_filtered_commands(cog, ctx)
-
-                for i in range(0, len(filtered_commands), self.cmds_per_page):
-
-                    command_entry = ""
-                    next_commands = filtered_commands[i : i + self.cmds_per_page]
-
-                    for cmd in next_commands:
-
-                        desc = cmd.short_doc or cmd.description
-                        subcommand = (
-                            "Has subcommands" if hasattr(cmd, "all_commands") else ""
-                        )
-
-                        command_entry += (
-                            f"• **__{cmd.name}__**\n{desc}\n    {subcommand}\n"
-                        )
-
-                pages.append(command_entry)
-
-                await Pag(
-                    title=f"{cog.qualified_name}'s commands",
-                    colour=0xCE2029,
-                    entries=pages,
-                    length=1,
-                ).start(ctx)
+                await self.setup_help_pag(ctx, cog, f"{cog.qualified_name}'s commands")
 
             else:
                 command = self.bot.get_command(entity)
                 if command:
-                    pages = []
-                    desc = command.short_doc or command.description
-                    signature = self.get_command_signature(command, ctx)
-                    command_entry = f"```{signature}```\n{desc}\n\n"
-
-                    if hasattr(command, "all_commands"):
-
-                        command_list = list(command.all_commands.values())
-
-                        for i in range(0, len(command_list), self.cmds_per_page,):
-                            next_commands = command_list[i : i + self.cmds_per_page]
-
-                            for cmd in next_commands:
-
-                                signature = self.get_command_signature(cmd, ctx)
-
-                                desc = cmd.short_doc or cmd.description
-
-                                command_entry += f" • **__{cmd.name}__**\n```\n{signature}```\n{desc}\n"
-
-                    pages.append(command_entry)
-
-                    await Pag(
-                        title=f"{command.qualified_name}",
-                        colour=0xCE2029,
-                        entries=pages,
-                        length=1,
-                    ).start(ctx)
+                    await self.setup_help_pag(ctx, command, command.name)
 
                 else:
                     await ctx.send("Entity not found.")

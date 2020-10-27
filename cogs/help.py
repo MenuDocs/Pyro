@@ -60,7 +60,11 @@ class Help(commands.Cog, name="Help command"):
         pages = []
 
         if isinstance(entity, commands.Command):
-            filtered_commands = list(set(entity.all_commands.values())) if hasattr(entity, "all_commands") else []
+            filtered_commands = (
+                list(set(entity.all_commands.values()))
+                if hasattr(entity, "all_commands")
+                else []
+            )
             filtered_commands.insert(0, entity)
 
         else:
@@ -68,7 +72,7 @@ class Help(commands.Cog, name="Help command"):
 
         for i in range(0, len(filtered_commands), self.cmds_per_page):
 
-            next_commands = filtered_commands[i: i + self.cmds_per_page]
+            next_commands = filtered_commands[i : i + self.cmds_per_page]
             command_entry = ""
 
             for cmd in next_commands:
@@ -78,7 +82,8 @@ class Help(commands.Cog, name="Help command"):
                 subcommand = "Has subcommands" if hasattr(cmd, "all_commands") else ""
 
                 command_entry += (
-                    f"• **__{cmd.name}__**\n```\n{signature}\n```\n{desc}\n" if isinstance(entity, commands.Command)
+                    f"• **__{cmd.name}__**\n```\n{signature}\n```\n{desc}\n"
+                    if isinstance(entity, commands.Command)
                     else f"• **__{cmd.name}__**\n{desc}\n    {subcommand}\n"
                 )
 

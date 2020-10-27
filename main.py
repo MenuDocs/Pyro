@@ -5,15 +5,17 @@ import json
 import logging
 import textwrap
 import contextlib
+import time
 from traceback import format_exception
 
 import discord
 import motor.motor_asyncio
-from discord.ext import commands
+from aiohttp import ClientSession
+from discord.ext import commands, tasks
 
 from utils import exceptions
 from utils.mongo import Document
-from utils.util import clean_code
+from utils.util import clean_code, get_jwt
 from utils.util import Pag
 
 with open("config.json", "r") as f:
@@ -70,6 +72,7 @@ async def on_ready():
     bot.menudocs_guild = bot.get_guild(config["menudocs_guild_id"])
     bot.dpy_help_channel = bot.menudocs_guild.get_channel(config["dpy_help_channel_id"])
     bot.quiz_role = bot.menudocs_guild.get_role(config["quiz_role_id"])
+    bot.API_auth_jwt = await get_jwt()
 
     logger.info("I'm all up and ready like mom's spaghetti")
 
@@ -113,6 +116,7 @@ async def on_message(message):
 @commands.is_owner()
 async def logout(ctx):
     await ctx.send("Cya :wave:")
+    update_status.cancel()
     await bot.logout()
 
 
@@ -198,6 +202,34 @@ async def dbbackup(ctx):
     )
 
 
+@tasks.loop(minutes=10)
+async def update_status():
+    """Sends an update request to the menudocs status api"""
+    if not hasattr(bot, "API_auth_jwt"):
+        bot.API_auth_jwt = await get_jwt()
+
+    headers = {"Authorization": f"Bearer {bot.API_auth_jwt}"}
+
+    t1 = time.perf_counter()
+    async with bot.dpy_help_channel.typing():  # Saves needing a new channel by using this
+        pass
+    t2 = time.perf_counter()
+
+    data = {"ping": int((t2 - t1) * 1000)}
+    async with ClientSession() as session:
+        async with session.put(
+            "https://menudocs-admin.herokuapp.com/pings/1", data=data, headers=headers,
+        ) as response:
+            if response.status == 401:
+                logger.info("Re-fetching JWT")
+                bot.API_auth_jwt = await get_jwt()
+
+
+@update_status.before_loop
+async def before_update_status():
+    await bot.wait_until_ready()
+
+
 # Load all extensions
 if __name__ == "__main__":
     # Database initialization
@@ -209,6 +241,8 @@ if __name__ == "__main__":
     bot.code = Document(bot.db, "code")
     bot.quiz_answers = Document(bot.db, "quizAnswers")
     bot.starboard = Document(bot.db, "starboard")
+
+    update_status.start()
 
     for ext in os.listdir("./cogs/"):
         if ext.endswith(".py") and not ext.startswith("_"):

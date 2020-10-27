@@ -5,6 +5,7 @@ import json
 import logging
 import textwrap
 import contextlib
+import time
 from traceback import format_exception
 
 import discord
@@ -204,22 +205,23 @@ async def dbbackup(ctx):
 @tasks.loop(minutes=10)
 async def update_status():
     """Sends an update request to the menudocs status api"""
-    bot.ping_counter += 1
-
     if not hasattr(bot, "API_auth_jwt"):
         bot.API_auth_jwt = await get_jwt()
 
     headers = {"Authorization": f"Bearer {bot.API_auth_jwt}"}
-    data = {"ping": bot.ping_counter}
+
+    t1 = time.perf_counter()
+    async with bot.dpy_help_channel.typing():  # Saves needing a new channel by using this
+        pass
+    t2 = time.perf_counter()
+
+    data = {"ping": int((t2 - t1) * 1000)}
     async with ClientSession() as session:
         async with session.put(
             "https://menudocs-admin.herokuapp.com/pings/1", data=data, headers=headers,
         ) as response:
-            if response.status == 200:
-                logger.info(f"Success for put {bot.ping_counter}")
-            elif response.status == 401:
+            if response.status == 401:
                 logger.info("Re-fetching JWT")
-                bot.ping_counter -= 1
                 bot.API_auth_jwt = await get_jwt()
 
 
@@ -239,8 +241,6 @@ if __name__ == "__main__":
     bot.code = Document(bot.db, "code")
     bot.quiz_answers = Document(bot.db, "quizAnswers")
     bot.starboard = Document(bot.db, "starboard")
-
-    bot.ping_counter = 0  # Represents how long the bots been up basically
 
     update_status.start()
 

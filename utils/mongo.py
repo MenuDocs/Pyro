@@ -179,8 +179,7 @@ class Document:
             raise KeyError("_id not found in supplied dict.")
 
         # Raise if the _id does not exist in database
-        if not await self.find_by_id(dict["_id"]):
-            pass
+        await self.find_by_id(dict["_id"])
 
         id = dict["_id"]
         dict.pop("_id")
@@ -196,8 +195,7 @@ class Document:
         - field () : field to increment
         """
         # Raise if the _id does not exist in database
-        if not await self.find_by_id(id):
-            pass
+        await self.find_by_id(id)
 
         self.db.update_one({"_id": id}, {"$inc": {field: amount}})
 

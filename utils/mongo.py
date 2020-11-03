@@ -36,37 +36,37 @@ class Document:
         """
         return await self.db.find(filter, *args, **kwargs).to_list(None)
 
-    async def get_by_id(self, id):
+    async def get_by_id(self, _id):
         """
         This is essentially find_by_id so point to that
         """
-        return await self.find_by_id(id)
+        return await self.find_by_id(_id)
 
-    async def find(self, id):
+    async def find(self, _id):
         """
         For simpler calls, points to self.find_by_id
         """
-        return await self.find_by_id(id)
+        return await self.find_by_id(_id)
 
-    async def delete(self, id):
+    async def delete(self, _id):
         """
         For simpler calls, points to self.delete_by_id
         """
-        await self.delete_by_id(id)
+        await self.delete_by_id(_id)
 
     # <-- Actual Methods -->
-    async def find_by_id(self, id):
+    async def find_by_id(self, _id):
         """
         Returns the data found under `id`
 
         Params:
-         -  id () : The id to search for
+         -  _id () : The id to search for
 
         Returns:
          - None if nothing is found
          - If somethings found, return that
         """
-        data = await self.db.find_one({"_id": id})
+        data = await self.db.find_one({"_id": _id})
         # Check if its none because
         # if not data: can raise on more then just None
         if not data:
@@ -88,17 +88,17 @@ class Document:
             raise IdNotFound()
         return data
 
-    async def delete_by_id(self, id):
+    async def delete_by_id(self, _id):
         """
         Deletes all items found with _id: `id`
 
         Params:
-         -  id () : The id to search for and delete
+         -  _id () : The id to search for and delete
         """
         # Raise if the _id does not exist in database
-        await self.find_by_id(id)
+        await self.find_by_id(_id)
 
-        await self.db.delete_many({"_id": id})
+        await self.db.delete_many({"_id": _id})
 
     async def insert(self, data):
         """
@@ -142,6 +142,9 @@ class Document:
         Params:
          - data (Dictionary) : The data to insert
         """
+
+        upsert = kwargs.pop("upsert")
+
         # Check if its actually a Dictionary
         if not isinstance(data, collections.abc.Mapping):
             raise TypeError("Expected Dictionary.")
@@ -151,11 +154,15 @@ class Document:
             raise KeyError("_id not found in supplied dict.")
 
         # Raise if the _id does not exist in database
-        await self.find_by_id(data["_id"])
+        try:
+            await self.find_by_id(data["_id"])
+        except IdNotFound as e:
+            if not upsert:
+                raise e
 
-        id = data["_id"]
+        _id = data["_id"]
         data.pop("_id")
-        await self.db.update_one({"_id": id}, {f"${option}": data}, *args, **kwargs)
+        await self.db.update_one({"_id": _id}, {f"${option}": data}, *args, **kwargs)
 
     async def unset(self, data):
         """
@@ -179,28 +186,28 @@ class Document:
         # Raise if the _id does not exist in database
         await self.find_by_id(data["_id"])
 
-        id = data["_id"]
+        _id = data["_id"]
         data.pop("_id")
-        await self.db.update_one({"_id": id}, {"$unset": data})
+        await self.db.update_one({"_id": _id}, {"$unset": data})
 
-    async def increment(self, id, amount, field):
+    async def increment(self, _id, amount, field):
         """
         Increment a given `field` by `amount`
 
         Params:
-        - id () : The id to search for
+        - _id () : The id to search for
         - amount (int) : Amount to increment by
         - field () : field to increment
         """
         # Raise if the _id does not exist in database
-        await self.find_by_id(id)
+        await self.find_by_id(_id)
 
-        self.db.update_one({"_id": id}, {"$inc": {field: amount}})
+        self.db.update_one({"_id": _id}, {"$inc": {field: amount}})
 
     # <-- Private methods -->
-    async def __get_raw(self, id):
+    async def __get_raw(self, _id):
         """
         An internal private method used to eval certain checks
         within other methods which require the actual data
         """
-        return await self.db.find_one({"_id": id})
+        return await self.db.find_one({"_id": _id})

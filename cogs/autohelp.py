@@ -7,7 +7,7 @@ class AutoHelp(commands.Cog, name="Autohelp"):
     def __init__(self, bot):
         self.bot = bot
         self.keywords = await self.bot.keywords.get_all()
-        self.channels = [kw["channel_id"] for kw in self.keywords]
+        self.channels = set(kw["channel_id"] for kw in self.keywords)
         self.logger = logging.getLogger(__name__)
 
     @commands.Cog.listener()
@@ -20,7 +20,7 @@ class AutoHelp(commands.Cog, name="Autohelp"):
             return
 
         tokens = msg.content.split()
-        for kw in await self.keywords.get_all():
+        for kw in await self.keywords:
             if set(kw["keywords"]).issubset(set(tokens)):
                 await msg.channel.send(kw["response"])
                 return

@@ -6,7 +6,7 @@ from discord.ext import commands
 class AutoHelp(commands.Cog, name="Autohelp"):
     def __init__(self, bot):
         self.bot = bot
-        self.keywords = self.bot.keywords
+        self.keywords = await self.bot.keywords.get_all()
         self.channels = [kw["channel"] for kw in self.keywords]
         self.logger = logging.getLogger(__name__)
 

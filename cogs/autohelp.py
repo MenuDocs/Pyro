@@ -7,7 +7,7 @@ class AutoHelp(commands.Cog, name="Autohelp"):
     def __init__(self, bot):
         self.bot = bot
         self.keywords = await self.bot.keywords.get_all()
-        self.channels = [kw["channel"] for kw in self.keywords]
+        self.channels = [kw["channel_id"] for kw in self.keywords]
         self.logger = logging.getLogger(__name__)
 
     @commands.Cog.listener()

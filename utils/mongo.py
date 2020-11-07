@@ -24,11 +24,11 @@ class Document:
         self.logger = logging.getLogger(__name__)
 
     # <-- Pointer Methods -->
-    async def update(self, dict, *args, **kwargs):
+    async def update(self, data, *args, **kwargs):
         """
         For simpler calls, points to self.update_by_id
         """
-        await self.update_by_id(dict, *args, **kwargs)
+        await self.update_by_id(data, *args, **kwargs)
 
     async def get_all(self, filter={}, *args, **kwargs):
         """
@@ -36,37 +36,37 @@ class Document:
         """
         return await self.db.find(filter, *args, **kwargs).to_list(None)
 
-    async def get_by_id(self, id):
+    async def get_by_id(self, _id):
         """
         This is essentially find_by_id so point to that
         """
-        return await self.find_by_id(id)
+        return await self.find_by_id(_id)
 
-    async def find(self, id):
+    async def find(self, _id):
         """
         For simpler calls, points to self.find_by_id
         """
-        return await self.find_by_id(id)
+        return await self.find_by_id(_id)
 
-    async def delete(self, id):
+    async def delete(self, _id):
         """
         For simpler calls, points to self.delete_by_id
         """
-        await self.delete_by_id(id)
+        await self.delete_by_id(_id)
 
     # <-- Actual Methods -->
-    async def find_by_id(self, id):
+    async def find_by_id(self, _id):
         """
         Returns the data found under `id`
 
         Params:
-         -  id () : The id to search for
+         -  _id () : The id to search for
 
         Returns:
          - None if nothing is found
          - If somethings found, return that
         """
-        data = await self.db.find_one({"_id": id})
+        data = await self.db.find_one({"_id": _id})
         # Check if its none because
         # if not data: can raise on more then just None
         if not data:
@@ -88,37 +88,36 @@ class Document:
             raise IdNotFound()
         return data
 
-    async def delete_by_id(self, id):
+    async def delete_by_id(self, _id):
         """
         Deletes all items found with _id: `id`
 
         Params:
-         -  id () : The id to search for and delete
+         -  _id () : The id to search for and delete
         """
         # Raise if the _id does not exist in database
-        if not await self.find_by_id(id):
-            return
+        await self.find_by_id(_id)
 
-        await self.db.delete_many({"_id": id})
+        await self.db.delete_many({"_id": _id})
 
-    async def insert(self, dict):
+    async def insert(self, data):
         """
         insert something into the db
 
         Params:
-        - dict (Dictionary) : The Dictionary to insert
+        - data (Dictionary) : The Dictionary to insert
         """
         # Check if its actually a Dictionary
-        if not isinstance(dict, collections.abc.Mapping):
+        if not isinstance(data, collections.abc.Mapping):
             raise TypeError("Expected Dictionary.")
 
         # Always use your own _id
-        if not dict["_id"]:
+        if not data.get("_id"):
             raise KeyError("_id not found in supplied dict.")
 
-        await self.db.insert_one(dict)
+        await self.db.insert_one(data)
 
-    async def upsert(self, dict, option="set", *args, **kwargs):
+    async def upsert(self, data, option="set", *args, **kwargs):
         """
         Makes a new item in the document, if it already exists
         it will update that item instead
@@ -128,11 +127,11 @@ class Document:
         Supports inserting when the document already exists
 
         Params:
-         - dict (Dictionary) : The dict to insert
+         - data (Dictionary) : The dict to insert
         """
-        await self.update_by_id(dict, option, upsert=True, *args, **kwargs)
+        await self.update_by_id(data, option, upsert=True, *args, **kwargs)
 
-    async def update_by_id(self, dict, option="set", *args, **kwargs):
+    async def update_by_id(self, data, option="set", *args, **kwargs):
         """
         For when a document already exists in the data
         and you want to update something in it
@@ -141,25 +140,31 @@ class Document:
         the relevant information needed to update.
 
         Params:
-         - dict (Dictionary) : The dict to insert
+         - data (Dictionary) : The data to insert
         """
+
+        upsert = kwargs.pop("upsert")
+
         # Check if its actually a Dictionary
-        if not isinstance(dict, collections.abc.Mapping):
+        if not isinstance(data, collections.abc.Mapping):
             raise TypeError("Expected Dictionary.")
 
         # Always use your own _id
-        if not dict["_id"]:
+        if not data.get("_id"):
             raise KeyError("_id not found in supplied dict.")
 
         # Raise if the _id does not exist in database
-        if not await self.find_by_id(dict["_id"]):
-            pass
+        try:
+            await self.find_by_id(data["_id"])
+        except IdNotFound as e:
+            if not upsert:
+                raise e
 
-        id = dict["_id"]
-        dict.pop("_id")
-        await self.db.update_one({"_id": id}, {f"${option}": dict}, *args, **kwargs)
+        _id = data["_id"]
+        data.pop("_id")
+        await self.db.update_one({"_id": _id}, {f"${option}": data}, *args, **kwargs)
 
-    async def unset(self, dict):
+    async def unset(self, data):
         """
         For when you want to remove a field from
         a pre-existing document in the collection
@@ -168,43 +173,41 @@ class Document:
         the relevant information needed to unset.
 
         Params:
-         - dict (Dictionary) : Dictionary to parse for info
+         - data (Dictionary) : Dictionary to parse for info
         """
         # Check if its actually a Dictionary
-        if not isinstance(dict, collections.abc.Mapping):
+        if not isinstance(data, collections.abc.Mapping):
             raise TypeError("Expected Dictionary.")
 
         # Always use your own _id
-        if not dict["_id"]:
+        if not data.get("_id"):
             raise KeyError("_id not found in supplied dict.")
 
         # Raise if the _id does not exist in database
-        if not await self.find_by_id(dict["_id"]):
-            pass
+        await self.find_by_id(data["_id"])
 
-        id = dict["_id"]
-        dict.pop("_id")
-        await self.db.update_one({"_id": id}, {"$unset": dict})
+        _id = data["_id"]
+        data.pop("_id")
+        await self.db.update_one({"_id": _id}, {"$unset": data})
 
-    async def increment(self, id, amount, field):
+    async def increment(self, _id, amount, field):
         """
         Increment a given `field` by `amount`
 
         Params:
-        - id () : The id to search for
+        - _id () : The id to search for
         - amount (int) : Amount to increment by
         - field () : field to increment
         """
         # Raise if the _id does not exist in database
-        if not await self.find_by_id(id):
-            pass
+        await self.find_by_id(_id)
 
-        self.db.update_one({"_id": id}, {"$inc": {field: amount}})
+        self.db.update_one({"_id": _id}, {"$inc": {field: amount}})
 
     # <-- Private methods -->
-    async def __get_raw(self, id):
+    async def __get_raw(self, _id):
         """
         An internal private method used to eval certain checks
         within other methods which require the actual data
         """
-        return await self.db.find_one({"_id": id})
+        return await self.db.find_one({"_id": _id})

@@ -6,7 +6,8 @@ from discord.ext import commands
 class AutoHelp(commands.Cog, name="Autohelp"):
     def __init__(self, bot):
         self.bot = bot
-        self.keywords = self.bot.keywords
+        self.keywords = await self.bot.keywords.get_all()
+        self.channels = [kw["channel_id"] for kw in self.keywords]
         self.logger = logging.getLogger(__name__)
 
     @commands.Cog.listener()
@@ -15,7 +16,7 @@ class AutoHelp(commands.Cog, name="Autohelp"):
 
     @commands.Cog.listener()
     async def on_message(self, msg):
-        if msg.channel.id != self.bot.dpy_help_channel.id or msg.author.bot:
+        if msg.channel.id not in self.channels or msg.author.bot:
             return
 
         tokens = msg.content.split()

@@ -1,4 +1,7 @@
+import json
+
 import discord
+from aiohttp import ClientSession
 from discord.ext.buttons import Paginator
 
 
@@ -19,3 +22,17 @@ def clean_code(content):
         return content
     # remove `foo`
     return content.strip("` \n")
+
+
+async def get_jwt():
+    with open("config.json", "r") as f:
+        config = json.load(f)
+
+    params = {"identifier": config["API_username"], "password": config["API_password"]}
+
+    async with ClientSession() as session:
+        async with session.post(
+            "https://menudocs-admin.herokuapp.com/auth/local", data=params
+        ) as response:
+            r = await response.json()
+            return r["jwt"]

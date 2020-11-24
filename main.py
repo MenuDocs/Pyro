@@ -67,9 +67,6 @@ bot.remove_command("help")
 @bot.event
 async def on_ready():
     bot.DEFAULTPREFIX = "py."
-    bot.menudocs_guild = bot.get_guild(config["menudocs_guild_id"])
-    bot.dpy_help_channel = bot.menudocs_guild.get_channel(config["dpy_help_channel_id"])
-    bot.quiz_role = bot.menudocs_guild.get_role(config["quiz_role_id"])
 
     logger.info("I'm all up and ready like mom's spaghetti")
 

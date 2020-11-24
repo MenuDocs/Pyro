@@ -154,10 +154,35 @@ class Quiz(commands.Cog, name="Quiz"):
     async def on_ready(self):
         self.logger.info("I'm ready!")
 
-    @commands.command()
-    @commands.dm_only()
+    @commands.group(invoke_without_command=True)
+    @commands.guild_only()
+    @commands.bot_has_permisssions(manage_roles=True)
     async def quiz(self, ctx):
         """Quiz yourself on relevant Python knowledge!"""
+        guild = ctx.guild
+        quiz_role = await self.bot.config.find()
+        quiz_role = quiz_role.get("quiz_role")
+
+        await ctx.send("Quiz started in your DMs!")
+        msg = await ctx.author.send("Do you still want to take the quiz? [yes/no]")
+
+        try:
+            msg = await self.bot.wait_for(
+                "message",
+                check=lambda m: m.channel.id == msg.channel.id
+                and m.author.id == ctx.author.id,
+                timeout=60,
+            )
+
+            if msg.content.lower() != "yes":
+                return
+            ctx = await self.bot.get_context(msg)
+                
+        except asyncio.TimeoutError:
+            await ctx.author.send("Well... A bit too slow there, pal. Better luck next time!")
+            return
+
+
         questions = await self.bot.quiz.get_all()
         questions.sort(key=lambda d: int(d["_id"]))
         user_answers = {}
@@ -215,6 +240,7 @@ class Quiz(commands.Cog, name="Quiz"):
                 return
         except asyncio.TimeoutError:
             await ctx.send("Sounds like you're busy! You didn't answer fast enough.")
+            return
 
         await ctx.send(
             "Please note, all code should be in accordance with PEP8.\n"
@@ -229,20 +255,43 @@ class Quiz(commands.Cog, name="Quiz"):
 
         if all(correct_answers.values()) and correct_choices:
             try:
-                member = await self.bot.menudocs_guild.fetch_member(ctx.author.id)
+                member = await guild.fetch_member(ctx.author.id)
             except discord.HTTPException:
                 self.logger.error(
-                    f"Failed to fetch {ctx.author.display_name}({ctx.author.id}) from the Menudocs Guild."
+                    f"Failed to fetch {ctx.author.display_name}({ctx.author.id}) from guild {guild.name}{guild.id}"
                 )
             else:
-                if self.bot.quiz_role in member.roles:
+                if quiz_role in member.roles:
                     await ctx.send("You already have the quiz role!")
                     return
 
-                await member.add_roles(
-                    self.bot.quiz_role, reason="Correctly finished the quiz."
-                )
+                if quiz_role:
+                    await member.add_roles(
+                        quiz_role, reason="Correctly finished the quiz."
+                    )
+                else:
+                    await ctx.send(
+                        f"Unfortunately, your server doesn't provide a quiz role! "
+                         "Please ask them to do it using `{prefix}quiz role`."
+                    )
+
                 await ctx.send("Congratulations on getting everything correct!")
+    
+    @quiz.command()
+    @commands.guild_only()
+    @commands.has_permisssions(manage_roles=True)
+    @commands.bot_has_permisssions(manage_roles=True)
+    async def role(self, ctx, role: discord.Role):
+        if role.is_default() or role.managed or role.position >= ctx.guild.me.top_role.position:
+            await ctx.send(
+                "Please choose a role that isn't the `everyone` role, "
+                "and isn't managed by an integration such as a bot, that I have permission to give."
+            )
+
+            return
+        await self.bot.config.upsert({"_id": ctx.guild.id, "quiz_role": role.id})
+        await ctx.send("Role added as a quiz role.")
+
 
 
 def setup(bot):

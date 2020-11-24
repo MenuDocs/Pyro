@@ -12,7 +12,9 @@ The bot expects there to be a configuration file named `config.json` to grab mul
 ```json
 {
   "token": "YOUR TOKEN",
-  "mongo_url": "THE URL TO ACCESS THE MONGODB DATABASE "
+  "mongo_url": "THE URL TO ACCESS THE MONGODB DATABASE ",
+  "API_username": "MenuDocs's Pyro JWT username",
+  "API_password": "MenuDocs's Pyro JWT password"
 }
 ```
 

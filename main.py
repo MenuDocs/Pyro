@@ -68,6 +68,8 @@ bot.remove_command("help")
 
 @bot.event
 async def on_ready():
+    await bot.change_presence(activity=discord.Game(name="py.help"))
+
     bot.DEFAULTPREFIX = "py."
 
     logger.info("I'm all up and ready like mom's spaghetti")

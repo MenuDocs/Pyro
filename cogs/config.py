@@ -274,7 +274,6 @@ class Config(commands.Cog, name="Configuration"):
     )
     @commands.has_permissions(manage_channels=True)
     async def guild_config(self, ctx):
-        """"""
         embed = discord.Embed(
             title=f"Configuration of {ctx.guild.name}",
             color=random.randint(0, 0xFFFFFF),

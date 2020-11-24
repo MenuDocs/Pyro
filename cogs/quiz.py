@@ -160,7 +160,7 @@ class Quiz(commands.Cog, name="Quiz"):
     async def quiz(self, ctx):
         """Quiz yourself on relevant Python knowledge!"""
         guild = ctx.guild
-        quiz_role = await self.bot.config.find()
+        quiz_role = await self.bot.config.find(ctx.guild.id)
         quiz_role = quiz_role.get("quiz_role")
 
         await ctx.send("Quiz started in your DMs!")
@@ -254,7 +254,7 @@ class Quiz(commands.Cog, name="Quiz"):
         await ctx.send("Alright! This whole quiz is over! Thanks for trying it!")
         correct_choices = total_correct == len(questions)
 
-        if all(correct_answers.values()) and correct_choices:
+        if correct_answers and all(correct_answers.values()) and correct_choices:
             try:
                 member = await guild.fetch_member(ctx.author.id)
             except discord.HTTPException:

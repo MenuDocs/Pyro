@@ -36,9 +36,7 @@ class Config(commands.Cog, name="Configuration"):
         )
 
     @commands.command(
-        name="reload",
-        description="Reload all/one of the bots cogs!",
-        usage="[cog]",
+        name="reload", description="Reload all/one of the bots cogs!", usage="[cog]",
     )
     @commands.is_owner()
     async def reload(self, ctx, cog=None):
@@ -59,8 +57,7 @@ class Config(commands.Cog, name="Configuration"):
                             description += f"Reloaded: `{ext}`\n"
                         except Exception as e:
                             embed.add_field(
-                                name=f"Failed to reload: `{ext}`",
-                                value=e,
+                                name=f"Failed to reload: `{ext}`", value=e,
                             )
                     await asyncio.sleep(0.5)
                 embed.description = description
@@ -88,15 +85,13 @@ class Config(commands.Cog, name="Configuration"):
                     except Exception:
                         desired_trace = traceback.format_exc()
                         embed.add_field(
-                            name=f"Failed to reload: `{ext}`",
-                            value=desired_trace,
+                            name=f"Failed to reload: `{ext}`", value=desired_trace,
                         )
                 await asyncio.sleep(0.5)
             await ctx.send(embed=embed)
 
     @commands.command(
-        name="update",
-        description="Automatically updates the bot from github!",
+        name="update", description="Automatically updates the bot from github!",
     )
     @commands.is_owner()
     async def update_bot(self, ctx):
@@ -125,8 +120,7 @@ class Config(commands.Cog, name="Configuration"):
         await ctx.invoke(self.bot.get_command("help"), entity="starboard")
 
     @starboard.command(
-        name="toggle",
-        description="Turn the starboard on or off for your guild.",
+        name="toggle", description="Turn the starboard on or off for your guild.",
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
@@ -148,8 +142,7 @@ class Config(commands.Cog, name="Configuration"):
             await self.bot.config.upsert(data)
 
     @starboard.command(
-        name="channel",
-        description="Set the starboard channel for this guild!",
+        name="channel", description="Set the starboard channel for this guild!",
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
@@ -184,8 +177,7 @@ class Config(commands.Cog, name="Configuration"):
             await ctx.send("I have set the starboard channel for this guild!")
 
     @starboard.command(
-        name="emoji",
-        description="Make the starboard work with your own emoji!",
+        name="emoji", description="Make the starboard work with your own emoji!",
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)

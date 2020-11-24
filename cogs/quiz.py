@@ -156,7 +156,7 @@ class Quiz(commands.Cog, name="Quiz"):
 
     @commands.group(invoke_without_command=True)
     @commands.guild_only()
-    @commands.bot_has_permisssions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
     async def quiz(self, ctx):
         """Quiz yourself on relevant Python knowledge!"""
         guild = ctx.guild
@@ -279,8 +279,8 @@ class Quiz(commands.Cog, name="Quiz"):
     
     @quiz.command()
     @commands.guild_only()
-    @commands.has_permisssions(manage_roles=True)
-    @commands.bot_has_permisssions(manage_roles=True)
+    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
     async def role(self, ctx, role: discord.Role):
         if role.is_default() or role.managed or role.position >= ctx.guild.me.top_role.position:
             await ctx.send(

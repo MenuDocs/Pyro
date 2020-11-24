@@ -143,7 +143,7 @@ class Document:
          - data (Dictionary) : The data to insert
         """
 
-        upsert = kwargs.pop("upsert")
+        upsert = kwargs.pop("upsert", False)
 
         # Check if its actually a Dictionary
         if not isinstance(data, collections.abc.Mapping):

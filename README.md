@@ -12,10 +12,9 @@ The bot expects there to be a configuration file named `config.json` to grab mul
 ```json
 {
   "token": "YOUR TOKEN",
-  "discord.py_help_channel_id": 12345,
-  "menudocs_guild_id": 12345,
-  "quiz_role_id": 12345,
-  "mongo_url": "THE URL TO ACCESS THE MONGODB DATABASE "
+  "mongo_url": "THE URL TO ACCESS THE MONGODB DATABASE ",
+  "API_username": "MenuDocs's Pyro JWT username",
+  "API_password": "MenuDocs's Pyro JWT password"
 }
 ```
 

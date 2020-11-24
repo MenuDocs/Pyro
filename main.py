@@ -207,7 +207,7 @@ async def update_status():
 
     headers = {"Authorization": f"Bearer {bot.API_auth_jwt}"}
 
-    data = {"ping": bot.latency)}
+    data = {"ping": bot.latency}
     async with ClientSession() as session:
         async with session.put(
             "https://menudocs-admin.herokuapp.com/pings/1",

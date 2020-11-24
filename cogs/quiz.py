@@ -254,7 +254,9 @@ class Quiz(commands.Cog, name="Quiz"):
         await ctx.send("Alright! This whole quiz is over! Thanks for trying it!")
         correct_choices = total_correct == len(questions)
 
-        if correct_answers and all(correct_answers.values()) and correct_choices:
+        correct = all(correct_answers.values()) or False
+
+        if correct and correct_choices:
             try:
                 member = await guild.fetch_member(ctx.author.id)
             except discord.HTTPException:

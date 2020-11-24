@@ -140,7 +140,8 @@ async def _eval(ctx, *, code):
     try:
         with contextlib.redirect_stdout(stdout):
             exec(
-                f"async def func():\n{textwrap.indent(code, '    ')}", local_variables,
+                f"async def func():\n{textwrap.indent(code, '    ')}",
+                local_variables,
             )
 
             obj = await local_variables["func"]()
@@ -214,7 +215,9 @@ async def update_status():
     data = {"ping": int((t2 - t1) * 1000)}
     async with ClientSession() as session:
         async with session.put(
-            "https://menudocs-admin.herokuapp.com/pings/1", data=data, headers=headers,
+            "https://menudocs-admin.herokuapp.com/pings/1",
+            data=data,
+            headers=headers,
         ) as response:
             if response.status == 401:
                 logger.info("Re-fetching JWT")

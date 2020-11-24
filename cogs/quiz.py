@@ -177,11 +177,12 @@ class Quiz(commands.Cog, name="Quiz"):
             if msg.content.lower() != "yes":
                 return
             ctx = await self.bot.get_context(msg)
-                
-        except asyncio.TimeoutError:
-            await ctx.author.send("Well... A bit too slow there, pal. Better luck next time!")
-            return
 
+        except asyncio.TimeoutError:
+            await ctx.author.send(
+                "Well... A bit too slow there, pal. Better luck next time!"
+            )
+            return
 
         questions = await self.bot.quiz.get_all()
         questions.sort(key=lambda d: int(d["_id"]))
@@ -272,17 +273,21 @@ class Quiz(commands.Cog, name="Quiz"):
                 else:
                     await ctx.send(
                         f"Unfortunately, your server doesn't provide a quiz role! "
-                         "Please ask them to do it using `{prefix}quiz role`."
+                        "Please ask them to do it using `{prefix}quiz role`."
                     )
 
                 await ctx.send("Congratulations on getting everything correct!")
-    
+
     @quiz.command()
     @commands.guild_only()
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
     async def role(self, ctx, role: discord.Role):
-        if role.is_default() or role.managed or role.position >= ctx.guild.me.top_role.position:
+        if (
+            role.is_default()
+            or role.managed
+            or role.position >= ctx.guild.me.top_role.position
+        ):
             await ctx.send(
                 "Please choose a role that isn't the `everyone` role, "
                 "and isn't managed by an integration such as a bot, that I have permission to give."
@@ -291,7 +296,6 @@ class Quiz(commands.Cog, name="Quiz"):
             return
         await self.bot.config.upsert({"_id": ctx.guild.id, "quiz_role": role.id})
         await ctx.send("Role added as a quiz role.")
-
 
 
 def setup(bot):

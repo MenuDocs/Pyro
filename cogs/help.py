@@ -89,7 +89,12 @@ class Help(commands.Cog, name="Help command"):
 
             pages.append(command_entry)
 
-        await Pag(title=title, colour=0xCE2029, entries=pages, length=1,).start(ctx)
+        await Pag(
+            title=title,
+            colour=0xCE2029,
+            entries=pages,
+            length=1,
+        ).start(ctx)
 
     @commands.Cog.listener()
     async def on_ready(self):

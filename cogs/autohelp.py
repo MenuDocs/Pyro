@@ -20,7 +20,7 @@ class AutoHelp(commands.Cog, name="Autohelp"):
             return
 
         tokens = msg.content.split()
-        for kw in await self.keywords:
+        for kw in self.keywords:
             if set(kw["keywords"]).issubset(set(tokens)):
                 await msg.channel.send(kw["response"])
                 return

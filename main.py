@@ -207,12 +207,7 @@ async def update_status():
 
     headers = {"Authorization": f"Bearer {bot.API_auth_jwt}"}
 
-    t1 = time.perf_counter()
-    async with bot.dpy_help_channel.typing():  # Saves needing a new channel by using this
-        pass
-    t2 = time.perf_counter()
-
-    data = {"ping": int((t2 - t1) * 1000)}
+    data = {"ping": bot.latency)}
     async with ClientSession() as session:
         async with session.put(
             "https://menudocs-admin.herokuapp.com/pings/1",

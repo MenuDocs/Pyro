@@ -273,7 +273,7 @@ class Quiz(commands.Cog, name="Quiz"):
                 else:
                     await ctx.send(
                         f"Unfortunately, your server doesn't provide a quiz role! "
-                        "Please ask them to do it using `{prefix}quiz role`."
+                        f"Please ask them to do it using `{ctx.prefix}quiz role`."
                     )
 
                 await ctx.send("Congratulations on getting everything correct!")

@@ -3,6 +3,7 @@ import difflib
 import logging
 import random
 
+from utils.exceptions import IdNotFound
 from utils.util import clean_code
 
 import aiohttp
@@ -160,8 +161,11 @@ class Quiz(commands.Cog, name="Quiz"):
     async def quiz(self, ctx):
         """Quiz yourself on relevant Python knowledge!"""
         guild = ctx.guild
-        quiz_role = await self.bot.config.find(ctx.guild.id)
-        quiz_role = quiz_role.get("quiz_role")
+        try:
+            quiz_role = await self.bot.config.find(ctx.guild.id)
+            quiz_role = quiz_role.get("quiz_role")
+        except IdNotFound:
+            quiz_role = None
 
         await ctx.send("Quiz started in your DMs!")
         msg = await ctx.author.send("Do you still want to take the quiz? [yes/no]")
@@ -254,9 +258,7 @@ class Quiz(commands.Cog, name="Quiz"):
         await ctx.send("Alright! This whole quiz is over! Thanks for trying it!")
         correct_choices = total_correct == len(questions)
 
-        correct = all(correct_answers.values()) or False
-
-        if correct and correct_choices:
+        if all(correct_answers.values()) and correct_choices:
             try:
                 member = await guild.fetch_member(ctx.author.id)
             except discord.HTTPException:
@@ -264,11 +266,11 @@ class Quiz(commands.Cog, name="Quiz"):
                     f"Failed to fetch {ctx.author.display_name}({ctx.author.id}) from guild {guild.name}{guild.id}"
                 )
             else:
-                if quiz_role in member.roles:
-                    await ctx.send("You already have the quiz role!")
-                    return
-
                 if quiz_role:
+                    if quiz_role in member.roles:
+                        await ctx.send("You already have the quiz role!")
+                        return
+
                     await member.add_roles(
                         quiz_role, reason="Correctly finished the quiz."
                     )

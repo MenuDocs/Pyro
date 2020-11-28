@@ -297,7 +297,6 @@ class Quiz(commands.Cog, name="Quiz"):
                 "Please choose a role that isn't the `everyone` role, "
                 "and isn't managed by an integration such as a bot, that I have permission to give."
             )
-
             return
 
         await self.bot.config.upsert({"_id": ctx.guild.id, "quiz_role": role.id})

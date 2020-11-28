@@ -271,6 +271,7 @@ class Quiz(commands.Cog, name="Quiz"):
                         await ctx.send("You already have the quiz role!")
                         return
 
+                    quiz_role = guild.get_role(quiz_role)
                     await member.add_roles(
                         quiz_role, reason="Correctly finished the quiz."
                     )
@@ -298,6 +299,7 @@ class Quiz(commands.Cog, name="Quiz"):
             )
 
             return
+
         await self.bot.config.upsert({"_id": ctx.guild.id, "quiz_role": role.id})
         await ctx.send("Role added as a quiz role.")
 

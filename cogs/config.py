@@ -247,7 +247,7 @@ class Config(commands.Cog, name="Configuration"):
         )
 
     @commands.command(
-        description="Ungignores a previously ignored channel. Allows commands to be ran."
+        description="Unignores a previously ignored channel. Allows commands to be ran."
     )
     @commands.has_permissions(manage_messages=True)
     async def unignore(self, ctx, channel: discord.TextChannel):
@@ -270,7 +270,8 @@ class Config(commands.Cog, name="Configuration"):
 
     @commands.command(
         aliases=["gc"],
-        description="Views the guild's config. Shows the starboard channels, ignored channels, prefix, starboard data, etc.",
+        description="Views the guild's config. Shows the starboard channels, ignored channels, prefix, starboard "
+        "data, etc.",
     )
     @commands.has_permissions(manage_channels=True)
     async def guild_config(self, ctx):
@@ -278,16 +279,23 @@ class Config(commands.Cog, name="Configuration"):
             title=f"Configuration of {ctx.guild.name}",
             color=random.randint(0, 0xFFFFFF),
         )
-        data = await self.bot.config.find(ctx.guild.id)
-        channels = map(
-            lambda c: self.bot.get_channel(c).mention, data["ignored_channels"]
-        )
-        data["ignored_channels"] = channels
+        try:
+            data = await self.bot.config.find(ctx.guild.id)
+        except IdNotFound:
+            await ctx.send("This guild does not have anything saved.")
+        else:
+            channels = map(
+                lambda c: self.bot.get_channel(c).mention, data["ignored_channels"]
+            )
+            data["ignored_channels"] = channels
 
-        embed.description = "\n".join(
-            (f"{attr}: {val}".replace("_", " ").title() for attr, val in data.items())
-        )
-        await ctx.send(embed=embed)
+            embed.description = "\n".join(
+                (
+                    f"{attr}: {val}".replace("_", " ").title()
+                    for attr, val in data.items()
+                )
+            )
+            await ctx.send(embed=embed)
 
 
 def setup(bot):

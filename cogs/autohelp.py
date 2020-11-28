@@ -7,16 +7,21 @@ class AutoHelp(commands.Cog, name="Autohelp"):
     def __init__(self, bot):
         self.bot = bot
         self.logger = logging.getLogger(__name__)
-        self.keywords = await self.bot.keywords.get_all()
-        self.channels = set(kw["channel_id"] for kw in self.keywords)
 
     @commands.Cog.listener()
     async def on_ready(self):
         self.logger.info("I'm ready!")
+        self.keywords = await self.bot.keywords.get_all()
+        self.channels = set(kw["channel_id"] for kw in self.keywords)
 
     @commands.Cog.listener()
     async def on_message(self, msg):
-        if msg.channel.id not in self.channels or msg.author.bot:
+        try:
+            if msg.channel.id not in self.channels or msg.author.bot:
+                return
+        except:
+            # If we can't verify the channel isn't used for keywords,
+            # treat it as such and return
             return
 
         keywords = filter(lambda k: k["channel_id"] == msg.channel.id, self.keywords)
@@ -26,6 +31,15 @@ class AutoHelp(commands.Cog, name="Autohelp"):
             if set(kw["keywords"]).issubset(set(tokens)):
                 await msg.channel.send(kw["response"])
                 return
+
+    @commands.command(aliases=["rk"])
+    @commands.is_owner()
+    async def reload_keywords(self, ctx):
+        """Update the auto-help list of keywords"""
+        self.keywords = await self.bot.keywords.get_all()
+        self.channels = set(kw["channel_id"] for kw in self.keywords)
+
+        await ctx.send("Those should be all reloaded for you now.")
 
 
 def setup(bot):

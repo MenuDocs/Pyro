@@ -71,10 +71,6 @@ async def on_ready():
     await bot.change_presence(activity=discord.Game(name="py.help"))
 
     bot.DEFAULTPREFIX = "py."
-    bot.menudocs_guild = bot.get_guild(config["menudocs_guild_id"])
-    bot.dpy_help_channel = bot.menudocs_guild.get_channel(config["dpy_help_channel_id"])
-    bot.quiz_role = bot.menudocs_guild.get_role(config["quiz_role_id"])
-    bot.API_auth_jwt = await get_jwt()
 
     logger.info("I'm all up and ready like mom's spaghetti")
 
@@ -98,6 +94,8 @@ async def on_message(message):
             if message.channel.id in guild_config["ignored_channels"]:
                 return
         except exceptions.IdNotFound:
+            pass
+        except KeyError:
             pass
 
     # Whenever the bot is tagged, respond with its prefix
@@ -212,12 +210,7 @@ async def update_status():
 
     headers = {"Authorization": f"Bearer {bot.API_auth_jwt}"}
 
-    t1 = time.perf_counter()
-    async with bot.dpy_help_channel.typing():  # Saves needing a new channel by using this
-        pass
-    t2 = time.perf_counter()
-
-    data = {"ping": int((t2 - t1) * 1000)}
+    data = {"ping": bot.latency}
     async with ClientSession() as session:
         async with session.put(
             "https://menudocs-admin.herokuapp.com/pings/1", data=data, headers=headers,

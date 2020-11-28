@@ -7,12 +7,12 @@ class AutoHelp(commands.Cog, name="Autohelp"):
     def __init__(self, bot):
         self.bot = bot
         self.logger = logging.getLogger(__name__)
+        self.keywords = await self.bot.keywords.get_all()
+        self.channels = set(kw["channel_id"] for kw in self.keywords)
 
     @commands.Cog.listener()
     async def on_ready(self):
         self.logger.info("I'm ready!")
-        self.keywords = await self.bot.keywords.get_all()
-        self.channels = set(kw["channel_id"] for kw in self.keywords)
 
     @commands.Cog.listener()
     async def on_message(self, msg):

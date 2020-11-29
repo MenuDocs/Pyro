@@ -284,10 +284,13 @@ class Config(commands.Cog, name="Configuration"):
         except IdNotFound:
             await ctx.send("This guild does not have anything saved.")
         else:
-            channels = map(
-                lambda c: self.bot.get_channel(c).mention, data["ignored_channels"]
-            )
-            data["ignored_channels"] = channels
+            try:
+                channels = map(
+                    lambda c: self.bot.get_channel(c).mention, data["ignored_channels"]
+                )
+                data["ignored_channels"] = channels
+            except KeyError:
+                pass
 
             embed.description = "\n".join(
                 (

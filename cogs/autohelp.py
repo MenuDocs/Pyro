@@ -17,6 +17,9 @@ class AutoHelp(commands.Cog, name="Autohelp"):
 
     @commands.Cog.listener()
     async def on_message(self, msg):
+        if msg.channel.id == 756125781737996329:
+            await msg.send("hi")
+
         if msg.channel.id not in self.channels or msg.author.bot:
             return
 

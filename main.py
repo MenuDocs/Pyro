@@ -54,6 +54,7 @@ bot = commands.Bot(
     "developers with helping the community "
     "with discord.py related issues.",
     intents=intents,
+    help_command=None,
 )
 
 logger = logging.getLogger(__name__)
@@ -63,14 +64,12 @@ logger = logging.getLogger(__name__)
 # This basically ONLY matches a string that only consists of a mention
 mention = re.compile(r"^<@!?(?P<id>\d+)>$")
 
-bot.remove_command("help")
+bot.DEFAULTPREFIX = "py."
 
 
 @bot.event
 async def on_ready():
     await bot.change_presence(activity=discord.Game(name="py.help"))
-
-    bot.DEFAULTPREFIX = "py."
 
     logger.info("I'm all up and ready like mom's spaghetti")
 

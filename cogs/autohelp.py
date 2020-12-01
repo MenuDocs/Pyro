@@ -21,7 +21,6 @@ class AutoHelp(commands.Cog, name="Autohelp"):
             await msg.send("hi")
 
         if msg.channel.id not in self.channels or msg.author.bot:
-            return
 
         keywords = filter(lambda k: k["channel_id"] == msg.channel.id, self.keywords)
 
@@ -30,6 +29,15 @@ class AutoHelp(commands.Cog, name="Autohelp"):
             if set(kw["keywords"]).issubset(set(tokens)):
                 await msg.channel.send(kw["response"])
                 return
+
+    @commands.command(aliases=["rk"])
+    @commands.is_owner()
+    async def reload_keywords(self, ctx):
+        """Update the auto-help list of keywords"""
+        self.keywords = await self.bot.keywords.get_all()
+        self.channels = set(kw["channel_id"] for kw in self.keywords)
+
+        await ctx.send("Those should be all reloaded for you now.")
 
 
 def setup(bot):

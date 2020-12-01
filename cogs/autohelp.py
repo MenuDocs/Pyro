@@ -6,6 +6,7 @@ from discord.ext import commands
 class AutoHelp(commands.Cog, name="Autohelp"):
     def __init__(self, bot):
         self.bot = bot
+        self.channels = []
         self.logger = logging.getLogger(__name__)
 
     @commands.Cog.listener()

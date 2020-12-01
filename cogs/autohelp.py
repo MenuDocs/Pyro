@@ -6,6 +6,7 @@ from discord.ext import commands
 class AutoHelp(commands.Cog, name="Autohelp"):
     def __init__(self, bot):
         self.bot = bot
+        self.channels = []
         self.logger = logging.getLogger(__name__)
 
     @commands.Cog.listener()
@@ -16,13 +17,10 @@ class AutoHelp(commands.Cog, name="Autohelp"):
 
     @commands.Cog.listener()
     async def on_message(self, msg):
-        try:
-            if msg.channel.id not in self.channels or msg.author.bot:
-                return
-        except:
-            # If we can't verify the channel isn't used for keywords,
-            # treat it as such and return
-            return
+        if msg.channel.id == 756125781737996329:
+            await msg.send("hi")
+
+        if msg.channel.id not in self.channels or msg.author.bot:
 
         keywords = filter(lambda k: k["channel_id"] == msg.channel.id, self.keywords)
 

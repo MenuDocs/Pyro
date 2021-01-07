@@ -23,7 +23,6 @@ with open("config.json", "r") as f:
 
 
 async def get_prefix(bot, message):
-    return commands.when_mentioned_or("!!!")(bot, message)
     # If private messages
     if not message.guild:
         return commands.when_mentioned_or(bot.DEFAULTPREFIX)(bot, message)

@@ -21,6 +21,8 @@ class Starboard(commands.Cog, name="Starboard"):
             # Only use this in guilds
             return
 
+        # TODO Ensure toggle actually works
+
         entries = await self.bot.config.get_all()
         guilds = list(map(lambda e: e["_id"], entries))
         if payload.guild_id in guilds:
@@ -29,6 +31,9 @@ class Starboard(commands.Cog, name="Starboard"):
             emoji = guild.get("emoji") or "⭐"
 
             if not guild.get("starboard_channel"):
+                return
+
+            if not guild.get("starboard_toggle"):
                 return
 
             if str(payload.emoji) == emoji:

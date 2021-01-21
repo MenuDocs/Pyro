@@ -33,7 +33,9 @@ class Starboard(commands.Cog, name="Starboard"):
             if not guild.get("starboard_channel"):
                 return
 
-            if not guild.get("starboard_toggle"):
+            if not guild.get("starboard_toggle", True):
+                # Default to True because it should be enabled if they
+                # haven't explicitly said no
                 return
 
             if str(payload.emoji) == emoji:

@@ -49,15 +49,18 @@ class Starboard(commands.Cog, name="Starboard"):
 
                 if reacts:
                     react = list(map(lambda u: u.id, await reacts[0].users().flatten()))
-                    # if msg.author.id in react:
-                    #    del react[react.index(msg.author.id)]
+                    if msg.author.id in react:
+                        del react[react.index(msg.author.id)]
 
                     thresh = guild.get("emoji_threshold") or 3
                     if len(react) >= thresh:
                         # We should now be 'adding' this to our starboard
                         # So lets just check its not already in it haha
+                        # and if it is, update the message rather then make a new one
+                        starboard = self.bot.get_channel(guild["starboard_channel"])
+
                         try:
-                            await self.bot.starboard.find_by_custom(
+                            existing_star = await self.bot.starboard.find_by_custom(
                                 {
                                     "_id": payload.message_id,
                                     "guildId": payload.guild_id,
@@ -69,9 +72,19 @@ class Starboard(commands.Cog, name="Starboard"):
                             pass
                         else:
                             # This message is already in the starboard, update the star count
+                            if not existing_star.get("starboard_message_id"):
+                                # Guard against old starboard items
+                                return
+
+                            existing_message = await starboard.fetch_message(
+                                existing_star["starboard_message_id"]
+                            )
+                            await existing_message.edit(
+                                content=f"{len(react)} | {channel.mention}",
+                                embed=existing_message.embeds[0],
+                            )
                             return
 
-                        starboard = self.bot.get_channel(guild["starboard_channel"])
                         embed = discord.Embed(
                             description=msg.content,
                             color=msg.author.color,
@@ -98,20 +111,20 @@ class Starboard(commands.Cog, name="Starboard"):
                             f"\n\n**[Jump to message]({msg.jump_url})**"
                         )
 
-                        await starboard.send(
-                            content=f"{len(react)} | {channel.mention}", embed=embed,
+                        starboard_message = await starboard.send(
+                            content=f"{len(react)} {emoji} | {channel.mention}",
+                            embed=embed,
                         )
                         if msg_embed:
                             await starboard.send(embed=msg_embed)
 
-                        # return
                         await self.bot.starboard.upsert(
                             {
                                 "_id": payload.message_id,
                                 "guildId": payload.guild_id,
                                 "authorId": payload.user_id,
                                 "channelId": payload.channel_id,
-                                "current_reaction_count": len(react),
+                                "starboard_message_id": starboard_message.id,
                             }
                         )
 

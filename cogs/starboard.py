@@ -38,7 +38,7 @@ class Starboard(commands.Cog, name="Starboard"):
                 # haven't explicitly said no
                 return
 
-            if str(payload.emoji) == emoji or True:
+            if str(payload.emoji) == emoji:
                 channel = self.bot.get_channel(payload.channel_id)
                 try:
                     msg = await channel.fetch_message(payload.message_id)
@@ -47,13 +47,13 @@ class Starboard(commands.Cog, name="Starboard"):
                 except discord.HTTPException:
                     await channel.send("An error occurred while fetching the message")
 
-                if reacts or True:
+                if reacts:
                     react = list(map(lambda u: u.id, await reacts[0].users().flatten()))
                     # if msg.author.id in react:
                     #    del react[react.index(msg.author.id)]
 
                     thresh = guild.get("emoji_threshold") or 3
-                    if len(react) >= thresh or True:
+                    if len(react) >= thresh:
                         # We should now be 'adding' this to our starboard
                         # So lets just check its not already in it haha
                         try:

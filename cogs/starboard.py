@@ -38,22 +38,22 @@ class Starboard(commands.Cog, name="Starboard"):
                 # haven't explicitly said no
                 return
 
-            if str(payload.emoji) == emoji:
+            if str(payload.emoji) == emoji or True:
+                channel = self.bot.get_channel(payload.channel_id)
                 try:
-                    channel = self.bot.get_channel(payload.channel_id)
                     msg = await channel.fetch_message(payload.message_id)
                     reacts = msg.reactions
                     reacts = list(filter(lambda r: str(r.emoji) == emoji, reacts))
                 except discord.HTTPException:
                     await channel.send("An error occurred while fetching the message")
 
-                if reacts:
+                if reacts or True:
                     react = list(map(lambda u: u.id, await reacts[0].users().flatten()))
-                    if msg.author.id in react:
-                        del react[react.index(msg.author.id)]
+                    # if msg.author.id in react:
+                    #    del react[react.index(msg.author.id)]
 
                     thresh = guild.get("emoji_threshold") or 3
-                    if len(react) >= thresh:
+                    if len(react) >= thresh or True:
                         # We should now be 'adding' this to our starboard
                         # So lets just check its not already in it haha
                         try:
@@ -68,43 +68,50 @@ class Starboard(commands.Cog, name="Starboard"):
                             # We need to store it, so we are fine
                             pass
                         else:
-                            # This message is already in the starboard
+                            # This message is already in the starboard, update the star count
                             return
 
                         starboard = self.bot.get_channel(guild["starboard_channel"])
-
                         embed = discord.Embed(
-                            title="Jump to message",
-                            url=msg.jump_url,
                             description=msg.content,
                             color=msg.author.color,
+                            timestamp=msg.created_at,
                         )
 
                         embed.set_author(
-                            name=msg.author.display_name,
+                            name=f"{msg.author.display_name}#{msg.author.discriminator}",
                             icon_url=msg.author.avatar_url,
                         )
 
+                        embed.set_footer(text=f"ID: {msg.id}")
+
                         attach = msg.attachments[0] if msg.attachments else None
+                        if attach:
+                            embed.set_image(url=attach.url)
 
-                        image = attach or msg.embeds[0] if msg.embeds else None
+                        msg_embed = msg.embeds[0] if msg.embeds else None
 
-                        if image:
+                        if msg_embed:
                             embed.description = "View the below for message"
 
-                        await starboard.send(
-                            content=f"{len(react)} {emoji} {channel.mention}",
-                            embed=embed,
+                        embed.description += (
+                            f"\n\n**[Jump to message]({msg.jump_url})**"
                         )
-                        if image:
-                            await starboard.send(embed=image)
 
+                        await starboard.send(
+                            content=f"{len(react)} | {channel.mention}", embed=embed,
+                        )
+                        if msg_embed:
+                            await starboard.send(embed=msg_embed)
+
+                        # return
                         await self.bot.starboard.upsert(
                             {
                                 "_id": payload.message_id,
                                 "guildId": payload.guild_id,
                                 "authorId": payload.user_id,
                                 "channelId": payload.channel_id,
+                                "current_reaction_count": len(react),
                             }
                         )
 

@@ -80,7 +80,7 @@ class Starboard(commands.Cog, name="Starboard"):
                                 existing_star["starboard_message_id"]
                             )
                             await existing_message.edit(
-                                content=f"{len(react)} | {channel.mention}",
+                                content=f"{len(react)} {emoji} | {channel.mention}",
                                 embed=existing_message.embeds[0],
                             )
                             return

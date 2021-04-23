@@ -20,17 +20,3 @@ def clean_code(content):
         return "\n".join(content.split("\n")[1:])[:-3]
     else:
         return content
-
-
-async def get_jwt():
-    with open("config.json", "r") as f:
-        config = json.load(f)
-
-    params = {"identifier": config["API_username"], "password": config["API_password"]}
-
-    async with ClientSession() as session:
-        async with session.post(
-            "https://menudocs-admin.herokuapp.com/auth/local", data=params
-        ) as response:
-            r = await response.json()
-            return r["jwt"]

@@ -70,7 +70,7 @@ class Starboard(commands.Cog, name="Starboard"):
                         except IdNotFound:
                             # We need to store it, so we are fine
                             pass
-                        else:
+         ions: Manage Roles               else:
                             # This message is already in the starboard, update the star count
                             if not existing_star.get("starboard_message_id"):
                                 # Guard against old starboard items

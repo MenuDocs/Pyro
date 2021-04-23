@@ -156,8 +156,8 @@ class Quiz(commands.Cog, name="Quiz"):
         self.logger.info("I'm ready!")
 
     @commands.group(invoke_without_command=True)
-    @commands.guild_only()
     @commands.bot_has_permissions(manage_roles=True)
+    @commands.guild_only()
     async def quiz(self, ctx):
         """Quiz yourself on relevant Python knowledge!"""
         guild = ctx.guild

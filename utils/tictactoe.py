@@ -34,6 +34,19 @@ class TicTacToe:
         self.is_agaisnt_computer = is_agaisnt_computer
         self.is_player_one_move = True
 
+    async def ai_turn(self):
+        depth = len(await self.valid_moves())
+        if depth == 9:
+            x = random.choice([0, 1, 2])
+            y = random.choice([0, 1, 2])
+        else:
+            depth = depth // self.difficulty
+            # Winnable: 2.1,2.5,3,4 (two empty) 5 (Too easy) | Un-Winnable: 2
+            depth = math.ceil(depth)
+            x, y, _ = await self.minimax(self.board, depth, COMP)
+
+        await self.make_move(x + 1, y + 1)
+
     async def evaluate(self, board):
         if await self.wins(board, COMP):
             score = +1
@@ -43,6 +56,9 @@ class TicTacToe:
             score = 0
 
         return score
+
+    async def flip_player(self):
+        self.is_player_one_move = not self.is_player_one_move
 
     async def has_actual_winner(self, board):
         winner = await self.has_winner(board=board)
@@ -158,19 +174,3 @@ class TicTacToe:
     async def wins(self, board, player):
         winner = await self.has_winner(board)
         return winner == Winner.from_piece(player)
-
-    async def flip_player(self):
-        self.is_player_one_move = not self.is_player_one_move
-
-    async def ai_turn(self):
-        depth = len(await self.valid_moves())
-        if depth == 9:
-            x = random.choice([0, 1, 2])
-            y = random.choice([0, 1, 2])
-        else:
-            depth = depth // self.difficulty
-            # Winnable: 2.1,2.5,3,4 (two empty) 5 (Too easy) | Un-Winnable: 2
-            depth = math.ceil(depth)
-            x, y, _ = await self.minimax(self.board, depth, COMP)
-
-        await self.make_move(x + 1, y + 1)

@@ -1,19 +1,25 @@
 import asyncio
 import logging
 import random
+from itertools import islice
 from string import Template
 
 import discord
 from discord.ext import commands
 
-from utils.enums import Winner
-from utils.tictactoe import TicTacToe, InvalidMove
+from utils import Winner, TicTacToe, InvalidMove, PlayerStats
+from utils.util import Pag
 
 
 class Games(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.stats = {}
         self.logger = logging.getLogger(__name__)
+
+    async def chunk_results(self, it, size):
+        it = iter(it)
+        return iter(lambda: tuple(islice(it, size)), ())
 
     async def display_board(self, messageable, game, *, content=None):
         board = game.board
@@ -31,6 +37,26 @@ class Games(commands.Cog):
             description=desc,
         )
         await messageable.edit(content=content, embed=embed)
+
+    async def update_stats(self, member, end_state, was_player_one):
+        player = self.stats.get(member.id, PlayerStats(member.id))
+
+        if end_state.value == 1:
+            if was_player_one:
+                player.wins += 1
+            else:
+                player.losses += 1
+
+        elif end_state.value == 2:
+            if was_player_one:
+                player.losses += 1
+            else:
+                player.wins += 1
+
+        elif end_state.value == 3:
+            player.draws += 1
+
+        self.stats[member.id] = player
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -144,6 +170,52 @@ class Games(commands.Cog):
             {"MENTIONONE": ctx.author.mention, "MENTIONTWO": player_two.mention}
         )
         await self.display_board(m, game, content=content)
+
+        await self.update_stats(ctx.author, winner, True)
+        await self.update_stats(player_two, winner, False)
+
+    @commands.command()
+    async def stats(self, ctx, player: discord.Member = None):
+        """Returns your TicTacToe stats"""
+        player = player or ctx.author
+        if not (player_stats := self.stats.get(player.id)):
+            return await ctx.send(f"I have no stats for `{player.display_name}`")
+
+        embed = discord.Embed(
+            title=f"TicTacToe stats for: `{player.display_name}`",
+            description=f"Wins: **{player_stats.wins}**\n"
+            f"Losses: **{player_stats.losses}**\n"
+            f"Draws: **{player_stats.draws}**",
+            timestamp=ctx.message.created_at,
+        )
+        await ctx.send(embed=embed)
+
+    @commands.command(aliases=["lb"])
+    async def leaderboard(self, ctx, stat_type="wins"):
+        """Shows the TicTacToe leaderboard"""
+        if (stat_type := stat_type.lower()) not in ["wins", "losses", "draws"]:
+            return await ctx.send("Invalid stat type requested!")
+
+        data = list(self.stats.values())
+        if not data:
+            return await ctx.send("I have no stats to show.")
+
+        data = sorted(data, key=lambda x: getattr(x, stat_type), reverse=True)
+        data = await self.chunk_results(data, 10)
+
+        pages = []
+        for item in data:
+            page = ""
+            for result in item:
+                page += f"<@{result.player_id}> - {getattr(result, stat_type)} {stat_type}\n"
+            pages.append(page)
+
+        await Pag(
+            title=f"TicTacToe leaderboard for `{stat_type}`",
+            colour=0x00008B,
+            entries=pages,
+            length=1,
+        ).start(ctx)
 
 
 def setup(bot):

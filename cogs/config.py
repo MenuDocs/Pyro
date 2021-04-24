@@ -55,9 +55,6 @@ class Config(commands.Cog, name="Configuration"):
                             await asyncio.sleep(0.5)
                             self.bot.load_extension(f"cogs.{ext[:-3]}")
                             description += f"Reloaded: `{ext}`\n"
-                        except commands.ExtensionNotLoaded:
-                            self.bot.load_extension(f"cogs.{ext[:-3]}")
-                            description += f"Reloaded: `{ext}`\n"
                         except Exception as e:
                             embed.add_field(
                                 name=f"Failed to reload: `{ext}`", value=e,
@@ -85,9 +82,6 @@ class Config(commands.Cog, name="Configuration"):
                         await asyncio.sleep(0.5)
                         self.bot.load_extension(f"cogs.{ext[:-3]}")
                         embed.description = f"Reloaded: `{ext}`"
-                    except commands.ExtensionNotLoaded:
-                        self.bot.load_extension(f"cogs.{ext[:-3]}")
-                        embed.description += f"Reloaded: `{ext}`\n"
                     except Exception:
                         desired_trace = traceback.format_exc()
                         embed.add_field(

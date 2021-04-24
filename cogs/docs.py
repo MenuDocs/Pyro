@@ -3,15 +3,13 @@ import os
 import re
 import zlib
 import logging
-import sys
-import inspect
 
 import aiohttp
 import discord
 from discord.ext import commands
 
 
-# Sphinx reader pbject because d.py docs
+# Sphinx reader object because d.py docs
 # are written in sphinx.
 class SphinxObjectFileReader:
     # Inspired by Sphinx's InventoryFileReader

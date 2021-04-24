@@ -1,4 +1,5 @@
 import asyncio
+import dataclasses
 import logging
 import random
 from itertools import islice
@@ -58,13 +59,32 @@ class Games(commands.Cog):
 
         self.stats[member.id] = player
 
+        data = dataclasses.asdict(player)
+        data["_id"] = data.pop("player_id")
+        await self.bot.tictactoe.upsert(data)
+
+    async def populate_stats(self):
+        # Handle on_ready being called multiple times
+        if self.stats:
+            return
+
+        data = await self.bot.tictactoe.get_all()
+        for document in data:
+            player = PlayerStats(
+                document["_id"],
+                wins=document["wins"],
+                losses=document["losses"],
+                draws=document["draws"],
+            )
+            self.stats[document["_id"]] = player
+
     @commands.Cog.listener()
     async def on_ready(self):
         self.logger.info("I'm ready!")
+        await self.populate_stats()
 
     @commands.command(aliases=["ttt"])
     @commands.max_concurrency(1, commands.BucketType.channel)
-    @commands.guild_only()
     async def tictactoe(self, ctx, player_two: discord.Member = None):
         def check(m):
             return m.channel == ctx.channel and m.author == current_player

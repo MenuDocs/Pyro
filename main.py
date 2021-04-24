@@ -21,7 +21,7 @@ from utils.util import Pag
 with open("config.json", "r") as f:
     config = json.load(f)
 
-    
+
 async def get_prefix(bot, message):
     # If private messages
     if not message.guild:
@@ -212,6 +212,7 @@ if __name__ == "__main__":
     bot.code = Document(bot.db, "code")
     bot.quiz_answers = Document(bot.db, "quizAnswers")
     bot.starboard = Document(bot.db, "starboard")
+    bot.tictactoe = Document(bot.db, "tictactoe")
 
     for ext in os.listdir("./cogs/"):
         if ext.endswith(".py") and not ext.startswith("_"):

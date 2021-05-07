@@ -1,228 +1,172 @@
-import io
-import os
-import re
-import json
-import logging
-import textwrap
-import contextlib
-import time
-from traceback import format_exception
+from json import load
+from logging import basicConfig, getLogger
+from os import listdir
+from re import compile as re_compile
 
-import discord
-import motor.motor_asyncio
-from aiohttp import ClientSession
-from discord.ext import commands, tasks
+from discord import Game, Intents
+from discord.ext.commands import Bot, command, is_owner, when_mentioned_or
+from motor.motor_asyncio import AsyncIOMotorClient
 
 from utils import exceptions
 from utils.mongo import Document
-from utils.util import clean_code
-from utils.util import Pag
+from utils.util import Pag, clean_code
 
-with open("config.json", "r") as f:
-    config = json.load(f)
+with open('config.json', 'r') as f:
+    config = load(f)
 
-
-async def get_prefix(bot, message):
-    # If private messages
-    if not message.guild:
-        return commands.when_mentioned_or(bot.DEFAULTPREFIX)(bot, message)
-
-    try:
-        data = await bot.config.find(message.guild.id)
-
-        # Make sure we have a use able prefix
-        if not data or "prefix" not in data:
-            return commands.when_mentioned_or(bot.DEFAULTPREFIX)(bot, message)
-        return commands.when_mentioned_or(data["prefix"])(bot, message)
-    except exceptions.IdNotFound:
-        return commands.when_mentioned_or(bot.DEFAULTPREFIX)(bot, message)
+basicConfig(level='INFO')
+mention = re_compile(r"^<@!?(?P<id>\d+)>$")
 
 
-logging.basicConfig(level="INFO")
+class Pyro(Bot):
 
-intents = discord.Intents.none()
-intents.messages = True
-intents.reactions = True
-intents.guilds = True
-intents.members = True
-intents.emojis = True
+    def __init__(self):
+        intents = Intents.none()
+        intents.messages = True
+        intents.guilds = True
+        intents.members = True
+        intents.emojis = True
 
-bot = commands.Bot(
-    command_prefix=get_prefix,
-    case_insensitive=True,
-    description="A short sharp bot coded in python to aid the python "
-    "developers with helping the community "
-    "with discord.py related issues.",
-    intents=intents,
-    help_command=None,
-)
+        super().__init__(
+            command_prefix=self.get_prefix,
+            case_insensitive=True,
+            description=(
+                'A short sharp bot coded in Python to aid the Python '
+                'developers in helping the community '
+                'with "discord.py" related issues.'
+            ),
+            help_command=None,
+            intents=intents
+        )
 
-logger = logging.getLogger(__name__)
+        self.logger = getLogger(__name__)
+        self.DEFAULTPREFIX = 'py.'
 
-# Use regex to parse mentions, much better than only supporting
-# nickname mentions (<@!1234>)
-# This basically ONLY matches a string that only consists of a mention
-mention = re.compile(r"^<@!?(?P<id>\d+)>$")
+        # Required for `self.get_prefix` to remain exactly how it was written.
+        # See `self.get_prefix` for alternative.
+        self.config = self.mongo('config')
 
-bot.DEFAULTPREFIX = "py."
+    async def on_ready(self):
+        activity = Game(name='py.help')
+        await self.change_presence(activity=activity)
 
+        self.logger.info("I'm all up and ready like mom's spaghetti")
 
-@bot.event
-async def on_ready():
-    await bot.change_presence(activity=discord.Game(name="py.help"))
-
-    logger.info("I'm all up and ready like mom's spaghetti")
-
-    try:
-        await bot.config.get_all()
-    except exceptions.PyMongoError as e:
-        logger.error("An error occurred while fetching the config: %s" % e)
-    else:
-        logger.info("Database connection established")
-
-
-@bot.event
-async def on_message(message):
-    # Ignore messages sent by bots
-    if message.author.bot:
-        return
-
-    if message.guild:
         try:
-            guild_config = await bot.config.find(message.guild.id)
-            if message.channel.id in guild_config["ignored_channels"]:
-                return
-        except exceptions.IdNotFound:
-            pass
-        except KeyError:
-            pass
+            await self.config.get_all()
+        except exceptions.PyMongoError as error:
+            log = 'An error occured while fetching the config: %s' % error
+            self.logger.error(log)
+        else:
+            self.logger.info('Database connection established.')
 
-    # Whenever the bot is tagged, respond with its prefix
-    if match := mention.match(message.content):
-        if int(match.group("id")) == bot.user.id:
-            data = await bot.config._Document__get_raw(message.guild.id)
-            if not data or "prefix" not in data:
-                prefix = bot.DEFAULTPREFIX
-            else:
-                prefix = data["prefix"]
+    async def on_message(self, message):
+        # Ignore messages sent by bots.
+        if message.author.bot:
+            return None
 
-            await message.channel.send(f"My prefix here is `{prefix}`", delete_after=15)
+        guild_id = message.guild.id
 
-    await bot.process_commands(message)
+        if message.guild:
+            try:
+                guild_config = await self.config.find(guild_id)
+                if message.channel.id in guild_config['ignored_channels']:
+                    return None
+            except (exceptions.IdNotFound, KeyError):
+                pass
+        # Whenever the bot is tagged, respond with its prefix
+        if match := mention.match(message.content):
+            if int(match.group('id')) == (self.user.id):
+                data = await self.config._Document__get_raw(guild_id)
+                if (not data) or ('prefix' not in data):
+                    prefix = self.DEFAULTPREFIX
+                else:
+                    prefix = data['prefix']
+
+                content = 'My prefix here is `%s`' % (prefix)
+                await message.channel.send(content, delete_after=15)
+
+        await self.process_commands(message)
+
+    def mongo(self, collection):
+        """Solution for needing to restart the bot each time a new collection
+        needs to be created.
+
+        This way you just call this method and create the instance
+        of the collection when you need it in the Cog.
+
+        Usage
+        -----
+        ```python
+        from discord.ext.commands import Cog
 
 
-@bot.command(description="Log the bot out.")
-@commands.is_owner()
-async def logout(ctx):
-    await ctx.send("Cya :wave:")
-    update_status.cancel()
-    await bot.logout()
+        class UsageExample(Cog):
+            def __init__(self, bot):
+                self.bot = bot
+                self.starboard = self.bot.mongo('starboard')
 
+                # Now just replace:
+                # `self.bot.starboard` -> `self.starboard`
+                # With VSCode it's easy, just highlight and hit `CTRL + F2`.
 
-@bot.command(name="eval", aliases=["exec"])
-@commands.is_owner()
-async def _eval(ctx, *, code):
-    """
-    Evaluates given code.
-    """
-    code = clean_code(code)
+        ```
 
-    local_variables = {
-        "discord": discord,
-        "commands": commands,
-        "bot": bot,
-        "ctx": ctx,
-        "channel": ctx.channel,
-        "author": ctx.author,
-        "guild": ctx.guild,
-        "message": ctx.message,
-    }
+        Returns connection to collection as an instance of :class: Document.
+        """
 
-    stdout = io.StringIO()
+        db = AsyncIOMotorClient(config['mongo_url']).pyro
+        return Document(db, collection)
 
-    try:
-        with contextlib.redirect_stdout(stdout):
-            exec(
-                f"async def func():\n{textwrap.indent(code, '    ')}", local_variables,
+    def load_cogs(self, path):
+
+        extensions = [
+            ext for ext
+            in listdir(path)
+            if not ext.startswith('_')
+            and ext.endswith('.py')
+        ]
+
+        for extension in extensions:
+
+            dot_format = (
+                path
+                .replace('\\', '/')
+                .replace('/', '.')
+                .strip('.')
+                + '.'
             )
 
-            obj = await local_variables["func"]()
-            result = f"{stdout.getvalue()}\n-- {obj}\n"
+            name = dot_format + extension[:3]
 
-    except Exception as e:
-        result = "".join(format_exception(e, e, e.__traceback__))
+            self.bot.load_extension(name=name)
 
-    pager = Pag(
-        timeout=180,
-        use_defaults=True,
-        entries=[result[i : i + 2000] for i in range(0, len(result), 2000)],
-        length=1,
-        prefix="```py\n",
-        suffix="```",
-    )
+    @staticmethod
+    async def get_prefix(bot, message):
+        # If private message:
+        if not message.guild:
+            return when_mentioned_or(bot.DEFAULTPREFIX)(bot, message)
 
-    await pager.start(ctx)
+        try:
+            # Could be rewritten to be:
+            # data = await bot.mongo('config').find(message.guild.id)
+            data = await bot.config.find(message.guild.id)
 
+            # Make sure we have a usable prefix:
+            if (not data) or ('prefix' not in data):
+                return when_mentioned_or(bot.DEFAULTPREFIX)(bot, message)
 
-@bot.command()
-@commands.is_owner()
-async def dbbackup(ctx):
-    """Back up the database"""
-    await ctx.send("https://giphy.com/gifs/christmas-3P0oEX5oTmrkY")
+            return when_mentioned_or(data['prefix'])(bot, message)
 
-    backupDB = motor.motor_asyncio.AsyncIOMotorClient(config["mongo_url"]).backup
-    backupConfig = Document(backupDB, "config")
-    backupKeywords = Document(backupDB, "keywords")
-    backupQuiz = Document(backupDB, "quiz")
-    backupCode = Document(backupDB, "code")
-    backupQuizAnswers = Document(backupDB, "quizAnswers")
-    backupStarboard = Document(backupDB, "starboard")
+        except exceptions.IdNotFound:
+            return when_mentioned_or(bot.DEFAULTPREFIX)(bot, message)
 
-    for item in await bot.config.get_all():
-        await backupConfig.upsert(item)
-
-    for item in await bot.keywords.get_all():
-        await backupKeywords.upsert(item)
-
-    for item in await bot.quiz.get_all():
-        await backupQuiz.upsert(item)
-
-    for item in await bot.code.get_all():
-        await backupCode.upsert(item)
-
-    for item in await bot.quiz_answers.get_all():
-        await backupQuizAnswers.upsert(item)
-
-    for item in await bot.starboard.get_all():
-        await backupStarboard.upsert(item)
-
-    await ctx.send(
-        "https://giphy.com/gifs/deliverance-vN3fMMSAmVwoo\n\n*Database backup complete*"
-    )
+    def run(self):
+        return super().run(config['token'])
 
 
-# Load all extensions
-if __name__ == "__main__":
-    # Database initialization
-    bot.db = motor.motor_asyncio.AsyncIOMotorClient(config["mongo_url"]).pyro
+if __name__ == '__main__':
 
-    bot.config = Document(bot.db, "config")
-    bot.keywords = Document(bot.db, "keywords")
-    bot.quiz = Document(bot.db, "quiz")
-    bot.code = Document(bot.db, "code")
-    bot.quiz_answers = Document(bot.db, "quizAnswers")
-    bot.starboard = Document(bot.db, "starboard")
-    bot.tictactoe = Document(bot.db, "tictactoe")
-
-    for ext in os.listdir("./cogs/"):
-        if ext.endswith(".py") and not ext.startswith("_"):
-            try:
-                bot.load_extension(f"cogs.{ext[:-3]}")
-            except Exception as e:
-                logger.error(
-                    "An error occurred while loading ext cogs.{}: {}".format(
-                        ext[:-3], e
-                    )
-                )
-
-    bot.run(config["token"])
+    bot = Pyro()
+    bot.load_cogs('./cogs')
+    bot.run()

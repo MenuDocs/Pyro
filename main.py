@@ -137,7 +137,7 @@ class Pyro(Bot):
                 + '.'
             )
 
-            name = dot_format + extension[:3]
+            name = dot_format + extension[:-3]
 
             self.bot.load_extension(name=name)
 

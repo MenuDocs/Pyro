@@ -139,7 +139,8 @@ async def _eval(ctx, *, code):
     try:
         with contextlib.redirect_stdout(stdout):
             exec(
-                f"async def func():\n{textwrap.indent(code, '    ')}", local_variables,
+                f"async def func():\n{textwrap.indent(code, '    ')}",
+                local_variables,
             )
 
             obj = await local_variables["func"]()
@@ -200,7 +201,7 @@ async def dbbackup(ctx):
 # Load all extensions
 if __name__ == "__main__":
     # Database initialization
-    bot.db = motor.motor_asyncio.AsyncIOMotorClient("mongo_url").pyro
+    bot.db = motor.motor_asyncio.AsyncIOMotorClient(mongo_url).pyro
 
     bot.config = Document(bot.db, "config")
     bot.keywords = Document(bot.db, "keywords")

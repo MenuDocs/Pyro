@@ -1,0 +1,35 @@
+name: Publish Docker Image
+on:
+    push:
+        branches: [ menudocs ]
+jobs:
+    push_to_registry:
+        name: Push Docker image to GitHub Packages
+        runs-on: ubuntu-latest
+        steps:
+            - name: Check out the repo
+              uses: actions/checkout@v2
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v1
+
+            - name: Login to GitHubHub
+              uses: docker/login-action@v1
+              with:
+                  registry: docker.pkg.github.com
+                  username: ${{ github.repository_owner }}
+                  password: ${{ github.token }}
+
+            - name: Build and push
+              uses: docker/build-push-action@v2
+              with:
+                context: .
+                file: ./Dockerfile
+                pull: true
+                push: true
+                build-args: |
+                    BRANCH=${{ github.ref }}
+                    COMMIT=${{ github.sha }}
+                cache-from: type=registry,ref=menudocs/pyro/pyro:latest
+                cache-to: type=inline
+                tags: menudocs/pyro:latest

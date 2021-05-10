@@ -111,11 +111,16 @@ class Starboard(commands.Cog, name="Starboard"):
                             f"\n\n**[Jump to message]({msg.jump_url})**"
                         )
 
+                        if msg_embed:
+                            image = msg_embed.image.url
+                            if image:
+                                embed.set_image(url=image)
+
                         starboard_message = await starboard.send(
                             content=f"{len(react)} {emoji} | {channel.mention}",
                             embed=embed,
                         )
-                        if msg_embed:
+                        if msg_embed and not msg_embed.image.url:
                             await starboard.send(embed=msg_embed)
 
                         await self.bot.starboard.upsert(

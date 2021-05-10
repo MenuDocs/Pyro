@@ -189,8 +189,10 @@ class Docs(commands.Cog, name="Documentation"):
                         {
                             "title": "'It'll be finished before Mandroc still Connor' ~ Kindly, Pyro Devs",
                             "description": "Primary dev:\n<@330566541156417536>\nDevs:\n"
-                            "<@271612318947868673>\n<@686846374737739797> ",
-                            "footer": {"text": "Imagine including easter eggs"},
+                            "<@271612318947868673>",
+                            "footer": {
+                                "text": "Fun fact, the initial bot was coded on a phone."
+                            },
                         }
                     )
                 )

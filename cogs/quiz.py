@@ -168,7 +168,10 @@ class Quiz(commands.Cog, name="Quiz"):
             quiz_role = None
 
         await ctx.send("Quiz started in your DMs!")
-        msg = await ctx.author.send("Do you still want to take the quiz? [yes/no]")
+        try:
+            msg = await ctx.author.send("Do you still want to take the quiz? [yes/no]")
+        except discord.HTTPException:
+            return await ctx.send(f"I cannot dm you {ctx.author.mention}, so I cannot do the quiz with you.")
 
         try:
             msg = await self.bot.wait_for(

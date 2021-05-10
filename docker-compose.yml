@@ -1,0 +1,8 @@
+version: "3.8"
+services:
+  pyro:
+    image: pyro
+    build: .
+    environment:
+      - TOKEN=${TOKEN}
+      - MONGO=${MONGO}

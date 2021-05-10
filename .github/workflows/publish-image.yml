@@ -15,5 +15,5 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: docker.pkg.github.com
-          repository: menudocs/pyro/pyro
+          repository: menudocs/Pyro/pyro
           tag_with_ref: true

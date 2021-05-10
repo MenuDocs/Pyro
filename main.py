@@ -1,25 +1,22 @@
 import io
 import os
 import re
-import json
 import logging
 import textwrap
 import contextlib
-import time
 from traceback import format_exception
 
 import discord
 import motor.motor_asyncio
-from aiohttp import ClientSession
-from discord.ext import commands, tasks
+from discord.ext import commands
 
 from utils import exceptions
 from utils.mongo import Document
 from utils.util import clean_code
 from utils.util import Pag
 
-with open("config.json", "r") as f:
-    config = json.load(f)
+mongo_url = os.getenv("MONGO")
+token = os.getenv("TOKEN")
 
 
 async def get_prefix(bot, message):
@@ -115,7 +112,6 @@ async def on_message(message):
 @commands.is_owner()
 async def logout(ctx):
     await ctx.send("Cya :wave:")
-    update_status.cancel()
     await bot.logout()
 
 
@@ -170,31 +166,31 @@ async def dbbackup(ctx):
     """Back up the database"""
     await ctx.send("https://giphy.com/gifs/christmas-3P0oEX5oTmrkY")
 
-    backupDB = motor.motor_asyncio.AsyncIOMotorClient(config["mongo_url"]).backup
-    backupConfig = Document(backupDB, "config")
-    backupKeywords = Document(backupDB, "keywords")
-    backupQuiz = Document(backupDB, "quiz")
-    backupCode = Document(backupDB, "code")
-    backupQuizAnswers = Document(backupDB, "quizAnswers")
-    backupStarboard = Document(backupDB, "starboard")
+    backup_db = motor.motor_asyncio.AsyncIOMotorClient(mongo_url).backup
+    backup_config = Document(backup_db, "config")
+    backup_keywords = Document(backup_db, "keywords")
+    backup_quiz = Document(backup_db, "quiz")
+    backup_code = Document(backup_db, "code")
+    backup_quiz_answers = Document(backup_db, "quizAnswers")
+    backup_starboard = Document(backup_db, "starboard")
 
     for item in await bot.config.get_all():
-        await backupConfig.upsert(item)
+        await backup_config.upsert(item)
 
     for item in await bot.keywords.get_all():
-        await backupKeywords.upsert(item)
+        await backup_keywords.upsert(item)
 
     for item in await bot.quiz.get_all():
-        await backupQuiz.upsert(item)
+        await backup_quiz.upsert(item)
 
     for item in await bot.code.get_all():
-        await backupCode.upsert(item)
+        await backup_code.upsert(item)
 
     for item in await bot.quiz_answers.get_all():
-        await backupQuizAnswers.upsert(item)
+        await backup_quiz_answers.upsert(item)
 
     for item in await bot.starboard.get_all():
-        await backupStarboard.upsert(item)
+        await backup_starboard.upsert(item)
 
     await ctx.send(
         "https://giphy.com/gifs/deliverance-vN3fMMSAmVwoo\n\n*Database backup complete*"
@@ -204,7 +200,7 @@ async def dbbackup(ctx):
 # Load all extensions
 if __name__ == "__main__":
     # Database initialization
-    bot.db = motor.motor_asyncio.AsyncIOMotorClient(config["mongo_url"]).pyro
+    bot.db = motor.motor_asyncio.AsyncIOMotorClient("mongo_url").pyro
 
     bot.config = Document(bot.db, "config")
     bot.keywords = Document(bot.db, "keywords")
@@ -225,4 +221,4 @@ if __name__ == "__main__":
                     )
                 )
 
-    bot.run(config["token"])
+    bot.run(token)

@@ -4,20 +4,21 @@ Pyro is supposed to be a short sharp coded bot to help the MenuDocs community wi
 # Installation
 **Python 3.8 is required**
 
-Run `git clone https://github.com/MenuDocs/Pyro`.
-To install the requirements for the bot, run `python3.8 -m pip install -r requirements.txt` inside the bot's directory.
+```shell
+> git clone https://github.com/MenuDocs/Pyro
 
-# Setup
-The bot expects there to be a configuration file named `config.json` to grab multiple values from, formatted this way:
-```json
-{
-  "token": "YOUR TOKEN",
-  "mongo_url": "THE URL TO ACCESS THE MONGODB DATABASE ",
-  "API_username": "MenuDocs's Pyro JWT username",
-  "API_password": "MenuDocs's Pyro JWT password"
-}
+> docker-compose build
+
+> docker-compose up
 ```
 
-Mind that the fields that have `id` in their name need an actual ID as the value.
 
-with that inside the bot's directory, running `python3.8 main.py` should run the bot without any problem, if the ID's are valid.
+# Setup
+The bot expects there to be a configuration file named `docker-compose.override.yml` to grab multiple values from, formatted this way:
+```docker
+services:
+  pyro:
+    environment:
+      - TOKEN="Your token here"
+      - MONGO="Your connection string here"
+```

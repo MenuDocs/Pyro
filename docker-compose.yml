@@ -3,6 +3,3 @@ services:
   pyro:
     image: pyro
     build: .
-    environment:
-      - TOKEN=${TOKEN}
-      - MONGO=${MONGO}

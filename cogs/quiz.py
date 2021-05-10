@@ -171,7 +171,9 @@ class Quiz(commands.Cog, name="Quiz"):
         try:
             msg = await ctx.author.send("Do you still want to take the quiz? [yes/no]")
         except discord.HTTPException:
-            return await ctx.send(f"I cannot dm you {ctx.author.mention}, so I cannot do the quiz with you.")
+            return await ctx.send(
+                f"I cannot dm you {ctx.author.mention}, so I cannot do the quiz with you."
+            )
 
         try:
             msg = await self.bot.wait_for(

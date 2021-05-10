@@ -203,6 +203,8 @@ if __name__ == "__main__":
     # Database initialization
     bot.db = motor.motor_asyncio.AsyncIOMotorClient(mongo_url).pyro
 
+    print("Hello logs!")
+
     bot.config = Document(bot.db, "config")
     bot.keywords = Document(bot.db, "keywords")
     bot.quiz = Document(bot.db, "quiz")

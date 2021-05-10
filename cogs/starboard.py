@@ -105,7 +105,7 @@ class Starboard(commands.Cog, name="Starboard"):
                         msg_embed = msg.embeds[0] if msg.embeds else None
 
                         if msg_embed:
-                            embed.description = "View the below for embed."
+                            embed.description = msg.content or "View the below for embed."
 
                         embed.description += (
                             f"\n\n**[Jump to message]({msg.jump_url})**"

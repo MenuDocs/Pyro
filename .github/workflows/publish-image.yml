@@ -16,4 +16,4 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: docker.pkg.github.com
           repository: menudocs/Pyro/pyro
-          tag_with_ref: true
+          tags: menudocs/pyro:latest

@@ -8,7 +8,6 @@ Pyro is supposed to be a short sharp coded bot to help the MenuDocs community wi
 > git clone https://github.com/MenuDocs/Pyro
 
 > docker-compose build
-
 > docker-compose up
 ```
 

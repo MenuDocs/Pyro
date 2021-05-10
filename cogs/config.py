@@ -7,7 +7,6 @@ import asyncio
 
 import emojis
 import discord
-from git import Repo
 from discord.ext import commands
 
 from utils.exceptions import IdNotFound
@@ -89,23 +88,6 @@ class Config(commands.Cog, name="Configuration"):
                         )
                 await asyncio.sleep(0.5)
             await ctx.send(embed=embed)
-
-    @commands.command(
-        name="update", description="Automatically updates the bot from github!",
-    )
-    @commands.is_owner()
-    async def update_bot(self, ctx):
-        await ctx.send("Beginning the update")
-        async with ctx.typing():
-            repo = Repo(os.getcwd())
-            repo.git.fetch()
-            repo.git.pull()
-
-            # attempt to reload all commands
-            await asyncio.sleep(5)
-            await self.reload(ctx)
-
-            await ctx.send("Update complete!")
 
     @commands.group(
         name="starboard",

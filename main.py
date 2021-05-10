@@ -75,7 +75,7 @@ async def on_ready():
     except exceptions.PyMongoError as e:
         logger.error("An error occurred while fetching the config: %s" % e)
     else:
-        logger.info("Database connection established")
+        logger.info("Database connection established successfully")
 
 
 @bot.event
@@ -202,8 +202,6 @@ async def dbbackup(ctx):
 if __name__ == "__main__":
     # Database initialization
     bot.db = motor.motor_asyncio.AsyncIOMotorClient(mongo_url).pyro
-
-    print("Hello logs!")
 
     bot.config = Document(bot.db, "config")
     bot.keywords = Document(bot.db, "keywords")

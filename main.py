@@ -39,7 +39,7 @@ async def get_prefix(bot, message):
         # The prefix matches, now return the one the user used
         # such that dpy will dispatch the given command
         prefix_length = len(prefix)
-        prefix = prefix[:prefix_length]
+        prefix = message.content[:prefix_length]
 
     return commands.when_mentioned_or(prefix)(bot, message)
 

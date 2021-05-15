@@ -46,3 +46,7 @@ class Menudocs(commands.Cog):
         if pyro_pr_regex is not None:
             url = f"{BASE_MENUDOCS_URL}pyro/pulls/"
             await message.channel.send(url + pyro_pr_regex.group("number"))
+
+
+def setup(bot):
+    bot.add_cog(Docs(bot))

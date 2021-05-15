@@ -98,7 +98,8 @@ class Games(commands.Cog):
 
         is_bot = False
         difficulty = 1
-        if not player_two or player_two == ctx.guild.me:
+        # Disable difficulty atm
+        if not player_two or player_two == ctx.guild.me and False:
             player_two = ctx.guild.me
             is_bot = True
 

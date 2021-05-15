@@ -4,7 +4,7 @@ from math import inf as infinity
 
 import discord
 
-from .enums import Winner, Piece
+from utils.enums import Winner, Piece
 
 
 class InvalidMove(Exception):

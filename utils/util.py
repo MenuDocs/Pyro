@@ -1,7 +1,4 @@
-import json
-
 import discord
-from aiohttp import ClientSession
 from discord.ext.buttons import Paginator
 
 

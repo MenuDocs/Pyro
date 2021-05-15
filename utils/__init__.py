@@ -1,3 +1,2 @@
-from .stats import PlayerStats
-from .tictactoe import TicTacToe, InvalidMove
 from .enums import Winner
+from .games import TicTacToe, PlayerStats, InvalidMove

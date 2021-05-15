@@ -26,7 +26,8 @@ async def get_prefix(bot, message):
         # Make sure we have a use able prefix
         if not data or "prefix" not in data:
             prefix = bot.DEFAULTPREFIX
-        prefix = data["prefix"]
+        else:
+            prefix = data["prefix"]
     except exceptions.IdNotFound:
         # No set guild
         prefix = bot.DEFAULTPREFIX

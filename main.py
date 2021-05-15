@@ -20,6 +20,11 @@ token = os.getenv("TOKEN")
 
 
 async def get_prefix(bot, message):
+    # Appease my (271612318947868673) auto correct for now. Will be removed after
+    # completion of #38
+    if message.author.id == 271612318947868673:
+        return commands.when_mentioned_or([bot.DEFAULTPREFIX, "Oh", "oh"])(bot, message)
+
     # If private messages
     if not message.guild:
         return commands.when_mentioned_or(bot.DEFAULTPREFIX)(bot, message)

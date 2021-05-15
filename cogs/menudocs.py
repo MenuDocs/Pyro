@@ -55,6 +55,22 @@ class Menudocs(commands.Cog):
             url = f"{BASE_MENUDOCS_URL}/{repo}/pulls/{number}"
             await message.channel.send(url)
 
+    @commands.command()
+    async def init(self, ctx):
+        embed = discord.Embed(
+            title="Seeing something like?\n`ModuleNotFoundError: No module named 'utils.utils'`\nRead on!",
+            description="""
+            In order to fix import issues, please add an empty file called
+            `__init__.py` in your directory you are attempting to import from.
+            If you are following our tutorials this is likely `utils`
+            
+            This happens because python is not aware of your folder
+            being 'importable', by adding this file we explicitly
+            declare it 'importable'. This generally resolves this issue.
+            """,
+        )
+        await ctx.send(embed=embed)
+
 
 def setup(bot):
     bot.add_cog(Menudocs(bot))

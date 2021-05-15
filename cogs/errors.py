@@ -61,8 +61,7 @@ class Errors(commands.Cog, name="Error handler"):
                 f"`{ctx.command.qualified_name}` can only be used {err.number} command at a time under {str(err.per)}"
             )
 
-        else:
-            self.logger.error("".join(format_exception(err, err, err.__traceback__)))
+        self.logger.error("".join(format_exception(err, err, err.__traceback__)))
 
 
 def setup(bot):

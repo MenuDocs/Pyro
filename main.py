@@ -35,7 +35,11 @@ async def get_prefix(bot, message):
         return commands.when_mentioned_or(bot.DEFAULTPREFIX)(bot, message)
 
 
-logging.basicConfig(level="INFO")
+logging.basicConfig(
+    format="%(levelname)s | %(asctime)s | %(module)s | %(message)s",
+    datefmt="%d/%m/%Y %I:%M:%S %p",
+    level=logging.WARNING,
+)
 
 intents = discord.Intents.none()
 intents.messages = True

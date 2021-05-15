@@ -4,7 +4,7 @@ import re
 import discord
 from discord.ext import commands
 
-BASE_MENUDOCS_URL = "https://github.com/menudocs/"
+BASE_MENUDOCS_URL = "https://github.com/menudocs"
 MENUDOCS_GUILD_IDS = (416512197590777857, 566131499506860045)
 
 
@@ -17,6 +17,10 @@ def ensure_is_menudocs_guild():
     return commands.check(check)
 
 
+def extract_repo(regex):
+    return regex.group("repo") or "pyro"
+
+
 class Menudocs(commands.Cog):
     """A cog devoted to operations with the Menudocs guild"""
 
@@ -24,8 +28,8 @@ class Menudocs(commands.Cog):
         self.bot = bot
         self.logger = logging.getLogger(__name__)
 
-        self.pyro_issue_regex = re.compile(r"##(?P<number>[0-9]+)")
-        self.pyro_pr_regex = re.compile(r"\$\$(?P<number>[0-9]+)")
+        self.issue_regex = re.compile(r"##(?P<number>[0-9]+) (?P<repo>[a-zA-Z0-9]*)")
+        self.pr_regex = re.compile(r"\$\$(?P<number>[0-9]+) (?P<repo>[a-zA-Z0-9]*)")
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -37,15 +41,19 @@ class Menudocs(commands.Cog):
             # Not in menudocs
             return
 
-        pyro_issue_regex = self.pyro_issue_regex.search(message.content)
-        if pyro_issue_regex is not None:
-            url = f"{BASE_MENUDOCS_URL}pyro/issues/"
-            await message.channel.send(url + pyro_issue_regex.group("number"))
+        issue_regex = self.issue_regex.search(message.content)
+        if issue_regex is not None:
+            repo = extract_repo(issue_regex)
+            number = issue_regex.group("number")
+            url = f"{BASE_MENUDOCS_URL}/{repo}/issues/{number}"
+            await message.channel.send(url)
 
-        pyro_pr_regex = self.pyro_pr_regex.search(message.content)
-        if pyro_pr_regex is not None:
-            url = f"{BASE_MENUDOCS_URL}pyro/pulls/"
-            await message.channel.send(url + pyro_pr_regex.group("number"))
+        pr_regex = self.pr_regex.search(message.content)
+        if pr_regex is not None:
+            repo = extract_repo(pr_regex)
+            number = pr_regex.group("number")
+            url = f"{BASE_MENUDOCS_URL}/{repo}/pulls/{number}"
+            await message.channel.send(url)
 
 
 def setup(bot):

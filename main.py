@@ -20,24 +20,27 @@ token = os.getenv("TOKEN")
 
 
 async def get_prefix(bot, message):
-    # Appease my (271612318947868673) auto correct for now. Will be removed after
-    # completion of #38
-    if message.author.id == 271612318947868673:
-        return commands.when_mentioned_or(bot.DEFAULTPREFIX, "Oh", "oh")(bot, message)
-
-    # If private messages
-    if not message.guild:
-        return commands.when_mentioned_or(bot.DEFAULTPREFIX)(bot, message)
-
     try:
         data = await bot.config.find(message.guild.id)
 
         # Make sure we have a use able prefix
         if not data or "prefix" not in data:
-            return commands.when_mentioned_or(bot.DEFAULTPREFIX)(bot, message)
-        return commands.when_mentioned_or(data["prefix"])(bot, message)
+            prefix = bot.DEFAULTPREFIX
+        prefix = data["prefix"]
     except exceptions.IdNotFound:
-        return commands.when_mentioned_or(bot.DEFAULTPREFIX)(bot, message)
+        # No set guild
+        prefix = bot.DEFAULTPREFIX
+    except AttributeError:
+        # Dm's?
+        prefix = bot.DEFAULTPREFIX
+
+    if message.content.casefold().startswith(prefix.casefold()):
+        # The prefix matches, now return the one the user used
+        # such that dpy will dispatch the given command
+        prefix_length = len(prefix)
+        prefix = prefix[:prefix_length]
+
+    return commands.when_mentioned_or(prefix)(bot, message)
 
 
 logging.basicConfig(

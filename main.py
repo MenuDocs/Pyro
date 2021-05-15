@@ -38,7 +38,7 @@ async def get_prefix(bot, message):
 logging.basicConfig(
     format="%(levelname)s | %(asctime)s | %(module)s | %(message)s",
     datefmt="%d/%m/%Y %I:%M:%S %p",
-    level=logging.WARNING,
+    level=logging.INFO,
 )
 
 intents = discord.Intents.none()

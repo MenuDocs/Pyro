@@ -21,8 +21,6 @@ class Starboard(commands.Cog, name="Starboard"):
             # Only use this in guilds
             return
 
-        # TODO Ensure toggle actually works
-
         entries = await self.bot.config.get_all()
         guilds = list(map(lambda e: e["_id"], entries))
         if payload.guild_id in guilds:
@@ -45,7 +43,9 @@ class Starboard(commands.Cog, name="Starboard"):
                     reacts = msg.reactions
                     reacts = list(filter(lambda r: str(r.emoji) == emoji, reacts))
                 except discord.HTTPException:
-                    await channel.send("An error occurred while fetching the message")
+                    return await channel.send(
+                        "An error occurred while fetching the message"
+                    )
 
                 if reacts:
                     react = list(map(lambda u: u.id, await reacts[0].users().flatten()))
@@ -83,6 +83,10 @@ class Starboard(commands.Cog, name="Starboard"):
                                 content=f"{len(react)} {emoji} | {channel.mention}",
                                 embed=existing_message.embeds[0],
                             )
+                            return
+
+                        if starboard == channel:
+                            # Don't allow starboarding starboards, #37
                             return
 
                         embed = discord.Embed(

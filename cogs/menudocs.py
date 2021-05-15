@@ -22,7 +22,7 @@ def extract_repo(regex):
 
 
 class Menudocs(commands.Cog):
-    """A cog devoted to operations with the Menudocs guild"""
+    """A cog devoted to operations within the Menudocs guild"""
 
     def __init__(self, bot):
         self.bot = bot

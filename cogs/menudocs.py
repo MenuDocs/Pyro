@@ -28,8 +28,8 @@ class Menudocs(commands.Cog):
         self.bot = bot
         self.logger = logging.getLogger(__name__)
 
-        self.issue_regex = re.compile(r"##(?P<number>[0-9]+) (?P<repo>[a-zA-Z0-9]*)")
-        self.pr_regex = re.compile(r"\$\$(?P<number>[0-9]+) (?P<repo>[a-zA-Z0-9]*)")
+        self.issue_regex = re.compile(r"##(?P<number>[0-9]+)\s?(?P<repo>[a-zA-Z0-9]*)")
+        self.pr_regex = re.compile(r"\$\$(?P<number>[0-9]+)\s?(?P<repo>[a-zA-Z0-9]*)")
 
     @commands.Cog.listener()
     async def on_ready(self):

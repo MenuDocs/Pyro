@@ -56,7 +56,9 @@ class Menudocs(commands.Cog):
             await message.channel.send(url)
 
     @commands.command()
+    @ensure_is_menudocs_guild()
     async def init(self, ctx):
+        """Sends a helpful embed about how to fix import errors."""
         embed = discord.Embed(
             title="Seeing something like?\n`ModuleNotFoundError: No module named 'utils.utils'`\nRead on!",
             description="""
@@ -72,7 +74,9 @@ class Menudocs(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
+    @ensure_is_menudocs_guild()
     async def pypi(self, ctx):
+        """Sends a helpful embed about how to correctly download packages."""
         embed = discord.Embed(
             title="Trying to `pip install` something and getting the following?\n`Could not find a version that "
             "satisfies the requirement <package here>`\nRead on!",

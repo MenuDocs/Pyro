@@ -79,7 +79,7 @@ class Menudocs(commands.Cog):
         """Sends a helpful embed about how to correctly download packages."""
         embed = discord.Embed(
             title="Trying to `pip install` something and getting the following?\n`Could not find a version that "
-            "satisfies the requirement <package here>`\nRead on!",
+            "satisfies the requirement <package here>`",
             description="""
                 Most likely the package you are trying to install isn't named
                 the same as what you import. `discord.py` can be seen as an example

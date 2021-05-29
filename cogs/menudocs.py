@@ -83,7 +83,7 @@ class Menudocs(commands.Cog):
             description="""
                 Most likely the package you are trying to install isn't named
                 the same as what you import. `discord.py` can be seen as an example
-                here since you `import discord` and `pip install discord.py`.
+                here since you `import discord` and `pip install discord.py`
                 
                 A simple way to fix this is to google `pypi <package you want>`
                 This will 9 times out of 10 provide the pypi page for said package,

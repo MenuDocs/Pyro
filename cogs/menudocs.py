@@ -71,6 +71,23 @@ class Menudocs(commands.Cog):
         )
         await ctx.send(embed=embed)
 
+    @commands.command()
+    async def pypi(self, ctx):
+        embed = discord.Embed(
+            title="Trying to `pip install` something and getting the following?\n`Could not find a version that "
+            "satisfies the requirement <package here>`\nRead on!",
+            description="""
+                Most likely the package you are trying to install isn't named
+                the same as what you import. `discord.py` can be seen as an example
+                here since you `import discord` and `pip install discord.py`.
+                
+                A simple way to fix this is to google `pypi <package you want>`
+                This will 9 times out of 10 provide the pypi page for said package,
+                which will clearly indicate the correct way to install it.
+                """,
+        )
+        await ctx.send(embed=embed)
+
 
 def setup(bot):
     bot.add_cog(Menudocs(bot))

@@ -51,7 +51,7 @@ class Docs(commands.Cog, name="Documentation"):
 
         self.page_types = {
             "discord.py": "https://discordpy.readthedocs.io/en/latest",
-            "flags": "https://discord-ext-levelling.readthedocs.io/en/latest/",
+            "levelling": "https://discord-ext-levelling.readthedocs.io/en/latest/",
         }
 
     def finder(self, text, collection, *, key=None, lazy=True):

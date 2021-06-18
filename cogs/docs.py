@@ -49,6 +49,11 @@ class Docs(commands.Cog, name="Documentation"):
         self.bot = bot
         self.logger = logging.getLogger(__name__)
 
+        self.page_types = {
+            "discord.py": "https://discordpy.readthedocs.io/en/latest",
+            "flags": "https://discord-ext-levelling.readthedocs.io/en/latest/",
+        }
+
     def finder(self, text, collection, *, key=None, lazy=True):
         suggestions = []
         text = str(text)
@@ -137,9 +142,7 @@ class Docs(commands.Cog, name="Documentation"):
         self._rtfm_cache = cache
 
     async def do_rtfm(self, ctx, key, obj):
-        page_types = {
-            "latest": "https://discordpy.readthedocs.io/en/latest",
-        }
+        page_types = self.page_types
 
         if obj is None:
             await ctx.send(page_types[key])
@@ -169,8 +172,11 @@ class Docs(commands.Cog, name="Documentation"):
         description="Gives you a documentation link for a d.py entity.",
         aliases=["rtfd"],
     )
-    async def rtfm(self, ctx, *, query: str = None):
-        key = "latest"
+    async def rtfm(self, ctx, key: str = None, *, query: str = None):
+        if not key or key.lower() not in self.page_types.keys():
+            query = key + query
+            key = "discord.py"
+
         if query is not None:
             if query.lower() == "rtfm":
                 await ctx.send(

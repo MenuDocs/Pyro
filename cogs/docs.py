@@ -174,6 +174,10 @@ class Docs(commands.Cog, name="Documentation"):
     )
     async def rtfm(self, ctx, key: str = None, *, query: str = None):
         if not key or key.lower() not in self.page_types.keys():
+            # Avoid nonetypes
+            query = query or ""
+            key = key or ""
+
             query = key + query
             key = "discord.py"
 

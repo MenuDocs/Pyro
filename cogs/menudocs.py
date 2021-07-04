@@ -5,12 +5,23 @@ import discord
 from discord.ext import commands
 
 BASE_MENUDOCS_URL = "https://github.com/menudocs"
-MENUDOCS_GUILD_IDS = (416512197590777857, 566131499506860045)
+MAIN_GUILD = 416512197590777857
+PROJECT_GUILD = 566131499506860045
+MENUDOCS_GUILD_IDS = (MAIN_GUILD, PROJECT_GUILD)
 
 
 def ensure_is_menudocs_guild():
     async def check(ctx):
         if not ctx.guild or ctx.guild.id not in MENUDOCS_GUILD_IDS:
+            return False
+        return True
+
+    return commands.check(check)
+
+
+def ensure_is_menudocs_project_guild():
+    async def check(ctx):
+        if not ctx.guild or ctx.guild.id != PROJECT_GUILD:
             return False
         return True
 
@@ -90,6 +101,31 @@ class Menudocs(commands.Cog):
                 which will clearly indicate the correct way to install it.
                 """,
         )
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    @ensure_is_menudocs_project_guild()
+    async def story(self, ctx):
+        """Creates the current story for the project discord."""
+        channel = self.bot.get_channel(861209220536074250)
+        messages = await channel.history(limit=None, oldest_first=True).flatten()
+        story = ' '.join([message.content.lower() for message in messages])
+        story = story.capitalize()
+
+        # Stats
+        data = {}
+        for message in messages:
+            if message.author.name in data:
+                data[message.author.name] += 1
+            else:
+                data[message.author.name] = 1
+
+        data = sorted(data.items(), key=lambda x: x[1], reverse=True)
+
+        embed = discord.Embed(title=f"Here is the current story from {channel.name}", description=story)
+        for i in range(len(data)):
+            embed.add_field(name=data[i][0], value=f"Messages contributed to story: {data[i][1]}")
+
         await ctx.send(embed=embed)
 
 

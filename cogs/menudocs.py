@@ -4,6 +4,8 @@ import re
 import discord
 from discord.ext import commands
 
+from utils.util import Pag
+
 BASE_MENUDOCS_URL = "https://github.com/menudocs"
 MAIN_GUILD = 416512197590777857
 PROJECT_GUILD = 566131499506860045
@@ -109,7 +111,7 @@ class Menudocs(commands.Cog):
         """Creates the current story for the project discord."""
         channel = self.bot.get_channel(861209220536074250)
         messages = await channel.history(limit=None, oldest_first=True).flatten()
-        story = ' '.join([message.content.lower() for message in messages])
+        story = " ".join([message.content.lower() for message in messages])
         story = story.capitalize()
 
         # Stats
@@ -122,11 +124,19 @@ class Menudocs(commands.Cog):
 
         data = sorted(data.items(), key=lambda x: x[1], reverse=True)
 
-        embed = discord.Embed(title=f"Here is the current story from {channel.name}", description=story)
+        story += "\n\n"
         for i in range(len(data)):
-            embed.add_field(name=data[i][0], value=f"Messages contributed to story: {data[i][1]}")
+            story += f"{data[i][0]}, Messages contributed to story: {data[i][1]} \n"
 
-        await ctx.send(embed=embed)
+        pager = Pag(
+            title=f"Here is the current story from {channel.name}",
+            entries=[story[i : i + 2000] for i in range(0, len(story), 2000)],
+            length=1,
+            prefix="```py\n",
+            suffix="```",
+        )
+
+        await pager.start(ctx)
 
 
 def setup(bot):

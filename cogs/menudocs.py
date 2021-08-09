@@ -11,10 +11,10 @@ MAIN_GUILD = 416512197590777857
 PROJECT_GUILD = 566131499506860045
 MENUDOCS_GUILD_IDS = (MAIN_GUILD, PROJECT_GUILD)
 PYTHON_HELP_CHANNEL_IDS = (
-    621912956627582976,
-    621913007630319626,
-    479465622850371606,
-    416522595958259713,
+    621912956627582976,  # discord.py
+    621913007630319626,  # python
+    702862760052129822,  # pyro
+    416522595958259713,  # commands (main dc)
 )
 
 
@@ -49,8 +49,14 @@ class Menudocs(commands.Cog):
 
         self.issue_regex = re.compile(r"##(?P<number>[0-9]+)\s?(?P<repo>[a-zA-Z0-9]*)")
         self.pr_regex = re.compile(r"\$\$(?P<number>[0-9]+)\s?(?P<repo>[a-zA-Z0-9]*)")
-        self.injected_self = re.compile(
+        self.requires_self_removal = re.compile(
             r"@(client|bot)\.command\(\)\n(async def .*\(self, ctx.*\):)"
+        )
+        self.command_requires_self_addition = re.compile(
+            r"@commands\.command\(\)\n(async def .*\()(.*)(\).*:)"
+        )
+        self.event_requires_self_addition = re.compile(
+            r"@commands\.Cog\.listener\(\)\n(async def .*\()(.*)(\).*:)"
         )
 
     @commands.Cog.listener()
@@ -81,15 +87,16 @@ class Menudocs(commands.Cog):
         if message.channel.id not in PYTHON_HELP_CHANNEL_IDS:
             return
 
-        await self.process_injected_self(message)
+        await self.process_requires_self_removal(message)
+        await self.process_requires_self_addition(message)
 
-    async def process_injected_self(self, message):
+    async def process_requires_self_removal(self, message):
         """
         Look in a message and attempt to auto-help on
         instances where members send code NOT in a cog
         that also contains self
         """
-        injected_self = self.injected_self.search(message.content)
+        injected_self = self.requires_self_removal.search(message.content)
         if injected_self is None:
             # Don't process
             return
@@ -112,7 +119,59 @@ class Menudocs(commands.Cog):
         embed.set_footer(text="Believe this is incorrect? Let Skelmis know.")
 
         await message.channel.send(
-            f"{message.author.mention} this might help.", embed=embed, delete_after=30
+            f"{message.author.mention} this might help.", embed=embed
+        )
+
+    async def process_requires_self_addition(self, message):
+        """
+        Look in a message and attempt to auto-help on
+        instances where members send code IN a cog
+        that doesnt contain self
+        """
+        event_requires_self_addition = self.event_requires_self_addition.search(
+            message.content
+        )
+        command_requires_self_addition = self.command_requires_self_addition.search(
+            message.content
+        )
+
+        if event_requires_self_addition is not None:
+            # Event posted, check if it needs self
+            to_use_regex = event_requires_self_addition
+            msg = "an event"
+        elif command_requires_self_addition is not None:
+            # Command posted, check if it needs self
+            to_use_regex = command_requires_self_addition
+            msg = "a command"
+        else:
+            return
+
+        args_group = to_use_regex.group(2)
+        if args_group.startswith("self,"):
+            return
+
+        initial_func = (
+            to_use_regex.group(1) + to_use_regex.group(2) + to_use_regex.group(3)
+        )
+
+        args_group = f"self, {args_group}"
+
+        final_func = to_use_regex.group(1) + args_group + to_use_regex.group(3)
+
+        # We need to process this
+        embed = discord.Embed(
+            description=f"Looks like your defining {msg} in a class (Cog) without "
+            "using `self` as the first variable. This will likely lead to issues and "
+            "you should change it as per the following:"
+            f"\n\n**Old**\n`{initial_func}`\n**New | Fixed**\n`{final_func}`",
+            timestamp=message.created_at,
+            color=0x26F7FD,
+        )
+        embed.set_author(name="Pyro Auto Helper", icon_url=message.guild.me.avatar_url)
+        embed.set_footer(text="Believe this is incorrect? Let Skelmis know.")
+
+        await message.channel.send(
+            f"{message.author.mention} this might help.", embed=embed
         )
 
     @commands.command()

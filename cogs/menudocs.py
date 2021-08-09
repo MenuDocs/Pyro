@@ -10,6 +10,12 @@ BASE_MENUDOCS_URL = "https://github.com/menudocs"
 MAIN_GUILD = 416512197590777857
 PROJECT_GUILD = 566131499506860045
 MENUDOCS_GUILD_IDS = (MAIN_GUILD, PROJECT_GUILD)
+PYTHON_HELP_CHANNEL_IDS = (
+    621912956627582976,
+    621913007630319626,
+    479465622850371606,
+    416522595958259713,
+)
 
 
 def ensure_is_menudocs_guild():
@@ -43,6 +49,9 @@ class Menudocs(commands.Cog):
 
         self.issue_regex = re.compile(r"##(?P<number>[0-9]+)\s?(?P<repo>[a-zA-Z0-9]*)")
         self.pr_regex = re.compile(r"\$\$(?P<number>[0-9]+)\s?(?P<repo>[a-zA-Z0-9]*)")
+        self.injected_self = re.compile(
+            r"@(client|bot)\.command\(\)\n(async def .*\(self, ctx.*\):)"
+        )
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -67,6 +76,44 @@ class Menudocs(commands.Cog):
             number = pr_regex.group("number")
             url = f"{BASE_MENUDOCS_URL}/{repo}/pulls/{number}"
             await message.channel.send(url)
+
+        # Only process in python help channels
+        if message.channel.id not in PYTHON_HELP_CHANNEL_IDS:
+            return
+
+        await self.process_injected_self(message)
+
+    async def process_injected_self(self, message):
+        """
+        Look in a message and attempt to auto-help on
+        instances where members send code NOT in a cog
+        that also contains self
+        """
+        injected_self = self.injected_self.search(message.content)
+        if injected_self is None:
+            # Don't process
+            return
+
+        initial_func = injected_self.group(2)
+        fixed_func = initial_func.replace("self,", "")
+        if "( c" in fixed_func:
+            fixed_func = fixed_func.replace("( c", "(c")
+
+        # We need to process this
+        embed = discord.Embed(
+            description="Looks like your defining a command with `self` as the first argument "
+            "without using the correct decorator. Likely you want to remove `self` as this only "
+            "applies to commands defined within a class (Cog).\nYou should change it as per the following:"
+            f"\n\n**Old**\n`{initial_func}`\n**New | Fixed**\n`{fixed_func}`",
+            timestamp=message.created_at,
+            color=0x26F7FD,
+        )
+        embed.set_author(name="Pyro Auto Helper", icon_url=message.guild.me.avatar_url)
+        embed.set_footer(text="Believe this is incorrect? Let Skelmis know.")
+
+        await message.channel.send(
+            f"{message.author.mention} this might help.", embed=embed, delete_after=30
+        )
 
     @commands.command()
     @ensure_is_menudocs_guild()

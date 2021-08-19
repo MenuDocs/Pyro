@@ -147,7 +147,7 @@ class Menudocs(commands.Cog):
             return
 
         args_group = to_use_regex.group(2)
-        if args_group.startswith("self,"):
+        if args_group.startswith("self"):
             return
 
         initial_func = (

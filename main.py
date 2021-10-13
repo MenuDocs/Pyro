@@ -214,9 +214,7 @@ async def dbbackup(ctx):
 # Load all extensions
 if __name__ == "__main__":
     # Database initialization
-    bot.db = motor.motor_asyncio.AsyncIOMotorClient(
-        "mongodb+srv://PyroAdmin:k2E0UoCxu7X5AeDF@pyromain.f8uvd.mongodb.net/pyro?retryWrites=true&w=majority"
-    ).pyro
+    bot.db = motor.motor_asyncio.AsyncIOMotorClient(mongo_url).pyro
 
     bot.config = Document(bot.db, "config")
     bot.keywords = Document(bot.db, "keywords")
@@ -237,4 +235,4 @@ if __name__ == "__main__":
                     )
                 )
 
-    bot.run("ODgyMTI1OTM1Mjc5NzM0ODI0.YS21zA.5i2ueS_qQ_TqFcFxngtCzJbImws")
+    bot.run(token)

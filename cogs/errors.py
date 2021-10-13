@@ -1,8 +1,8 @@
 import logging
 from traceback import format_exception
 
-import discord
-from discord.ext import commands
+import nextcord
+from nextcord.ext import commands
 
 
 class Errors(commands.Cog, name="Error handler"):
@@ -51,7 +51,7 @@ class Errors(commands.Cog, name="Error handler"):
         elif isinstance(err, commands.DisabledCommand):
             await ctx.send(f"`{ctx.command.qualified_name}` is currently disabled.")
 
-        elif isinstance(err, discord.HTTPException):
+        elif isinstance(err, nextcord.HTTPException):
             await ctx.send(
                 "An error occurred while I was trying to execute a task. Are you sure I have the correct permissions?"
             )

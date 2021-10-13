@@ -1,4 +1,4 @@
-import discord
+import nextcord
 from discord.ext.buttons import Paginator
 
 
@@ -6,7 +6,7 @@ class Pag(Paginator):
     async def teardown(self):
         try:
             await self.page.clear_reactions()
-        except discord.HTTPException:
+        except nextcord.HTTPException:
             pass
 
 

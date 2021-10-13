@@ -6,8 +6,8 @@ import logging
 import asyncio
 
 import emojis
-import discord
-from discord.ext import commands
+import nextcord
+from nextcord.ext import commands
 
 from utils.exceptions import IdNotFound
 
@@ -35,13 +35,15 @@ class Config(commands.Cog, name="Configuration"):
         )
 
     @commands.command(
-        name="reload", description="Reload all/one of the bots cogs!", usage="[cog]",
+        name="reload",
+        description="Reload all/one of the bots cogs!",
+        usage="[cog]",
     )
     @commands.is_owner()
     async def reload(self, ctx, cog=None):
         if not cog:
             async with ctx.typing():
-                embed = discord.Embed(
+                embed = nextcord.Embed(
                     title="Reloading all cogs!",
                     color=0x808080,
                     timestamp=ctx.message.created_at,
@@ -56,14 +58,15 @@ class Config(commands.Cog, name="Configuration"):
                             description += f"Reloaded: `{ext}`\n"
                         except Exception as e:
                             embed.add_field(
-                                name=f"Failed to reload: `{ext}`", value=e,
+                                name=f"Failed to reload: `{ext}`",
+                                value=e,
                             )
                     await asyncio.sleep(0.5)
                 embed.description = description
                 await ctx.send(embed=embed)
         else:
             async with ctx.typing():
-                embed = discord.Embed(
+                embed = nextcord.Embed(
                     title=f"Reloading {cog}!",
                     color=0x808080,
                     timestamp=ctx.message.created_at,
@@ -84,7 +87,8 @@ class Config(commands.Cog, name="Configuration"):
                     except Exception:
                         desired_trace = traceback.format_exc()
                         embed.add_field(
-                            name=f"Failed to reload: `{ext}`", value=desired_trace,
+                            name=f"Failed to reload: `{ext}`",
+                            value=desired_trace,
                         )
                 await asyncio.sleep(0.5)
             await ctx.send(embed=embed)
@@ -101,7 +105,8 @@ class Config(commands.Cog, name="Configuration"):
         await ctx.invoke(self.bot.get_command("help"), entity="starboard")
 
     @starboard.command(
-        name="toggle", description="Turn the starboard on or off for your guild.",
+        name="toggle",
+        description="Turn the starboard on or off for your guild.",
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
@@ -123,11 +128,12 @@ class Config(commands.Cog, name="Configuration"):
             await self.bot.config.upsert(data)
 
     @starboard.command(
-        name="channel", description="Set the starboard channel for this guild!",
+        name="channel",
+        description="Set the starboard channel for this guild!",
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
-    async def sb_channel(self, ctx, channel: discord.TextChannel = None):
+    async def sb_channel(self, ctx, channel: nextcord.TextChannel = None):
         if channel is None:
             await ctx.send(
                 "I will attempt to set this guilds starboard channel to this channel as you failed to give me another "
@@ -137,7 +143,7 @@ class Config(commands.Cog, name="Configuration"):
         channel = channel or ctx.channel
         try:
             await channel.send("test", delete_after=0.05)
-        except discord.HTTPException:
+        except nextcord.HTTPException:
             await ctx.send(
                 "I can not send a message to that channel! Please give me permissions and try again."
             )
@@ -158,15 +164,16 @@ class Config(commands.Cog, name="Configuration"):
             await ctx.send("I have set the starboard channel for this guild!")
 
     @starboard.command(
-        name="emoji", description="Make the starboard work with your own emoji!",
+        name="emoji",
+        description="Make the starboard work with your own emoji!",
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
-    async def sb_emoji(self, ctx, emoji: typing.Union[discord.Emoji, str] = None):
+    async def sb_emoji(self, ctx, emoji: typing.Union[nextcord.Emoji, str] = None):
         if not emoji:
             await self.bot.config.upsert({"_id": ctx.guild.id, "emoji": None})
             await ctx.send("Reset your server's custom emoji.")
-        elif isinstance(emoji, discord.Emoji):
+        elif isinstance(emoji, nextcord.Emoji):
             if not emoji.is_usable():
                 await ctx.send("I can't use that emoji.")
                 return
@@ -201,7 +208,7 @@ class Config(commands.Cog, name="Configuration"):
         description="Ignore a specified channel. This does not respond to commands in the specified channel."
     )
     @commands.has_permissions(manage_messages=True)
-    async def ignore(self, ctx, channel: discord.TextChannel = None):
+    async def ignore(self, ctx, channel: nextcord.TextChannel = None):
         channel = channel or ctx.channel
 
         try:
@@ -231,7 +238,7 @@ class Config(commands.Cog, name="Configuration"):
         description="Unignores a previously ignored channel. Allows commands to be ran."
     )
     @commands.has_permissions(manage_messages=True)
-    async def unignore(self, ctx, channel: discord.TextChannel):
+    async def unignore(self, ctx, channel: nextcord.TextChannel):
         try:
             data = await self.bot.config.find(ctx.guild.id)
             if channel.id not in data["ignored_channels"]:
@@ -256,7 +263,7 @@ class Config(commands.Cog, name="Configuration"):
     )
     @commands.has_permissions(manage_channels=True)
     async def guild_config(self, ctx):
-        embed = discord.Embed(
+        embed = nextcord.Embed(
             title=f"Configuration of {ctx.guild.name}",
             color=random.randint(0, 0xFFFFFF),
         )

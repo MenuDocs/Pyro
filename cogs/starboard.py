@@ -1,7 +1,7 @@
 import logging
 
-import discord
-from discord.ext import commands
+import nextcord
+from nextcord.ext import commands
 
 from utils.exceptions import IdNotFound
 
@@ -42,7 +42,7 @@ class Starboard(commands.Cog, name="Starboard"):
                     msg = await channel.fetch_message(payload.message_id)
                     reacts = msg.reactions
                     reacts = list(filter(lambda r: str(r.emoji) == emoji, reacts))
-                except discord.HTTPException:
+                except nextcord.HTTPException:
                     return await channel.send(
                         "An error occurred while fetching the message"
                     )
@@ -89,7 +89,7 @@ class Starboard(commands.Cog, name="Starboard"):
                             # Don't allow starboarding starboards, #37
                             return
 
-                        embed = discord.Embed(
+                        embed = nextcord.Embed(
                             description=msg.content,
                             color=msg.author.color,
                             timestamp=msg.created_at,
@@ -166,7 +166,7 @@ class Starboard(commands.Cog, name="Starboard"):
                     msg = await channel.fetch_message(payload.message_id)
                     reacts = msg.reactions
                     reacts = list(filter(lambda r: str(r.emoji) == emoji, reacts))
-                except discord.HTTPException:
+                except nextcord.HTTPException:
                     await channel.send("An error occurred while fetching the message")
 
                 if reacts:

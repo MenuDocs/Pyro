@@ -80,7 +80,7 @@ class Menudocs(commands.Cog):
         if pr_regex is not None:
             repo = extract_repo(pr_regex)
             number = pr_regex.group("number")
-            url = f"{BASE_MENUDOCS_URL}/{repo}/pulls/{number}"
+            url = f"{BASE_MENUDOCS_URL}/{repo}/pull/{number}"
             await message.channel.send(url)
 
         # Only process in python help channels

@@ -187,6 +187,7 @@ async def dbbackup(ctx):
     backup_code = Document(backup_db, "code")
     backup_quiz_answers = Document(backup_db, "quizAnswers")
     backup_starboard = Document(backup_db, "starboard")
+    backup_tictactoe = Document(backup_db, "tictactoe")
 
     for item in await bot.config.get_all():
         await backup_config.upsert(item)
@@ -205,6 +206,9 @@ async def dbbackup(ctx):
 
     for item in await bot.starboard.get_all():
         await backup_starboard.upsert(item)
+
+    for item in await bot.tictactoe.get_all():
+        await backup_tictactoe.upsert(item)
 
     await ctx.send(
         "https://giphy.com/gifs/deliverance-vN3fMMSAmVwoo\n\n*Database backup complete*"

@@ -96,7 +96,7 @@ class Menudocs(commands.Cog):
             # Not in menudocs
             return
 
-        if not thread.parent_id in PYTHON_HELP_CHANNEL_IDS:
+        if thread.parent_id not in PYTHON_HELP_CHANNEL_IDS:
             # Not a python help channel
             return
 

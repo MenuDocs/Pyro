@@ -1,6 +1,6 @@
 aiofiles==0.6.0
 black==21.5b0
-discord.py==1.7.2
+nextcord==2.0.0a3
 buttons==0.1.9
 dnspython==2.1.0
 motor==2.4.0

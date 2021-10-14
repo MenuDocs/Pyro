@@ -5,8 +5,8 @@ import zlib
 import logging
 
 import aiohttp
-import discord
-from discord.ext import commands
+import nextcord
+from nextcord.ext import commands
 
 
 # Sphinx reader object because d.py docs
@@ -156,7 +156,7 @@ class Docs(commands.Cog, name="Documentation"):
 
         self.matches = self.finder(obj, cache, key=lambda t: t[0], lazy=False)[:8]
 
-        e = discord.Embed(colour=0xCE2029)
+        e = nextcord.Embed(colour=0xCE2029)
         if len(self.matches) == 0:
             return await ctx.send("Could not find anything. Sorry.")
 
@@ -184,7 +184,7 @@ class Docs(commands.Cog, name="Documentation"):
         if query is not None:
             if query.lower() == "rtfm":
                 await ctx.send(
-                    embed=discord.Embed.from_dict(
+                    embed=nextcord.Embed.from_dict(
                         {
                             "title": "Read The Fucking Manual",
                             "description": "You expect me to know?",
@@ -195,7 +195,7 @@ class Docs(commands.Cog, name="Documentation"):
 
             elif query.lower() in ["developers", "devs"]:
                 await ctx.send(
-                    embed=discord.Embed.from_dict(
+                    embed=nextcord.Embed.from_dict(
                         {
                             "title": "'It'll be finished before Mandroc still Connor' ~ Kindly, Pyro Devs",
                             "description": "Primary dev:\n<@330566541156417536>\nDevs:\n"

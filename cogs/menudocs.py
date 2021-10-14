@@ -1,8 +1,8 @@
 import logging
 import re
 
-import discord
-from discord.ext import commands
+import nextcord
+from nextcord.ext import commands
 
 from utils.util import Pag
 
@@ -64,7 +64,7 @@ class Menudocs(commands.Cog):
         self.logger.info("I'm ready!")
 
     @commands.Cog.listener()
-    async def on_message(self, message: discord.Message) -> None:
+    async def on_message(self, message: nextcord.Message) -> None:
         if not message.guild or message.guild.id not in MENUDOCS_GUILD_IDS:
             # Not in menudocs
             return
@@ -90,6 +90,18 @@ class Menudocs(commands.Cog):
         await self.process_requires_self_removal(message)
         await self.process_requires_self_addition(message)
 
+    @commands.Cog.listener()
+    async def on_thread_join(self, thread) -> None:
+        if not thread.guild or thread.guild.id not in MENUDOCS_GUILD_IDS:
+            # Not in menudocs
+            return
+
+        if thread.parent_id not in PYTHON_HELP_CHANNEL_IDS:
+            # Not a python help channel
+            return
+
+        await thread.join()
+
     async def process_requires_self_removal(self, message):
         """
         Look in a message and attempt to auto-help on
@@ -107,7 +119,7 @@ class Menudocs(commands.Cog):
             fixed_func = fixed_func.replace("( c", "(c")
 
         # We need to process this
-        embed = discord.Embed(
+        embed = nextcord.Embed(
             description="Looks like your defining a command with `self` as the first argument "
             "without using the correct decorator. Likely you want to remove `self` as this only "
             "applies to commands defined within a class (Cog).\nYou should change it as per the following:"
@@ -159,7 +171,7 @@ class Menudocs(commands.Cog):
         final_func = to_use_regex.group(1) + args_group + to_use_regex.group(3)
 
         # We need to process this
-        embed = discord.Embed(
+        embed = nextcord.Embed(
             description=f"Looks like your defining {msg} in a class (Cog) without "
             "using `self` as the first variable. This will likely lead to issues and "
             "you should change it as per the following:"
@@ -178,7 +190,7 @@ class Menudocs(commands.Cog):
     @ensure_is_menudocs_guild()
     async def init(self, ctx):
         """Sends a helpful embed about how to fix import errors."""
-        embed = discord.Embed(
+        embed = nextcord.Embed(
             title="Seeing something like?\n`ModuleNotFoundError: No module named 'utils.utils'`\nRead on!",
             description="""
             In order to fix import issues, please add an empty file called
@@ -196,7 +208,7 @@ class Menudocs(commands.Cog):
     @ensure_is_menudocs_guild()
     async def pypi(self, ctx):
         """Sends a helpful embed about how to correctly download packages."""
-        embed = discord.Embed(
+        embed = nextcord.Embed(
             title="Trying to `pip install` something and getting the following?\n`Could not find a version that "
             "satisfies the requirement <package here>`",
             description="""

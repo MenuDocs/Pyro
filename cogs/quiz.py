@@ -7,8 +7,8 @@ from utils.exceptions import IdNotFound
 from utils.util import clean_code
 
 import aiohttp
-import discord
-from discord.ext import commands
+import nextcord
+from nextcord.ext import commands
 
 
 class Choices:
@@ -27,7 +27,7 @@ class Choices:
         self.result = None
 
     async def start(self, ctx):
-        embed = discord.Embed(
+        embed = nextcord.Embed(
             title=self.question,
             description="\n".join(f"{i+1}: {q}" for i, q in enumerate(self.answers)),
         )
@@ -170,7 +170,7 @@ class Quiz(commands.Cog, name="Quiz"):
         await ctx.send("Quiz started in your DMs!")
         try:
             msg = await ctx.author.send("Do you still want to take the quiz? [yes/no]")
-        except discord.HTTPException:
+        except nextcord.HTTPException:
             return await ctx.send(
                 f"I cannot dm you {ctx.author.mention}, so I cannot do the quiz with you."
             )
@@ -218,7 +218,7 @@ class Quiz(commands.Cog, name="Quiz"):
             else:
                 wrong_questions[item["_id"]] = [item, ans]
 
-        embed = discord.Embed(
+        embed = nextcord.Embed(
             title="Python choices quiz",
             description=f"Starting stage 2.\nYou answered {total_correct} questions out "
             + f"of {len(questions)} correctly.\n"
@@ -266,7 +266,7 @@ class Quiz(commands.Cog, name="Quiz"):
         if all(correct_answers.values()) and correct_choices:
             try:
                 member = await guild.fetch_member(ctx.author.id)
-            except discord.HTTPException:
+            except nextcord.HTTPException:
                 self.logger.error(
                     f"Failed to fetch {ctx.author.display_name}({ctx.author.id}) from guild {guild.name}{guild.id}"
                 )
@@ -292,7 +292,7 @@ class Quiz(commands.Cog, name="Quiz"):
     @commands.guild_only()
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
-    async def role(self, ctx, role: discord.Role):
+    async def role(self, ctx, role: nextcord.Role):
         if (
             role.is_default()
             or role.managed

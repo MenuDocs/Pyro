@@ -2,7 +2,7 @@ import math
 import random
 from math import inf as infinity
 
-import discord
+import nextcord
 
 from utils.enums import Winner, Piece
 
@@ -20,14 +20,14 @@ class TicTacToe:
 
     def __init__(
         self,
-        player_one: discord.Member,
-        player_two: discord.Member,
+        player_one: nextcord.Member,
+        player_two: nextcord.Member,
         *,
         is_agaisnt_computer: bool = False,
         difficulty: int = 1
     ) -> None:
-        self.player_one: discord.Member = player_one
-        self.player_two: discord.Member = player_two
+        self.player_one: nextcord.Member = player_one
+        self.player_two: nextcord.Member = player_two
 
         self.board = [[Piece.NULL for _ in range(3)] for _ in range(3)]
         self.difficulty = difficulty

@@ -260,6 +260,7 @@ class Menudocs(commands.Cog):
         arg: str = None,
     ):
         """Given a message, create a pastebin for it"""
+        # TODO Implement arg to auto fetch last message or somethin
         if not messages:
             return await ctx.send("I need at-least one message to convert to a paste")
 

@@ -1,8 +1,10 @@
 import logging
 import re
+from typing import Union, List
 
 import nextcord
 from nextcord.ext import commands
+from nextcord.ext.commands import Greedy
 
 from utils.util import Pag
 
@@ -186,6 +188,10 @@ class Menudocs(commands.Cog):
             f"{message.author.mention} this might help.", embed=embed
         )
 
+    def extract_code(self, message: nextcord.Message) -> List[str]:
+        """Extracts all codeblocks to str"""
+        content = message.content.split("```")
+
     @commands.command()
     @ensure_is_menudocs_guild()
     async def init(self, ctx):
@@ -224,6 +230,25 @@ class Menudocs(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
+    @ensure_is_menudocs_guild()
+    async def paste(
+        self, ctx: commands.Context, messages: Greedy[nextcord.Message] = None
+    ):
+        """Given a message, create a pastebin for it"""
+        if not messages:
+            return await ctx.send("I need at-least one message to convert to a paste")
+
+        total_messages = len(messages)
+        if total_messages not in (1, 2):
+            return await ctx.send("I can only convert 1 or 2 messages to a paste")
+
+        # Placeholders for code
+        extracted_code: str = ""
+        extracted_error: str = ""
+        if total_messages == 1:
+            self.extract_code(messages[0])
+
+    @commands.command(enabled=False)
     @ensure_is_menudocs_project_guild()
     async def story(self, ctx):
         """Creates the current story for the project discord."""

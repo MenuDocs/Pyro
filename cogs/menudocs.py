@@ -200,7 +200,7 @@ class Menudocs(commands.Cog):
         is_codeblock = False
         for item in parsed_lst:
             # Only keep items with content from codeblocks
-            if item.startswith("```") or item.endswith("```"):
+            if "```" in item:
                 is_codeblock = not is_codeblock
 
                 if not is_codeblock:
@@ -254,7 +254,10 @@ class Menudocs(commands.Cog):
     @commands.command()
     @ensure_is_menudocs_guild()
     async def paste(
-        self, ctx: commands.Context, messages: Greedy[nextcord.Message] = None
+        self,
+        ctx: commands.Context,
+        messages: Greedy[nextcord.Message] = None,
+        arg: str = None,
     ):
         """Given a message, create a pastebin for it"""
         if not messages:
@@ -289,13 +292,15 @@ class Menudocs(commands.Cog):
             return await ctx.send(str(e))
 
         await ctx.send(
+            f"Hey, {ctx.author.mention}",
             embed=nextcord.Embed(
                 title="Find your paste here",
                 url=entry.resolve_url(),
                 description=f"[{entry.resolve_url()}]({entry.resolve_url()})",
                 timestamp=ctx.message.created_at,
-            )
+            ),
         )
+        await ctx.message.delete()
 
     @commands.command(enabled=False)
     @ensure_is_menudocs_project_guild()

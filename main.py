@@ -6,9 +6,11 @@ import textwrap
 import contextlib
 from traceback import format_exception
 
+import aiohttp
 import discord
 import motor.motor_asyncio
 from discord.ext import commands
+from nextcord.ext import tasks
 
 from utils import exceptions
 from utils.mongo import Document
@@ -17,6 +19,7 @@ from utils.util import Pag
 
 mongo_url = os.getenv("MONGO")
 token = os.getenv("TOKEN")
+patch = os.getenv("UPTIME_PATCH")
 
 
 async def get_prefix(bot, message):
@@ -215,8 +218,24 @@ async def dbbackup(ctx):
     )
 
 
+@tasks.loop(minutes=10)
+async def update_uptime():
+    async with aiohttp.ClientSession() as session:
+        async with session.post(
+            url=f"https://betteruptime.com/api/v1/heartbeat/{patch}"
+        ):
+            pass
+
+
+@update_uptime.before_loop
+async def before_update_uptime():
+    await bot.wait_until_ready()
+
+
 # Load all extensions
 if __name__ == "__main__":
+    update_uptime.start()
+
     # Database initialization
     bot.db = motor.motor_asyncio.AsyncIOMotorClient(mongo_url).pyro
 

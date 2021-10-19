@@ -3,6 +3,7 @@ import re
 from typing import Union, List
 
 import nextcord
+from axew import AxewClient, BaseAxewException
 from nextcord.ext import commands
 from nextcord.ext.commands import Greedy
 
@@ -48,6 +49,8 @@ class Menudocs(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.logger = logging.getLogger(__name__)
+
+        self.axew = AxewClient()
 
         self.issue_regex = re.compile(r"##(?P<number>[0-9]+)\s?(?P<repo>[a-zA-Z0-9]*)")
         self.pr_regex = re.compile(r"\$\$(?P<number>[0-9]+)\s?(?P<repo>[a-zA-Z0-9]*)")
@@ -190,7 +193,26 @@ class Menudocs(commands.Cog):
 
     def extract_code(self, message: nextcord.Message) -> List[str]:
         """Extracts all codeblocks to str"""
-        content = message.content.split("```")
+        content: List[str] = []
+        current = []
+        parsed_lst: List[str] = message.content.split("\n")
+
+        is_codeblock = False
+        for item in parsed_lst:
+            # Only keep items with content from codeblocks
+            if "```" in item:
+                is_codeblock = not is_codeblock
+
+                if not is_codeblock:
+                    content.append("\n".join(current))
+                    current = []
+
+                continue
+
+            if is_codeblock:
+                current.append(item)
+
+        return content
 
     @commands.command()
     @ensure_is_menudocs_guild()
@@ -232,9 +254,13 @@ class Menudocs(commands.Cog):
     @commands.command()
     @ensure_is_menudocs_guild()
     async def paste(
-        self, ctx: commands.Context, messages: Greedy[nextcord.Message] = None
+        self,
+        ctx: commands.Context,
+        messages: Greedy[nextcord.Message] = None,
+        arg: str = None,
     ):
         """Given a message, create a pastebin for it"""
+        # TODO Implement arg to auto fetch last message or somethin
         if not messages:
             return await ctx.send("I need at-least one message to convert to a paste")
 
@@ -242,11 +268,40 @@ class Menudocs(commands.Cog):
         if total_messages not in (1, 2):
             return await ctx.send("I can only convert 1 or 2 messages to a paste")
 
-        # Placeholders for code
-        extracted_code: str = ""
-        extracted_error: str = ""
         if total_messages == 1:
-            self.extract_code(messages[0])
+            code = self.extract_code(messages[0])
+        else:
+            code = self.extract_code(messages[0])
+            code.extend(self.extract_code(messages[1]))
+
+        # Ensure theres something to upload
+        if not code:
+            return await ctx.send("Couldn't extract anything to store")
+
+        # Setup paste parts
+        extracted_code = code[0]
+        try:
+            extracted_error = code[1]
+        except IndexError:
+            extracted_error = ""
+
+        try:
+            entry = await self.axew.async_create_paste(
+                code=extracted_code, error=extracted_error
+            )
+        except BaseAxewException as e:
+            return await ctx.send(str(e))
+
+        await ctx.send(
+            f"Hey, {ctx.author.mention}",
+            embed=nextcord.Embed(
+                title="Find your paste here",
+                url=entry.resolve_url(),
+                description=f"[{entry.resolve_url()}]({entry.resolve_url()})",
+                timestamp=ctx.message.created_at,
+            ),
+        )
+        await ctx.message.delete()
 
     @commands.command(enabled=False)
     @ensure_is_menudocs_project_guild()

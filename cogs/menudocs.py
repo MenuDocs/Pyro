@@ -257,6 +257,7 @@ class Menudocs(commands.Cog):
         self, ctx: commands.Context, messages: Greedy[nextcord.Message] = None
     ):
         """Given a message, create a pastebin for it"""
+        # TODO Make for only proficients or somethin
         # TODO Implement arg to auto fetch last message or somethin
         if not messages:
             return await ctx.send("I need at-least one message to convert to a paste")

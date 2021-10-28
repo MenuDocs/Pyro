@@ -5,4 +5,4 @@ buttons==0.1.9
 dnspython==2.1.0
 motor==2.5.1
 emojis==0.6.0
-axew==1.0.1
+axew

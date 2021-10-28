@@ -254,10 +254,7 @@ class Menudocs(commands.Cog):
     @commands.command()
     @ensure_is_menudocs_guild()
     async def paste(
-        self,
-        ctx: commands.Context,
-        messages: Greedy[nextcord.Message] = None,
-        arg: str = None,
+        self, ctx: commands.Context, messages: Greedy[nextcord.Message] = None
     ):
         """Given a message, create a pastebin for it"""
         # TODO Implement arg to auto fetch last message or somethin

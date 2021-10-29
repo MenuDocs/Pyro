@@ -307,6 +307,11 @@ class Menudocs(commands.Cog):
         except BaseAxewException as e:
             return await ctx.send(str(e))
 
+        mention_turnery = (
+            f"{ctx.author.mention} and {messages[0].author.mention}"
+            if ctx.author != messages[0].author
+            else f"{ctx.author.mention}"
+        )
         embed = nextcord.Embed(
             title="Find your paste here",
             url=entry.resolve_url(),
@@ -317,7 +322,7 @@ class Menudocs(commands.Cog):
             text="You can now delete the code and or error from your message"
         ),
 
-        await ctx.send(f"Hey, {ctx.author.mention}", embed=embed)
+        await ctx.send(f"Hey, {mention_turnery}", embed=embed)
         await ctx.message.delete()
 
     @commands.command(enabled=False)

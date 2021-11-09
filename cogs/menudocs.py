@@ -279,6 +279,10 @@ class Menudocs(commands.Cog):
                 if message.author != ctx.guild.me
             ]
 
+            if len(messages) == 2 and messages[0].author.id != messages[1].author.id:
+                # Make sure messages only come from the same person
+                messages.pop(1)
+
         total_messages = len(messages)
         if total_messages > 2:
             return await ctx.send("I can only convert 1 or 2 messages to a paste")

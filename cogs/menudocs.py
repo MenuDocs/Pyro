@@ -19,6 +19,11 @@ PYTHON_HELP_CHANNEL_IDS = (
     702862760052129822,  # pyro
     416522595958259713,  # commands (main dc)
 )
+CODE_REVIEWER, PROFICIENT, TEAM = (
+    850330300595699733,  # Code Reviewer
+    479199775590318080,  # Proficient
+    659897739844517931,  # ⚔ Team
+)
 
 
 def ensure_is_menudocs_guild():
@@ -33,6 +38,15 @@ def ensure_is_menudocs_guild():
 def ensure_is_menudocs_project_guild():
     async def check(ctx):
         if not ctx.guild or ctx.guild.id != PROJECT_GUILD:
+            return False
+        return True
+
+    return commands.check(check)
+
+
+def ensure_is_menudocs_staff():
+    async def check(ctx):
+        if not commands.has_any_role(CODE_REVIEWER, PROFICIENT, TEAM):
             return False
         return True
 
@@ -252,18 +266,21 @@ class Menudocs(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
+    @ensure_is_menudocs_staff()
     @ensure_is_menudocs_guild()
     async def paste(
         self, ctx: commands.Context, messages: Greedy[nextcord.Message] = None
     ):
         """Given a message, create a pastebin for it"""
-        # TODO Make for only proficients or somethin
-        # TODO Implement arg to auto fetch last message or somethin
         if not messages:
-            return await ctx.send("I need at-least one message to convert to a paste")
+            messages = [
+                message
+                async for message in ctx.channel.history(limit=2)
+                if message.author != ctx.guild.me
+            ]
 
         total_messages = len(messages)
-        if total_messages not in (1, 2):
+        if total_messages > 2:
             return await ctx.send("I can only convert 1 or 2 messages to a paste")
 
         if total_messages == 1:
@@ -290,15 +307,22 @@ class Menudocs(commands.Cog):
         except BaseAxewException as e:
             return await ctx.send(str(e))
 
-        await ctx.send(
-            f"Hey, {ctx.author.mention}",
-            embed=nextcord.Embed(
-                title="Find your paste here",
-                url=entry.resolve_url(),
-                description=f"[{entry.resolve_url()}]({entry.resolve_url()})",
-                timestamp=ctx.message.created_at,
-            ),
+        mention_turnery = (
+            f"{ctx.author.mention} and {messages[0].author.mention}"
+            if ctx.author != messages[0].author
+            else f"{ctx.author.mention}"
         )
+        embed = nextcord.Embed(
+            title="Find your paste here",
+            url=entry.resolve_url(),
+            description=f"[{entry.resolve_url()}]({entry.resolve_url()})",
+            timestamp=ctx.message.created_at,
+        )
+        embed.set_footer(
+            text="You can now delete the code and or error from your message"
+        ),
+
+        await ctx.send(f"Hey, {mention_turnery}", embed=embed)
         await ctx.message.delete()
 
     @commands.command(enabled=False)

@@ -306,7 +306,9 @@ class Menudocs(commands.Cog):
 
         try:
             entry = await self.axew.async_create_paste(
-                code=extracted_code, error=extracted_error
+                code=extracted_code,
+                error=extracted_error,
+                description=f"Extracted paste for {messages[0].author.display_name} in {ctx.guild.name}"
             )
         except BaseAxewException as e:
             return await ctx.send(str(e))

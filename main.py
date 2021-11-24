@@ -10,7 +10,7 @@ import aiohttp
 import discord
 import motor.motor_asyncio
 from discord.ext import commands
-from nextcord.ext import tasks
+from discord.ext import tasks
 
 from utils import exceptions
 from utils.mongo import Document

@@ -97,7 +97,7 @@ class Starboard(commands.Cog, name="Starboard"):
 
                         embed.set_author(
                             name=f"{msg.author.display_name}#{msg.author.discriminator}",
-                            icon_url=msg.author.avatar_url,
+                            icon_url=msg.author.avatar.url,
                         )
 
                         embed.set_footer(text=f"ID: {msg.id}")

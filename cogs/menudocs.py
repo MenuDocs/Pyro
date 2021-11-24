@@ -132,7 +132,7 @@ class Menudocs(commands.Cog):
             timestamp=message.created_at,
             color=0x26F7FD,
         )
-        embed.set_author(name="Pyro Auto Helper", icon_url=message.guild.me.avatar_url)
+        embed.set_author(name="Pyro Auto Helper", icon_url=message.guild.me.avatar.url)
         embed.set_footer(text="Believe this is incorrect? Let Skelmis know.")
 
         await message.channel.send(
@@ -184,7 +184,7 @@ class Menudocs(commands.Cog):
             timestamp=message.created_at,
             color=0x26F7FD,
         )
-        embed.set_author(name="Pyro Auto Helper", icon_url=message.guild.me.avatar_url)
+        embed.set_author(name="Pyro Auto Helper", icon_url=message.guild.me.avatar.url)
         embed.set_footer(text="Believe this is incorrect? Let Skelmis know.")
 
         await message.channel.send(

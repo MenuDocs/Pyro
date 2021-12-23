@@ -3,12 +3,11 @@ import difflib
 import logging
 import random
 
-from utils.exceptions import IdNotFound
-from utils.util import clean_code
-
 import aiohttp
 import nextcord
 from nextcord.ext import commands
+
+from utils.util import clean_code
 
 
 class Choices:
@@ -161,11 +160,9 @@ class Quiz(commands.Cog, name="Quiz"):
     async def quiz(self, ctx):
         """Quiz yourself on relevant Python knowledge!"""
         guild = ctx.guild
-        try:
-            quiz_role = await self.bot.db.config.find(ctx.guild.id)
+        quiz_role = await self.bot.db.config.find(ctx.guild.id)
+        if quiz_role:
             quiz_role = quiz_role.get("quiz_role")
-        except IdNotFound:
-            quiz_role = None
 
         await ctx.send("Quiz started in your DMs!")
         try:

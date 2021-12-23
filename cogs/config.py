@@ -9,8 +9,6 @@ import emojis
 import nextcord
 from nextcord.ext import commands
 
-from utils.exceptions import IdNotFound
-
 
 class Config(commands.Cog, name="Configuration"):
     def __init__(self, bot):
@@ -111,21 +109,19 @@ class Config(commands.Cog, name="Configuration"):
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
     async def sb_toggle(self, ctx):
-        try:
-            data = await self.bot.db.config.find(ctx.guild.id)
-        except IdNotFound:
-            await ctx.send(
+        data = await self.bot.db.config.find(ctx.guild.id)
+        if not data:
+            return await ctx.send(
                 "You have not setup the starboard for this guild, please use the `starboard channel` command to do so."
             )
-            return
+
+        if not data.get("starboard_toggle"):
+            data = {"_id": ctx.guild.id, "starboard_toggle": True}
+            await ctx.send("I have turned the starboard `on` for you.")
         else:
-            if not data.get("starboard_toggle"):
-                data = {"_id": ctx.guild.id, "starboard_toggle": True}
-                await ctx.send("I have turned the starboard `on` for you.")
-            else:
-                data = {"_id": ctx.guild.id, "starboard_toggle": False}
-                await ctx.send("I have turned the starboard `off` for you.")
-            await self.bot.db.config.upsert(data)
+            data = {"_id": ctx.guild.id, "starboard_toggle": False}
+            await ctx.send("I have turned the starboard `off` for you.")
+        await self.bot.db.config.upsert(data)
 
     @starboard.command(
         name="channel",
@@ -149,19 +145,18 @@ class Config(commands.Cog, name="Configuration"):
             )
             return
 
-        try:
-            data = await self.bot.db.config.find(ctx.guild.id)
-        except IdNotFound:
+        data = await self.bot.db.config.find(ctx.guild.id)
+
+        if not data:
             data = {
                 "_id": ctx.guild.id,
-                "starboard_channel": channel.id,
                 "starboard_toggle": True,
             }
-        else:
-            data["starboard_channel"] = channel.id
-        finally:
-            await self.bot.db.config.upsert(data)
-            await ctx.send("I have set the starboard channel for this guild!")
+
+        data["starboard_channel"] = channel.id
+
+        await self.bot.db.config.upsert(data)
+        await ctx.send("I have set the starboard channel for this guild!")
 
     @starboard.command(
         name="emoji",
@@ -207,58 +202,6 @@ class Config(commands.Cog, name="Configuration"):
             await ctx.send("Added your threshold.")
 
     @commands.command(
-        description="Ignore a specified channel. This does not respond to commands in the specified channel."
-    )
-    @commands.has_permissions(manage_messages=True)
-    async def ignore(self, ctx, channel: nextcord.TextChannel = None):
-        channel = channel or ctx.channel
-
-        try:
-            data = await self.bot.db.config.find(ctx.guild.id)
-            if channel.id in data["ignored_channels"]:
-                await ctx.send(
-                    "This channel is already ignored. Use the `unignore` command to unignore it."
-                )
-                return
-        except IdNotFound:
-            await self.bot.db.config.insert(
-                {"_id": ctx.guild.id, "ignored_channels": [channel.id]}
-            )
-            await ctx.send(
-                "This channel has been ignored. You can use the `unignore` command to unignore it."
-            )
-            return
-
-        await self.bot.db.config.upsert(
-            {"_id": ctx.guild.id, "ignored_channels": channel.id}, option="push"
-        )
-        await ctx.send(
-            "This channel has been ignored. You can use the `unignore` command to unignore it."
-        )
-
-    @commands.command(
-        description="Unignores a previously ignored channel. Allows commands to be ran."
-    )
-    @commands.has_permissions(manage_messages=True)
-    async def unignore(self, ctx, channel: nextcord.TextChannel):
-        try:
-            data = await self.bot.db.config.find(ctx.guild.id)
-            if channel.id not in data["ignored_channels"]:
-                await ctx.send(
-                    "This channel is not ignored. You can use the `ignore` command to ignore it."
-                )
-                return
-
-            await self.bot.db.config.upsert(
-                {"_id": ctx.guild.id, "ignored_channels": channel.id}, option="pull"
-            )
-            await ctx.send("This channel has been unignored.")
-        except IdNotFound:
-            await ctx.send(
-                "This channel is not ignored. You can use the `ignore` command to ignore it."
-            )
-
-    @commands.command(
         aliases=["gc"],
         description="Views the guild's config. Shows the starboard channels, ignored channels, prefix, starboard "
         "data, etc.",
@@ -269,26 +212,16 @@ class Config(commands.Cog, name="Configuration"):
             title=f"Configuration of {ctx.guild.name}",
             color=random.randint(0, 0xFFFFFF),
         )
-        try:
-            data = await self.bot.db.config.find(ctx.guild.id)
-        except IdNotFound:
-            await ctx.send("This guild does not have anything saved.")
-        else:
-            try:
-                channels = map(
-                    lambda c: self.bot.get_channel(c).mention, data["ignored_channels"]
-                )
-                data["ignored_channels"] = channels
-            except KeyError:
-                pass
 
-            embed.description = "\n".join(
-                (
-                    f"{attr}: {val}".replace("_", " ").title()
-                    for attr, val in data.items()
-                )
-            )
-            await ctx.send(embed=embed)
+        data = await self.bot.db.config.find(ctx.guild.id)
+
+        if not data:
+            return await ctx.send("This guild does not have anything saved.")
+
+        embed.description = "\n".join(
+            (f"{attr}: {val}".replace("_", " ").title() for attr, val in data.items())
+        )
+        await ctx.send(embed=embed)
 
 
 def setup(bot):

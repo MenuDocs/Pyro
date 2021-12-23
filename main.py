@@ -7,15 +7,13 @@ import contextlib
 from traceback import format_exception
 
 import aiohttp
-import discord
+import nextcord
 import motor.motor_asyncio
-from bot_base import BotBase
-from discord.ext import commands
-from discord.ext import tasks
+from bot_base.db.document import Document
+from nextcord.ext import commands
+from nextcord.ext import tasks
 
 from bot import Pyro
-from utils import exceptions
-from utils.mongo import Document
 from utils.util import clean_code
 from utils.util import Pag
 
@@ -30,7 +28,7 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
-intents = discord.Intents.none()
+intents = nextcord.Intents.none()
 intents.messages = True
 intents.reactions = True
 intents.guilds = True
@@ -41,7 +39,7 @@ bot = Pyro(
     case_insensitive=True,
     description="A short sharp bot coded in python to aid the python "
     "developers with helping the community "
-    "with discord.py related issues.",
+    "with nextcord.py related issues.",
     intents=intents,
     help_command=None,
     mongo_url=mongo_url,
@@ -62,7 +60,7 @@ bot.DEFAULTPREFIX = "py."
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(activity=discord.Game(name="py.help"))
+    await bot.change_presence(activity=nextcord.Game(name="py.help"))
 
     logger.info("I'm all up and ready like mom's spaghetti")
 
@@ -80,20 +78,10 @@ async def on_message(message):
     if message.author.bot:
         return
 
-    if message.guild:
-        try:
-            guild_config = await bot.db.config.find(message.guild.id)
-            if message.channel.id in guild_config["ignored_channels"]:
-                return
-        except exceptions.IdNotFound:
-            pass
-        except KeyError:
-            pass
-
     # Whenever the bot is tagged, respond with its prefix
     if match := mention.match(message.content):
         if int(match.group("id")) == bot.user.id:
-            data = await bot.db.config._Document__get_raw(message.guild.id)
+            data = await bot.db.config.find(message.guild.id)
             if not data or "prefix" not in data:
                 prefix = bot.DEFAULTPREFIX
             else:
@@ -120,7 +108,7 @@ async def _eval(ctx, *, code):
     code = clean_code(code)
 
     local_variables = {
-        "discord": discord,
+        "nextcord": nextcord,
         "commands": commands,
         "bot": bot,
         "ctx": ctx,

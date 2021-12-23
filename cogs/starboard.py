@@ -3,8 +3,6 @@ import logging
 import nextcord
 from nextcord.ext import commands
 
-from utils.exceptions import IdNotFound
-
 
 class Starboard(commands.Cog, name="Starboard"):
     def __init__(self, bot):
@@ -59,18 +57,15 @@ class Starboard(commands.Cog, name="Starboard"):
                         # and if it is, update the message rather then make a new one
                         starboard = self.bot.get_channel(guild["starboard_channel"])
 
-                        try:
-                            existing_star = await self.bot.db.starboard.find_by_custom(
-                                {
-                                    "_id": payload.message_id,
-                                    "guildId": payload.guild_id,
-                                    "channelId": payload.channel_id,
-                                }
-                            )
-                        except IdNotFound:
-                            # We need to store it, so we are fine
-                            pass
-                        else:
+                        existing_star = await self.bot.db.starboard.find_by_custom(
+                            {
+                                "_id": payload.message_id,
+                                "guildId": payload.guild_id,
+                                "channelId": payload.channel_id,
+                            }
+                        )
+
+                        if existing_star:
                             # This message is already in the starboard, update the star count
                             if not existing_star.get("starboard_message_id"):
                                 # Guard against old starboard items
@@ -181,30 +176,28 @@ class Starboard(commands.Cog, name="Starboard"):
                         # and if it is, update the message rather then make a new one
                         starboard = self.bot.get_channel(guild["starboard_channel"])
 
-                        try:
-                            existing_star = await self.bot.db.starboard.find_by_custom(
-                                {
-                                    "_id": payload.message_id,
-                                    "guildId": payload.guild_id,
-                                    "channelId": payload.channel_id,
-                                }
-                            )
-                        except IdNotFound:
-                            # We need to store it, so we are fine
+                        existing_star = await self.bot.db.starboard.find_by_custom(
+                            {
+                                "_id": payload.message_id,
+                                "guildId": payload.guild_id,
+                                "channelId": payload.channel_id,
+                            }
+                        )
+                        if not existing_star:
                             return
-                        else:
-                            # This message is already in the starboard, update the star count
-                            if not existing_star.get("starboard_message_id"):
-                                # Guard against old starboard items
-                                return
 
-                            existing_message = await starboard.fetch_message(
-                                existing_star["starboard_message_id"]
-                            )
-                            await existing_message.edit(
-                                content=f"{len(react)} | {channel.mention}",
-                                embed=existing_message.embeds[0],
-                            )
+                        # This message is already in the starboard, update the star count
+                        if not existing_star.get("starboard_message_id"):
+                            # Guard against old starboard items
+                            return
+
+                        existing_message = await starboard.fetch_message(
+                            existing_star["starboard_message_id"]
+                        )
+                        await existing_message.edit(
+                            content=f"{len(react)} | {channel.mention}",
+                            embed=existing_message.embeds[0],
+                        )
 
 
 def setup(bot):

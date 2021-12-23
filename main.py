@@ -9,9 +9,11 @@ from traceback import format_exception
 import aiohttp
 import discord
 import motor.motor_asyncio
+from bot_base import BotBase
 from discord.ext import commands
 from discord.ext import tasks
 
+from bot import Pyro
 from utils import exceptions
 from utils.mongo import Document
 from utils.util import clean_code
@@ -20,31 +22,6 @@ from utils.util import Pag
 mongo_url = os.getenv("MONGO")
 token = os.getenv("TOKEN")
 patch = os.getenv("UPTIME_PATCH")
-
-
-async def get_prefix(bot, message):
-    try:
-        data = await bot.config.find(message.guild.id)
-
-        # Make sure we have a use able prefix
-        if not data or "prefix" not in data:
-            prefix = bot.DEFAULTPREFIX
-        else:
-            prefix = data["prefix"]
-    except exceptions.IdNotFound:
-        # No set guild
-        prefix = bot.DEFAULTPREFIX
-    except AttributeError:
-        # Dm's?
-        prefix = bot.DEFAULTPREFIX
-
-    if message.content.casefold().startswith(prefix.casefold()):
-        # The prefix matches, now return the one the user used
-        # such that dpy will dispatch the given command
-        prefix_length = len(prefix)
-        prefix = message.content[:prefix_length]
-
-    return commands.when_mentioned_or(prefix)(bot, message)
 
 
 logging.basicConfig(
@@ -60,14 +37,17 @@ intents.guilds = True
 intents.members = True
 intents.emojis = True
 
-bot = commands.Bot(
-    command_prefix=get_prefix,
+bot = Pyro(
     case_insensitive=True,
     description="A short sharp bot coded in python to aid the python "
     "developers with helping the community "
     "with discord.py related issues.",
     intents=intents,
     help_command=None,
+    mongo_url=mongo_url,
+    leave_db=True,
+    command_prefix="py.",
+    load_builtin_commands=True,
 )
 
 logger = logging.getLogger(__name__)
@@ -87,7 +67,7 @@ async def on_ready():
     logger.info("I'm all up and ready like mom's spaghetti")
 
     try:
-        await bot.config.get_all()
+        await bot.db.config.get_all()
     except exceptions.PyMongoError as e:
         logger.error("An error occurred while fetching the config: %s" % e)
     else:
@@ -102,7 +82,7 @@ async def on_message(message):
 
     if message.guild:
         try:
-            guild_config = await bot.config.find(message.guild.id)
+            guild_config = await bot.db.config.find(message.guild.id)
             if message.channel.id in guild_config["ignored_channels"]:
                 return
         except exceptions.IdNotFound:
@@ -113,7 +93,7 @@ async def on_message(message):
     # Whenever the bot is tagged, respond with its prefix
     if match := mention.match(message.content):
         if int(match.group("id")) == bot.user.id:
-            data = await bot.config._Document__get_raw(message.guild.id)
+            data = await bot.db.config._Document__get_raw(message.guild.id)
             if not data or "prefix" not in data:
                 prefix = bot.DEFAULTPREFIX
             else:
@@ -192,25 +172,25 @@ async def dbbackup(ctx):
     backup_starboard = Document(backup_db, "starboard")
     backup_tictactoe = Document(backup_db, "tictactoe")
 
-    for item in await bot.config.get_all():
+    for item in await bot.db.config.get_all():
         await backup_config.upsert(item)
 
-    for item in await bot.keywords.get_all():
+    for item in await bot.db.keywords.get_all():
         await backup_keywords.upsert(item)
 
-    for item in await bot.quiz.get_all():
+    for item in await bot.db.quiz.get_all():
         await backup_quiz.upsert(item)
 
-    for item in await bot.code.get_all():
+    for item in await bot.db.code.get_all():
         await backup_code.upsert(item)
 
-    for item in await bot.quiz_answers.get_all():
+    for item in await bot.db.quiz_answers.get_all():
         await backup_quiz_answers.upsert(item)
 
-    for item in await bot.starboard.get_all():
+    for item in await bot.db.starboard.get_all():
         await backup_starboard.upsert(item)
 
-    for item in await bot.tictactoe.get_all():
+    for item in await bot.db.tictactoe.get_all():
         await backup_tictactoe.upsert(item)
 
     await ctx.send(
@@ -235,17 +215,6 @@ async def before_update_uptime():
 # Load all extensions
 if __name__ == "__main__":
     update_uptime.start()
-
-    # Database initialization
-    bot.db = motor.motor_asyncio.AsyncIOMotorClient(mongo_url).pyro
-
-    bot.config = Document(bot.db, "config")
-    bot.keywords = Document(bot.db, "keywords")
-    bot.quiz = Document(bot.db, "quiz")
-    bot.code = Document(bot.db, "code")
-    bot.quiz_answers = Document(bot.db, "quizAnswers")
-    bot.starboard = Document(bot.db, "starboard")
-    bot.tictactoe = Document(bot.db, "tictactoe")
 
     for ext in os.listdir("./cogs/"):
         if ext.endswith(".py") and not ext.startswith("_"):

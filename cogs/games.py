@@ -61,14 +61,14 @@ class Games(commands.Cog):
 
         data = dataclasses.asdict(player)
         data["_id"] = data.pop("player_id")
-        await self.bot.tictactoe.upsert(data)
+        await self.bot.db.tictactoe.upsert(data)
 
     async def populate_stats(self):
         # Handle on_ready being called multiple times
         if self.stats:
             return
 
-        data = await self.bot.tictactoe.get_all()
+        data = await self.bot.db.tictactoe.get_all()
         for document in data:
             player = PlayerStats(
                 document["_id"],

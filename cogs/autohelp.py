@@ -12,7 +12,7 @@ class AutoHelp(commands.Cog, name="Autohelp"):
     @commands.Cog.listener()
     async def on_ready(self):
         self.logger.info("I'm ready!")
-        self.keywords = await self.bot.keywords.get_all()
+        self.keywords = await self.bot.db.keywords.get_all()
         self.channels = set(kw["channel_id"] for kw in self.keywords)
 
     @commands.Cog.listener()
@@ -32,7 +32,7 @@ class AutoHelp(commands.Cog, name="Autohelp"):
     @commands.is_owner()
     async def reload_keywords(self, ctx):
         """Update the auto-help list of keywords"""
-        self.keywords = await self.bot.keywords.get_all()
+        self.keywords = await self.bot.db.keywords.get_all()
         self.channels = set(kw["channel_id"] for kw in self.keywords)
 
         await ctx.send("Those should be all reloaded for you now.")

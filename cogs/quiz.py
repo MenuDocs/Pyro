@@ -83,7 +83,7 @@ class CodeQuiz:
         # sort the questions by ID, in this context, ID is the order
         # of the questions.
         correct_answers = dict()
-        code_ques = sorted(await ctx.bot.code.get_all(), key=lambda d: d["_id"])
+        code_ques = sorted(await ctx.bot.db.code.get_all(), key=lambda d: d["_id"])
 
         for ques in code_ques:
             ques_id = ques["_id"]
@@ -162,7 +162,7 @@ class Quiz(commands.Cog, name="Quiz"):
         """Quiz yourself on relevant Python knowledge!"""
         guild = ctx.guild
         try:
-            quiz_role = await self.bot.config.find(ctx.guild.id)
+            quiz_role = await self.bot.db.config.find(ctx.guild.id)
             quiz_role = quiz_role.get("quiz_role")
         except IdNotFound:
             quiz_role = None
@@ -193,7 +193,7 @@ class Quiz(commands.Cog, name="Quiz"):
             )
             return
 
-        questions = await self.bot.quiz.get_all()
+        questions = await self.bot.db.quiz.get_all()
         questions.sort(key=lambda d: int(d["_id"]))
         user_answers = {}
 
@@ -304,7 +304,7 @@ class Quiz(commands.Cog, name="Quiz"):
             )
             return
 
-        await self.bot.config.upsert({"_id": ctx.guild.id, "quiz_role": role.id})
+        await self.bot.db.config.upsert({"_id": ctx.guild.id, "quiz_role": role.id})
         await ctx.send("Role added as a quiz role.")
 
 

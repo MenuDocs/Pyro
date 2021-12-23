@@ -21,7 +21,7 @@ class Starboard(commands.Cog, name="Starboard"):
             # Only use this in guilds
             return
 
-        entries = await self.bot.config.get_all()
+        entries = await self.bot.db.config.get_all()
         guilds = list(map(lambda e: e["_id"], entries))
         if payload.guild_id in guilds:
             guild = list(filter(lambda e: e["_id"] == payload.guild_id, entries))
@@ -60,7 +60,7 @@ class Starboard(commands.Cog, name="Starboard"):
                         starboard = self.bot.get_channel(guild["starboard_channel"])
 
                         try:
-                            existing_star = await self.bot.starboard.find_by_custom(
+                            existing_star = await self.bot.db.starboard.find_by_custom(
                                 {
                                     "_id": payload.message_id,
                                     "guildId": payload.guild_id,
@@ -129,7 +129,7 @@ class Starboard(commands.Cog, name="Starboard"):
                         if msg_embed and not msg_embed.image.url:
                             await starboard.send(embed=msg_embed)
 
-                        await self.bot.starboard.upsert(
+                        await self.bot.db.starboard.upsert(
                             {
                                 "_id": payload.message_id,
                                 "guildId": payload.guild_id,
@@ -145,7 +145,7 @@ class Starboard(commands.Cog, name="Starboard"):
             # Only use this in guilds
             return
 
-        entries = await self.bot.config.get_all()
+        entries = await self.bot.db.config.get_all()
         guilds = list(map(lambda e: e["_id"], entries))
         if payload.guild_id in guilds:
             guild = list(filter(lambda e: e["_id"] == payload.guild_id, entries))
@@ -182,7 +182,7 @@ class Starboard(commands.Cog, name="Starboard"):
                         starboard = self.bot.get_channel(guild["starboard_channel"])
 
                         try:
-                            existing_star = await self.bot.starboard.find_by_custom(
+                            existing_star = await self.bot.db.starboard.find_by_custom(
                                 {
                                     "_id": payload.message_id,
                                     "guildId": payload.guild_id,

@@ -29,7 +29,7 @@ class Config(commands.Cog, name="Configuration"):
     )
     @commands.has_guild_permissions(manage_guild=True)
     async def prefix(self, ctx, *, prefix="py."):
-        await self.bot.config.upsert({"_id": ctx.guild.id, "prefix": prefix})
+        await self.bot.db.config.upsert({"_id": ctx.guild.id, "prefix": prefix})
         await ctx.send(
             f"The guild prefix has been set to `{prefix}`. Use `{prefix}prefix [prefix]` to change it again!"
         )
@@ -112,7 +112,7 @@ class Config(commands.Cog, name="Configuration"):
     @commands.has_permissions(manage_messages=True)
     async def sb_toggle(self, ctx):
         try:
-            data = await self.bot.config.find(ctx.guild.id)
+            data = await self.bot.db.config.find(ctx.guild.id)
         except IdNotFound:
             await ctx.send(
                 "You have not setup the starboard for this guild, please use the `starboard channel` command to do so."
@@ -125,7 +125,7 @@ class Config(commands.Cog, name="Configuration"):
             else:
                 data = {"_id": ctx.guild.id, "starboard_toggle": False}
                 await ctx.send("I have turned the starboard `off` for you.")
-            await self.bot.config.upsert(data)
+            await self.bot.db.config.upsert(data)
 
     @starboard.command(
         name="channel",
@@ -150,7 +150,7 @@ class Config(commands.Cog, name="Configuration"):
             return
 
         try:
-            data = await self.bot.config.find(ctx.guild.id)
+            data = await self.bot.db.config.find(ctx.guild.id)
         except IdNotFound:
             data = {
                 "_id": ctx.guild.id,
@@ -160,7 +160,7 @@ class Config(commands.Cog, name="Configuration"):
         else:
             data["starboard_channel"] = channel.id
         finally:
-            await self.bot.config.upsert(data)
+            await self.bot.db.config.upsert(data)
             await ctx.send("I have set the starboard channel for this guild!")
 
     @starboard.command(
@@ -171,20 +171,20 @@ class Config(commands.Cog, name="Configuration"):
     @commands.has_permissions(manage_messages=True)
     async def sb_emoji(self, ctx, emoji: typing.Union[nextcord.Emoji, str] = None):
         if not emoji:
-            await self.bot.config.upsert({"_id": ctx.guild.id, "emoji": None})
+            await self.bot.db.config.upsert({"_id": ctx.guild.id, "emoji": None})
             await ctx.send("Reset your server's custom emoji.")
         elif isinstance(emoji, nextcord.Emoji):
             if not emoji.is_usable():
                 await ctx.send("I can't use that emoji.")
                 return
 
-            await self.bot.config.upsert({"_id": ctx.guild.id, "emoji": str(emoji)})
+            await self.bot.db.config.upsert({"_id": ctx.guild.id, "emoji": str(emoji)})
 
             await ctx.send("Added your emoji.")
         else:
             emos = emojis.get(emoji)
             if emos:
-                await self.bot.config.upsert({"_id": ctx.guild.id, "emoji": emoji})
+                await self.bot.db.config.upsert({"_id": ctx.guild.id, "emoji": emoji})
 
                 await ctx.send("Added your emoji.")
             else:
@@ -195,10 +195,12 @@ class Config(commands.Cog, name="Configuration"):
     @commands.has_permissions(manage_messages=True)
     async def sb_thresh(self, ctx, thresh: int = None):
         if not thresh:
-            await self.bot.config.upsert({"_id": ctx.guild.id, "emoji_threshold": None})
+            await self.bot.db.config.upsert(
+                {"_id": ctx.guild.id, "emoji_threshold": None}
+            )
             await ctx.send("Reset your server's custom emoji threshold.")
         else:
-            await self.bot.config.upsert(
+            await self.bot.db.config.upsert(
                 {"_id": ctx.guild.id, "emoji_threshold": thresh}
             )
 
@@ -212,14 +214,14 @@ class Config(commands.Cog, name="Configuration"):
         channel = channel or ctx.channel
 
         try:
-            data = await self.bot.config.find(ctx.guild.id)
+            data = await self.bot.db.config.find(ctx.guild.id)
             if channel.id in data["ignored_channels"]:
                 await ctx.send(
                     "This channel is already ignored. Use the `unignore` command to unignore it."
                 )
                 return
         except IdNotFound:
-            await self.bot.config.insert(
+            await self.bot.db.config.insert(
                 {"_id": ctx.guild.id, "ignored_channels": [channel.id]}
             )
             await ctx.send(
@@ -227,7 +229,7 @@ class Config(commands.Cog, name="Configuration"):
             )
             return
 
-        await self.bot.config.upsert(
+        await self.bot.db.config.upsert(
             {"_id": ctx.guild.id, "ignored_channels": channel.id}, option="push"
         )
         await ctx.send(
@@ -240,14 +242,14 @@ class Config(commands.Cog, name="Configuration"):
     @commands.has_permissions(manage_messages=True)
     async def unignore(self, ctx, channel: nextcord.TextChannel):
         try:
-            data = await self.bot.config.find(ctx.guild.id)
+            data = await self.bot.db.config.find(ctx.guild.id)
             if channel.id not in data["ignored_channels"]:
                 await ctx.send(
                     "This channel is not ignored. You can use the `ignore` command to ignore it."
                 )
                 return
 
-            await self.bot.config.upsert(
+            await self.bot.db.config.upsert(
                 {"_id": ctx.guild.id, "ignored_channels": channel.id}, option="pull"
             )
             await ctx.send("This channel has been unignored.")
@@ -268,7 +270,7 @@ class Config(commands.Cog, name="Configuration"):
             color=random.randint(0, 0xFFFFFF),
         )
         try:
-            data = await self.bot.config.find(ctx.guild.id)
+            data = await self.bot.db.config.find(ctx.guild.id)
         except IdNotFound:
             await ctx.send("This guild does not have anything saved.")
         else:

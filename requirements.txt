@@ -1,5 +1,5 @@
 nextcord
-bot-base==1.2.19
+bot-base
 aiofiles==0.7.0
 black==21.5b0
 buttons==0.1.9 # TODO phase out

@@ -1,6 +1,8 @@
 from bot_base.db import MongoManager
 from bot_base.db.document import Document
 
+from db import GuildReview, BotReview
+
 
 class PyroMongoManager(MongoManager):
     def __init__(self, connection_url):
@@ -13,3 +15,11 @@ class PyroMongoManager(MongoManager):
         self.starboard: Document = Document(self.db, "starboard")
         self.tictactoe: Document = Document(self.db, "tictactoe")
         self.quiz_answers: Document = Document(self.db, "quizAnswers")
+
+        # Use the features
+        self.bot_reviews: Document = Document(
+            self.db, "bot_reviews", converter=BotReview
+        )
+        self.guild_reviews: Document = Document(
+            self.db, "guild_reviews", converter=GuildReview
+        )

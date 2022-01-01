@@ -72,7 +72,7 @@ class Menudocs(commands.Cog):
             r"@(client|bot)\.command\(\)\n(async def .*\(self, ctx.*\):)"
         )
         self.command_requires_self_addition = re.compile(
-            r"@commands\.command\(\)\n(async def .*\()(.*)(\).*:)"
+            r"@commands\.command\([a-zA-Z= _]*?\)\n\s{0,8}(async def .*\()(.*)(\).*:)"
         )
         self.event_requires_self_addition = re.compile(
             r"@commands\.Cog\.listener\(\)\n(async def .*\()(.*)(\).*:)"

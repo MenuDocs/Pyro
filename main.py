@@ -39,9 +39,8 @@ bot = Pyro(
     case_insensitive=True,
     description="A short sharp bot coded in python to aid the python "
     "developers with helping the community "
-    "with nextcord.py related issues.",
+    "with nextcord related issues.",
     intents=intents,
-    help_command=None,
     mongo_url=mongo_url,
     leave_db=True,
     command_prefix="py.",

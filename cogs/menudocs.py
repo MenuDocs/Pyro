@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import Union, List, Optional
+from typing import List, Optional
 
 import nextcord
 from axew import AxewClient, BaseAxewException

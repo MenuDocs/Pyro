@@ -125,7 +125,6 @@ async def _eval(ctx, *, code):
     except Exception as e:
         result = "".join(format_exception(e, e, e.__traceback__))
 
-
     # TODO Fix
     pager = Pag(
         timeout=180,
@@ -147,7 +146,6 @@ async def dbbackup(ctx):
 
     backup_db = motor.motor_asyncio.AsyncIOMotorClient(mongo_url).backup
     backup_config = Document(backup_db, "config")
-    backup_keywords = Document(backup_db, "keywords")
     backup_quiz = Document(backup_db, "quiz")
     backup_code = Document(backup_db, "code")
     backup_quiz_answers = Document(backup_db, "quizAnswers")
@@ -156,9 +154,6 @@ async def dbbackup(ctx):
 
     for item in await bot.db.config.get_all():
         await backup_config.upsert(item)
-
-    for item in await bot.db.keywords.get_all():
-        await backup_keywords.upsert(item)
 
     for item in await bot.db.quiz.get_all():
         await backup_quiz.upsert(item)

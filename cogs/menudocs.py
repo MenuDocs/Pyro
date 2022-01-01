@@ -66,18 +66,21 @@ class Menudocs(commands.Cog):
 
         self.issue_regex = re.compile(r"##(?P<number>[0-9]+)\s?(?P<repo>[a-zA-Z0-9]*)")
         self.pr_regex = re.compile(r"\$\$(?P<number>[0-9]+)\s?(?P<repo>[a-zA-Z0-9]*)")
+
         self.requires_self_removal = re.compile(
-            r"@(client|bot)\.command\(\)\n(async def .*\(self, ctx.*\):)"
+            r"@[a-zA-Z0-9_]*?\.command\([a-zA-Z= _]*?\)\n\s{0,8}(async def .*\(self,\s*?ctx.*\):)",
         )
         self.command_requires_self_addition = re.compile(
             r"@commands\.command\([a-zA-Z= _]*?\)\n\s{0,8}(async def .*\()(.*)(\).*:)"
         )
         self.event_requires_self_addition = re.compile(
-            r"@commands\.Cog\.listener\(\)\n(async def .*\()(.*)(\).*:)"
+            r"@commands\.Cog\.listener\(\)\n\s{0,8}(async def .*\()(.*)(\).*:)"
         )
         self.command_pass_context = re.compile(
             r"@commands\.command\(\s*?pass_context\s*?=\s*?True\)"
         )
+        # client = commands.Bot regex
+        # TODO Add a way to delete embeds
 
     @commands.Cog.listener()
     async def on_ready(self):

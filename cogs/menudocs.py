@@ -109,11 +109,15 @@ class Menudocs(commands.Cog):
 
         auto_help_embeds: List[nextcord.Embed] = []
 
-        process_requires_self_removal = await self.process_requires_self_removal(message)
+        process_requires_self_removal = await self.process_requires_self_removal(
+            message
+        )
         if process_requires_self_removal:
             auto_help_embeds.append(process_requires_self_removal)
 
-        process_requires_self_addition = await self.process_requires_self_addition(message)
+        process_requires_self_addition = await self.process_requires_self_addition(
+            message
+        )
         if process_requires_self_addition:
             auto_help_embeds.append(process_requires_self_addition)
 
@@ -126,7 +130,7 @@ class Menudocs(commands.Cog):
 
         await message.channel.send(
             f"{message.author.mention} {'this' if len(auto_help_embeds) == 1 else 'these'} might help.",
-            embeds=auto_help_embeds
+            embeds=auto_help_embeds,
         )
 
     @commands.Cog.listener()
@@ -141,14 +145,24 @@ class Menudocs(commands.Cog):
 
         await thread.join()
 
-    async def process_pass_context(self, message: nextcord.Message) -> Optional[nextcord.Embed]:
+    async def process_pass_context(
+        self, message: nextcord.Message
+    ) -> Optional[nextcord.Embed]:
         """Checks, and notifies if people use pass_context"""
         pass_context = self.command_pass_context.search(message.content)
         if pass_context is None:
             return
 
         # Lol, cmon
-        embed = nextcord.Embed(timestamp=message.created_at, color=0x26F7FD)
+        embed = nextcord.Embed(
+            description="Looks like your using `pass_context` still. That was a feature "
+            "back in version 0.x.x, your likely using a fork of the now "
+            "no longer maintained discord.py which means your on version "
+            "2.x.x. Please check where your getting this code from and read "
+            "your forks migration guides.",
+            timestamp=message.created_at,
+            color=0x26F7FD,
+        )
         embed.set_author(name="Pyro Auto Helper", icon_url=message.guild.me.avatar.url)
         embed.set_footer(text="Believe this is incorrect? Let Skelmis know.")
 

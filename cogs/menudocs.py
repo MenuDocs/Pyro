@@ -7,6 +7,8 @@ from axew import AxewClient, BaseAxewException
 from nextcord.ext import commands
 from nextcord.ext.commands import Greedy
 
+log = logging.getLogger(__name__)
+
 BASE_MENUDOCS_URL = "https://github.com/menudocs"
 MAIN_GUILD = 416512197590777857
 PROJECT_GUILD = 566131499506860045
@@ -71,7 +73,8 @@ class Menudocs(commands.Cog):
             r"@[a-zA-Z0-9_]*?\.command\([a-zA-Z= _]*?\)\n\s{0,8}(async def .*\(self,\s*?ctx.*\):)",
         )
         self.command_requires_self_addition = re.compile(
-            r"@commands\.command\([a-zA-Z= _]*?\)\n\s{0,8}(async def .*\()(.*)(\).*:)"
+            r"@(commands\.command|nextcord\.(slash_command|user_command|message_command))"
+            r"\([a-zA-Z= _]*?\)\n\s{0,8}(async def .*\()(.*)(\).*:)"
         )
         self.event_requires_self_addition = re.compile(
             r"@commands\.Cog\.listener\(\)\n\s{0,8}(async def .*\()(.*)(\).*:)"
@@ -80,6 +83,12 @@ class Menudocs(commands.Cog):
             r"@commands\.command\(\s*?pass_context\s*?=\s*?True\)"
         )
         self.client_bot = re.compile(r"(?P<name>(?i:client))\s*?=\s*?commands.Bot")
+        self.invalid_ctx_or_inter_type = re.compile(
+            r"@((?P<cog>[a-zA-Z0-9_]*?|commands)\.)?"
+            r"(?P<command_type>command|slash_command|user_command|message_command)"
+            r"\([a-zA-Z= _]*?\)\n\s{0,8}(async def .*\()(?P<all>(self,\s*)?"
+            r"((?P<arg>[a-zA-Z_\s]+):(?P<arg_type>[a-zA-Z\s\.]+))(.*))(\).*:)"
+        )
 
         # TODO Add a way to delete embeds
 
@@ -133,6 +142,12 @@ class Menudocs(commands.Cog):
         if process_client_bot:
             auto_help_embeds.append(process_client_bot)
 
+        process_invalid_ctx_or_inter_type = (
+            await self.process_invalid_ctx_or_inter_type(message)
+        )
+        if process_invalid_ctx_or_inter_type:
+            auto_help_embeds.append(process_invalid_ctx_or_inter_type)
+
         if not auto_help_embeds:
             return
 
@@ -152,6 +167,55 @@ class Menudocs(commands.Cog):
             return
 
         await thread.join()
+
+    async def process_invalid_ctx_or_inter_type(
+        self, message: nextcord.Message
+    ) -> Optional[nextcord.Embed]:
+        invalid_ctx_or_inter_type = self.invalid_ctx_or_inter_type.search(
+            message.content
+        )
+        if invalid_ctx_or_inter_type is None:
+            return None
+
+        arg = invalid_ctx_or_inter_type.group("arg")
+        arg_type = invalid_ctx_or_inter_type.group("arg_type")
+        command_type = invalid_ctx_or_inter_type.group("command_type")
+        all_params = old_all_params = invalid_ctx_or_inter_type.group("all")
+
+        if command_type == "command" and "interaction" in arg_type.lower():
+            # Replace interaction with ctx
+            new_arg_type = " commands.Context"
+            notes = (
+                "Make sure to `from nextcord.ext import commands`.\n"
+                "You can read more about `Context` "
+                "[here](https://nextcord.readthedocs.io/en/latest/ext/commands/api.html#nextcord.ext.commands.Context)"
+            )
+            all_params = all_params.replace(arg_type, new_arg_type)
+
+        elif command_type != "command" and "context" in arg_type.lower():
+            new_arg_type = " nextcord.Interaction"
+            notes = (
+                "Make sure to `import nextcord`.\n"
+                "You can read more about `Interaction` "
+                "[here](https://nextcord.readthedocs.io/en/latest/api.html#nextcord.Interaction)"
+            )
+            all_params = all_params.replace(arg_type, new_arg_type)
+
+        else:
+            log.warning("Idk how I got here.")
+            return None
+
+        embed = nextcord.Embed(
+            description=f"Looks like your using a command, but typehinted the main parameter"
+            f"incorrectly! This won't lead to errors but will seriously hinder your "
+            f"development."
+            f"\n\n**Old**\n`{old_all_params}`\n**New | Fixed**\n`{all_params}`\n\nNotes: {notes}",
+            timestamp=message.created_at,
+            color=0x26F7FD,
+        )
+        embed.set_author(name="Pyro Auto Helper", icon_url=message.guild.me.avatar.url)
+        embed.set_footer(text="Believe this is incorrect? Let Skelmis know.")
+        return embed
 
     async def process_client_bot(
         self, message: nextcord.Message

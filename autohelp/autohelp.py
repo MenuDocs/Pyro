@@ -5,12 +5,12 @@ from typing import Callable, Optional, List
 import nextcord
 
 from autohelp.regexes import (
-    requires_self_removal,
-    event_requires_self_addition,
-    command_requires_self_addition,
-    command_pass_context,
-    invalid_ctx_or_inter_type,
-    client_bot,
+    requires_self_removal_pattern,
+    event_requires_self_addition_pattern,
+    command_requires_self_addition_pattern,
+    command_pass_context_pattern,
+    invalid_ctx_or_inter_type_pattern,
+    client_bot_pattern,
 )
 
 log = logging.getLogger(__name__)
@@ -18,12 +18,12 @@ log = logging.getLogger(__name__)
 
 class AutoHelp:
     def __init__(self):
-        self.requires_self_removal = requires_self_removal
-        self.event_requires_self_addition = event_requires_self_addition
-        self.command_requires_self_addition = command_requires_self_addition
-        self.command_pass_context = command_pass_context
-        self.invalid_ctx_or_inter_type = invalid_ctx_or_inter_type
-        self.client_bot = client_bot
+        self.requires_self_removal = requires_self_removal_pattern
+        self.event_requires_self_addition = event_requires_self_addition_pattern
+        self.command_requires_self_addition = command_requires_self_addition_pattern
+        self.command_pass_context = command_pass_context_pattern
+        self.invalid_ctx_or_inter_type = invalid_ctx_or_inter_type_pattern
+        self.client_bot = client_bot_pattern
 
         self.patterns: List[Callable] = [
             self.process_requires_self_removal,

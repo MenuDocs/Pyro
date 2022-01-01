@@ -15,7 +15,6 @@ from nextcord.ext import tasks
 
 from bot import Pyro
 from utils.util import clean_code
-from utils.util import Pag
 
 mongo_url = os.getenv("MONGO")
 token = os.getenv("TOKEN")
@@ -63,13 +62,6 @@ async def on_ready():
 
     logger.info("I'm all up and ready like mom's spaghetti")
 
-    try:
-        await bot.db.config.get_all()
-    except exceptions.PyMongoError as e:
-        logger.error("An error occurred while fetching the config: %s" % e)
-    else:
-        logger.info("Database connection established successfully")
-
 
 @bot.event
 async def on_message(message):
@@ -104,6 +96,7 @@ async def _eval(ctx, *, code):
     """
     Evaluates given code.
     """
+    return await ctx.send("requires fixes")
     code = clean_code(code)
 
     local_variables = {
@@ -132,6 +125,8 @@ async def _eval(ctx, *, code):
     except Exception as e:
         result = "".join(format_exception(e, e, e.__traceback__))
 
+
+    # TODO Fix
     pager = Pag(
         timeout=180,
         use_defaults=True,

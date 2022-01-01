@@ -7,8 +7,6 @@ from axew import AxewClient, BaseAxewException
 from nextcord.ext import commands
 from nextcord.ext.commands import Greedy
 
-from utils.util import Pag
-
 BASE_MENUDOCS_URL = "https://github.com/menudocs"
 MAIN_GUILD = 416512197590777857
 PROJECT_GUILD = 566131499506860045
@@ -361,39 +359,6 @@ class Menudocs(commands.Cog):
 
         await ctx.send(f"Hey, {mention_turnery}", embed=embed)
         await ctx.message.delete()
-
-    @commands.command(enabled=False)
-    @ensure_is_menudocs_project_guild()
-    async def story(self, ctx):
-        """Creates the current story for the project discord."""
-        channel = self.bot.get_channel(861209220536074250)
-        messages = await channel.history(limit=None, oldest_first=True).flatten()
-        story = " ".join([message.content.lower() for message in messages])
-        story = story.capitalize()
-
-        # Stats
-        data = {}
-        for message in messages:
-            if message.author.name in data:
-                data[message.author.name] += 1
-            else:
-                data[message.author.name] = 1
-
-        data = sorted(data.items(), key=lambda x: x[1], reverse=True)
-
-        story += "\n\n"
-        for i in range(len(data)):
-            story += f"{data[i][0]}, Messages contributed to story: {data[i][1]} \n"
-
-        pager = Pag(
-            title=f"Here is the current story from {channel.name}",
-            entries=[story[i : i + 2000] for i in range(0, len(story), 2000)],
-            length=1,
-            prefix="```py\n",
-            suffix="```",
-        )
-
-        await pager.start(ctx)
 
 
 def setup(bot):

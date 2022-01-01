@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import Union, List
+from typing import Union, List, Optional
 
 import nextcord
 from axew import AxewClient, BaseAxewException
@@ -77,6 +77,9 @@ class Menudocs(commands.Cog):
         self.event_requires_self_addition = re.compile(
             r"@commands\.Cog\.listener\(\)\n(async def .*\()(.*)(\).*:)"
         )
+        self.command_pass_context = re.compile(
+            r"@commands\.command\(\s*?pass_context\s*?=\s*?True\)"
+        )
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -106,8 +109,27 @@ class Menudocs(commands.Cog):
         if message.channel.id not in PYTHON_HELP_CHANNEL_IDS:
             return
 
-        await self.process_requires_self_removal(message)
-        await self.process_requires_self_addition(message)
+        auto_help_embeds: List[nextcord.Embed] = []
+
+        process_requires_self_removal = await self.process_requires_self_removal(message)
+        if process_requires_self_removal:
+            auto_help_embeds.append(process_requires_self_removal)
+
+        process_requires_self_addition = await self.process_requires_self_addition(message)
+        if process_requires_self_addition:
+            auto_help_embeds.append(process_requires_self_addition)
+
+        process_pass_context = await self.process_pass_context(message)
+        if process_pass_context:
+            auto_help_embeds.append(process_pass_context)
+
+        if not auto_help_embeds:
+            return
+
+        await message.channel.send(
+            f"{message.author.mention} {'this' if len(auto_help_embeds) == 1 else 'these'} might help.",
+            embeds=auto_help_embeds
+        )
 
     @commands.Cog.listener()
     async def on_thread_join(self, thread) -> None:
@@ -121,7 +143,20 @@ class Menudocs(commands.Cog):
 
         await thread.join()
 
-    async def process_requires_self_removal(self, message):
+    async def process_pass_context(self, message: nextcord.Message) -> Optional[nextcord.Embed]:
+        """Checks, and notifies if people use pass_context"""
+        pass_context = self.command_pass_context.search(message.content)
+        if pass_context is None:
+            return
+
+        # Lol, cmon
+        embed = nextcord.Embed(timestamp=message.created_at, color=0x26F7FD)
+        embed.set_author(name="Pyro Auto Helper", icon_url=message.guild.me.avatar.url)
+        embed.set_footer(text="Believe this is incorrect? Let Skelmis know.")
+
+        return embed
+
+    async def process_requires_self_removal(self, message) -> Optional[nextcord.Embed]:
         """
         Look in a message and attempt to auto-help on
         instances where members send code NOT in a cog
@@ -149,11 +184,9 @@ class Menudocs(commands.Cog):
         embed.set_author(name="Pyro Auto Helper", icon_url=message.guild.me.avatar.url)
         embed.set_footer(text="Believe this is incorrect? Let Skelmis know.")
 
-        await message.channel.send(
-            f"{message.author.mention} this might help.", embed=embed
-        )
+        return embed
 
-    async def process_requires_self_addition(self, message):
+    async def process_requires_self_addition(self, message) -> Optional[nextcord.Embed]:
         """
         Look in a message and attempt to auto-help on
         instances where members send code IN a cog
@@ -201,9 +234,7 @@ class Menudocs(commands.Cog):
         embed.set_author(name="Pyro Auto Helper", icon_url=message.guild.me.avatar.url)
         embed.set_footer(text="Believe this is incorrect? Let Skelmis know.")
 
-        await message.channel.send(
-            f"{message.author.mention} this might help.", embed=embed
-        )
+        return embed
 
     def extract_code(self, message: nextcord.Message) -> List[str]:
         """Extracts all codeblocks to str"""

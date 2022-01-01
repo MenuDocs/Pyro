@@ -7,6 +7,8 @@ from axew import AxewClient, BaseAxewException
 from nextcord.ext import commands
 from nextcord.ext.commands import Greedy
 
+from bot import Pyro
+
 log = logging.getLogger(__name__)
 
 BASE_MENUDOCS_URL = "https://github.com/menudocs"
@@ -61,35 +63,13 @@ class Menudocs(commands.Cog):
     """A cog devoted to operations within the Menudocs guild"""
 
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: Pyro = bot
         self.logger = logging.getLogger(__name__)
 
         self.axew = AxewClient()
 
         self.issue_regex = re.compile(r"##(?P<number>[0-9]+)\s?(?P<repo>[a-zA-Z0-9]*)")
         self.pr_regex = re.compile(r"\$\$(?P<number>[0-9]+)\s?(?P<repo>[a-zA-Z0-9]*)")
-
-        self.requires_self_removal = re.compile(
-            r"@[a-zA-Z0-9_]*?\.(command|slash_command|user_command|message_command)"
-            r"\([a-zA-Z= _]*?\)\n\s{0,8}(async def .*\((?P<func>self,\s*?ctx.*)\):)",
-        )
-        self.command_requires_self_addition = re.compile(
-            r"@((commands\.)?command|(nextcord\.)?(slash_command|user_command|message_command))"
-            r"\([a-zA-Z= _]*?\)\n\s{0,8}(?P<def>async def .*\()(?P<func>.*)(?P<close>\).*:)"
-        )
-        self.event_requires_self_addition = re.compile(
-            r"@commands\.Cog\.listener\(\)\n\s{0,8}(?P<def>async def .*\()(?P<func>.*)(?P<close>\).*:)"
-        )
-        self.command_pass_context = re.compile(
-            r"@commands\.command\(\s*?pass_context\s*?=\s*?True\)"
-        )
-        self.client_bot = re.compile(r"(?P<name>(?i:client))\s*?=\s*?commands.Bot")
-        self.invalid_ctx_or_inter_type = re.compile(
-            r"@((?P<cog>[a-zA-Z0-9_]*?|commands)\.)?"
-            r"(?P<command_type>command|slash_command|user_command|message_command)"
-            r"\([a-zA-Z= _]*?\)\n\s{0,8}(async def .*\()(?P<all>(self,\s*)?"
-            r"((?P<arg>[a-zA-Z_\s]+):(?P<arg_type>[a-zA-Z\s\.]+))(.*))(\).*:)"
-        )
 
         # TODO Add a way to delete embeds
 
@@ -121,33 +101,9 @@ class Menudocs(commands.Cog):
         if message.channel.id not in PYTHON_HELP_CHANNEL_IDS:
             return
 
-        auto_help_embeds: List[nextcord.Embed] = []
-
-        process_requires_self_removal = await self.process_requires_self_removal(
-            message
-        )
-        if process_requires_self_removal:
-            auto_help_embeds.append(process_requires_self_removal)
-
-        process_requires_self_addition = await self.process_requires_self_addition(
-            message
-        )
-        if process_requires_self_addition:
-            auto_help_embeds.append(process_requires_self_addition)
-
-        process_pass_context = await self.process_pass_context(message)
-        if process_pass_context:
-            auto_help_embeds.append(process_pass_context)
-
-        process_client_bot = await self.process_client_bot(message)
-        if process_client_bot:
-            auto_help_embeds.append(process_client_bot)
-
-        process_invalid_ctx_or_inter_type = (
-            await self.process_invalid_ctx_or_inter_type(message)
-        )
-        if process_invalid_ctx_or_inter_type:
-            auto_help_embeds.append(process_invalid_ctx_or_inter_type)
+        auto_help_embeds: List[
+            nextcord.Embed
+        ] = await self.bot.auto_help.process_message(message)
 
         if not auto_help_embeds:
             return
@@ -168,181 +124,6 @@ class Menudocs(commands.Cog):
             return
 
         await thread.join()
-
-    async def process_invalid_ctx_or_inter_type(
-        self, message: nextcord.Message
-    ) -> Optional[nextcord.Embed]:
-        invalid_ctx_or_inter_type = self.invalid_ctx_or_inter_type.search(
-            message.content
-        )
-        if invalid_ctx_or_inter_type is None:
-            return None
-
-        arg = invalid_ctx_or_inter_type.group("arg")
-        arg_type = invalid_ctx_or_inter_type.group("arg_type")
-        command_type = invalid_ctx_or_inter_type.group("command_type")
-        all_params = old_all_params = invalid_ctx_or_inter_type.group("all")
-
-        if command_type == "command" and "interaction" in arg_type.lower():
-            # Replace interaction with ctx
-            new_arg_type = " commands.Context"
-            notes = (
-                "Make sure to `from nextcord.ext import commands`.\n"
-                "You can read more about `Context` "
-                "[here](https://nextcord.readthedocs.io/en/latest/ext/commands/api.html#nextcord.ext.commands.Context)"
-            )
-            all_params = all_params.replace(arg_type, new_arg_type)
-
-        elif command_type != "command" and "context" in arg_type.lower():
-            new_arg_type = " nextcord.Interaction"
-            notes = (
-                "Make sure to `import nextcord`.\n"
-                "You can read more about `Interaction` "
-                "[here](https://nextcord.readthedocs.io/en/latest/api.html#nextcord.Interaction)"
-            )
-            all_params = all_params.replace(arg_type, new_arg_type)
-
-        else:
-            log.warning("Idk how I got here.")
-            return None
-
-        embed = nextcord.Embed(
-            description=f"Looks like your using a command, but typehinted the main parameter "
-            f"incorrectly! This won't lead to errors but will seriously hinder your "
-            f"development."
-            f"\n\n**Old**\n`{old_all_params}`\n**New | Fixed**\n`{all_params}`\n\nNotes: {notes}",
-            timestamp=message.created_at,
-            color=0x26F7FD,
-        )
-        embed.set_author(name="Pyro Auto Helper", icon_url=message.guild.me.avatar.url)
-        embed.set_footer(text="Believe this is incorrect? Let Skelmis know.")
-        return embed
-
-    async def process_client_bot(
-        self, message: nextcord.Message
-    ) -> Optional[nextcord.Embed]:
-        """Checks good naming conventions"""
-        client_bot = self.client_bot.search(message.content)
-        if client_bot is None:
-            return None
-
-        embed = nextcord.Embed(
-            description=f"Calling a `Bot`, `{client_bot.group('name')}` is not recommended. "
-            f"Read [here](https://tutorial.vcokltfre.dev/tips/clientbot/) for more detail.",
-            timestamp=message.created_at,
-            color=0x26F7FD,
-        )
-        embed.set_author(name="Pyro Auto Helper", icon_url=message.guild.me.avatar.url)
-        embed.set_footer(text="Believe this is incorrect? Let Skelmis know.")
-
-        return embed
-
-    async def process_pass_context(
-        self, message: nextcord.Message
-    ) -> Optional[nextcord.Embed]:
-        """Checks, and notifies if people use pass_context"""
-        pass_context = self.command_pass_context.search(message.content)
-        if pass_context is None:
-            return None
-
-        # Lol, cmon
-        embed = nextcord.Embed(
-            description="Looks like your using `pass_context` still. That was a feature "
-            "back in version 0.x.x, your likely using a fork of the now "
-            "no longer maintained discord.py which means your on version "
-            "2.x.x. Please check where your getting this code from and read "
-            "your forks migration guides.",
-            timestamp=message.created_at,
-            color=0x26F7FD,
-        )
-        embed.set_author(name="Pyro Auto Helper", icon_url=message.guild.me.avatar.url)
-        embed.set_footer(text="Believe this is incorrect? Let Skelmis know.")
-
-        return embed
-
-    async def process_requires_self_removal(self, message) -> Optional[nextcord.Embed]:
-        """
-        Look in a message and attempt to auto-help on
-        instances where members send code NOT in a cog
-        that also contains self
-        """
-        injected_self = self.requires_self_removal.search(message.content)
-        if injected_self is None:
-            # Don't process
-            return
-
-        initial_func = injected_self.group("func")
-        fixed_func = initial_func.replace("self,", "")
-        if "( c" in fixed_func:
-            fixed_func = fixed_func.replace("( c", "(c")
-
-        # We need to process this
-        embed = nextcord.Embed(
-            description="Looks like your defining a command with `self` as the first argument "
-            "without using the correct decorator. Likely you want to remove `self` as this only "
-            "applies to commands defined within a class (Cog).\nYou should change it as per the following:"
-            f"\n\n**Old**\n`{initial_func}`\n**New | Fixed**\n`{fixed_func}`",
-            timestamp=message.created_at,
-            color=0x26F7FD,
-        )
-        embed.set_author(name="Pyro Auto Helper", icon_url=message.guild.me.avatar.url)
-        embed.set_footer(text="Believe this is incorrect? Let Skelmis know.")
-
-        return embed
-
-    async def process_requires_self_addition(self, message) -> Optional[nextcord.Embed]:
-        """
-        Look in a message and attempt to auto-help on
-        instances where members send code IN a cog
-        that doesnt contain self
-        """
-        event_requires_self_addition = self.event_requires_self_addition.search(
-            message.content
-        )
-        command_requires_self_addition = self.command_requires_self_addition.search(
-            message.content
-        )
-
-        if event_requires_self_addition is not None:
-            # Event posted, check if it needs self
-            to_use_regex = event_requires_self_addition
-            msg = "an event"
-        elif command_requires_self_addition is not None:
-            # Command posted, check if it needs self
-            to_use_regex = command_requires_self_addition
-            msg = "a command"
-        else:
-            return None
-
-        args_group = to_use_regex.group("func")
-        if args_group.startswith("self"):
-            return
-
-        initial_func = (
-            to_use_regex.group("def")
-            + to_use_regex.group("func")
-            + to_use_regex.group("close")
-        )
-
-        args_group = f"self, {args_group}"
-
-        final_func = (
-            to_use_regex.group("def") + args_group + to_use_regex.group("close")
-        )
-
-        # We need to process this
-        embed = nextcord.Embed(
-            description=f"Looks like your defining {msg} in a class (Cog) without "
-            "using `self` as the first variable. This will likely lead to issues and "
-            "you should change it as per the following:"
-            f"\n\n**Old**\n`{initial_func}`\n**New | Fixed**\n`{final_func}`",
-            timestamp=message.created_at,
-            color=0x26F7FD,
-        )
-        embed.set_author(name="Pyro Auto Helper", icon_url=message.guild.me.avatar.url)
-        embed.set_footer(text="Believe this is incorrect? Let Skelmis know.")
-
-        return embed
 
     def extract_code(self, message: nextcord.Message) -> List[str]:
         """Extracts all codeblocks to str"""

@@ -70,14 +70,15 @@ class Menudocs(commands.Cog):
         self.pr_regex = re.compile(r"\$\$(?P<number>[0-9]+)\s?(?P<repo>[a-zA-Z0-9]*)")
 
         self.requires_self_removal = re.compile(
-            r"@[a-zA-Z0-9_]*?\.command\([a-zA-Z= _]*?\)\n\s{0,8}(async def .*\(self,\s*?ctx.*\):)",
+            r"@[a-zA-Z0-9_]*?\.(command|slash_command|user_command|message_command)"
+            r"\([a-zA-Z= _]*?\)\n\s{0,8}(async def .*\((?P<func>self,\s*?ctx.*)\):)",
         )
         self.command_requires_self_addition = re.compile(
-            r"@(commands\.command|nextcord\.(slash_command|user_command|message_command))"
-            r"\([a-zA-Z= _]*?\)\n\s{0,8}(async def .*\()(.*)(\).*:)"
+            r"@((commands\.)?command|(nextcord\.)?(slash_command|user_command|message_command))"
+            r"\([a-zA-Z= _]*?\)\n\s{0,8}(?P<def>async def .*\()(?P<func>.*)(?P<close>\).*:)"
         )
         self.event_requires_self_addition = re.compile(
-            r"@commands\.Cog\.listener\(\)\n\s{0,8}(async def .*\()(.*)(\).*:)"
+            r"@commands\.Cog\.listener\(\)\n\s{0,8}(?P<def>async def .*\()(?P<func>.*)(?P<close>\).*:)"
         )
         self.command_pass_context = re.compile(
             r"@commands\.command\(\s*?pass_context\s*?=\s*?True\)"
@@ -206,7 +207,7 @@ class Menudocs(commands.Cog):
             return None
 
         embed = nextcord.Embed(
-            description=f"Looks like your using a command, but typehinted the main parameter"
+            description=f"Looks like your using a command, but typehinted the main parameter "
             f"incorrectly! This won't lead to errors but will seriously hinder your "
             f"development."
             f"\n\n**Old**\n`{old_all_params}`\n**New | Fixed**\n`{all_params}`\n\nNotes: {notes}",
@@ -270,7 +271,7 @@ class Menudocs(commands.Cog):
             # Don't process
             return
 
-        initial_func = injected_self.group(2)
+        initial_func = injected_self.group("func")
         fixed_func = initial_func.replace("self,", "")
         if "( c" in fixed_func:
             fixed_func = fixed_func.replace("( c", "(c")
@@ -311,19 +312,23 @@ class Menudocs(commands.Cog):
             to_use_regex = command_requires_self_addition
             msg = "a command"
         else:
-            return
+            return None
 
-        args_group = to_use_regex.group(2)
+        args_group = to_use_regex.group("func")
         if args_group.startswith("self"):
             return
 
         initial_func = (
-            to_use_regex.group(1) + to_use_regex.group(2) + to_use_regex.group(3)
+            to_use_regex.group("def")
+            + to_use_regex.group("func")
+            + to_use_regex.group("close")
         )
 
         args_group = f"self, {args_group}"
 
-        final_func = to_use_regex.group(1) + args_group + to_use_regex.group(3)
+        final_func = (
+            to_use_regex.group("def") + args_group + to_use_regex.group("close")
+        )
 
         # We need to process this
         embed = nextcord.Embed(

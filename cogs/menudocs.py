@@ -79,7 +79,8 @@ class Menudocs(commands.Cog):
         self.command_pass_context = re.compile(
             r"@commands\.command\(\s*?pass_context\s*?=\s*?True\)"
         )
-        # client = commands.Bot regex
+        self.client_bot = re.compile(r"(?P<name>(?i:client))\s*?=\s*?commands.Bot")
+
         # TODO Add a way to delete embeds
 
     @commands.Cog.listener()
@@ -128,6 +129,10 @@ class Menudocs(commands.Cog):
         if process_pass_context:
             auto_help_embeds.append(process_pass_context)
 
+        process_client_bot = await self.process_client_bot(message)
+        if process_client_bot:
+            auto_help_embeds.append(process_client_bot)
+
         if not auto_help_embeds:
             return
 
@@ -148,13 +153,32 @@ class Menudocs(commands.Cog):
 
         await thread.join()
 
+    async def process_client_bot(
+        self, message: nextcord.Message
+    ) -> Optional[nextcord.Embed]:
+        """Checks good naming conventions"""
+        client_bot = self.client_bot.search(message.content)
+        if client_bot is None:
+            return None
+
+        embed = nextcord.Embed(
+            description=f"Calling a `Bot`, `{client_bot.group('name')}` is not recommended. "
+            f"Read [here](https://tutorial.vcokltfre.dev/tips/clientbot/) for more detail.",
+            timestamp=message.created_at,
+            color=0x26F7FD,
+        )
+        embed.set_author(name="Pyro Auto Helper", icon_url=message.guild.me.avatar.url)
+        embed.set_footer(text="Believe this is incorrect? Let Skelmis know.")
+
+        return embed
+
     async def process_pass_context(
         self, message: nextcord.Message
     ) -> Optional[nextcord.Embed]:
         """Checks, and notifies if people use pass_context"""
         pass_context = self.command_pass_context.search(message.content)
         if pass_context is None:
-            return
+            return None
 
         # Lol, cmon
         embed = nextcord.Embed(

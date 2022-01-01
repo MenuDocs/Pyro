@@ -1,7 +1,6 @@
 nextcord
 bot-base
 aiofiles==0.8.0
-black==21.5b0
 dnspython==2.1.0
 motor==2.5.1
 emojis==0.6.0

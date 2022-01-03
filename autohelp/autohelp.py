@@ -15,6 +15,30 @@ from autohelp.regexes import (
 
 log = logging.getLogger(__name__)
 
+MENUDOCS = 416512197590777857
+NEXTCORD = 881118111967883295
+TESTING = 888614043433197568
+
+class CloseButton(nextcord.ui.View):
+    def __init__(self, message: nextcord.Message) -> None:
+        super().__init__(timeout=None)
+        self._message = message
+
+    @nextcord.ui.button(label="🚮 Delete this message", style=nextcord.ButtonStyle.red)
+    async def close_button(self, button: nextcord.Button, interaction: nextcord.Interaction):
+        await self._message.delete()
+
+    async def interaction_check(self, interaction: nextcord.Interaction) -> bool:
+        autohelp_roles = {
+            MENUDOCS: {479199775590318080},
+            NEXTCORD: {882192899519954944},
+            TESTING: {888614043521269791},
+        }
+
+        roles = {role.id for role in interaction.message.author.roles}
+
+        return bool(roles.intersection(autohelp_roles[interaction.channel.guild.id])) \
+        or interaction.message.author.id == self._message.author.id
 
 class AutoHelp:
     def __init__(self):
@@ -44,7 +68,7 @@ class AutoHelp:
             timestamp=message.created_at,
             color=self.color,
         )
-        embed.set_author(name="Pyro Auto Helper", icon_url=message.guild.me.avatar.url)
+        embed.set_author(name="Pyro Auto Helper", icon_url=message.guild.me.display_avatar.url)
         embed.set_footer(
             text="Believe this is incorrect? Let Skelmis know in discord.gg/menudocs"
         )
@@ -53,7 +77,16 @@ class AutoHelp:
     async def process_message(self, message: nextcord.Message) -> List[nextcord.Embed]:
         iters = [call(message) for call in self.patterns]
         results = await asyncio.gather(*iters)
-        return list(filter(None, results))
+        results = list(filter(None, results))
+        if not results:
+            return
+
+        auto_message = await message.channel.send(
+            f"{message.author.mention} {'this' if len(results) == 1 else 'these'} might help.",
+            embeds=results,
+        )
+
+        await auto_message.edit(view=CloseButton(auto_message))
 
     async def process_invalid_ctx_or_inter_type(
         self, message: nextcord.Message

@@ -1,5 +1,7 @@
 from typing import Optional
 
+import nextcord
+
 
 class GuildReview:
     def __init__(
@@ -38,3 +40,8 @@ class GuildReview:
             data["channel_id"] = self.channel_id
 
         return data
+
+    def as_embed(self, requester_name: str) -> nextcord.Embed:
+        return nextcord.Embed(
+            title=f"Guild review request for: `{requester_name}`",
+        )

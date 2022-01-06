@@ -1,7 +1,9 @@
 import logging
+from typing import List
 
 import nextcord
 from bot_base import BotContext
+from bot_base.wraps import WrappedMember
 from nextcord import AllowedMentions
 from nextcord.ext import commands
 from nextcord.ext.commands import BucketType
@@ -17,6 +19,14 @@ class Review(commands.Cog):
         self.bot: Pyro = bot
         self.team_role_id: int = 659897739844517931
         self.review_category_id: int = 925723996585087016
+
+    @staticmethod
+    async def get_input(author: WrappedMember, desc: str) -> str:
+        out = await author.get_input(description=desc, delete_after=False)
+        if not out:
+            raise TimeoutError
+
+        return out
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -34,6 +44,23 @@ class Review(commands.Cog):
         if ctx.author.id != 203104843479515136:
             return await ctx.send("Not yet.")
 
+        questions: List[str] = [
+            "What is the name of the guild you wish to get reviewed?",
+            "Is there any specifics you would like to tell us?",
+            "What is your server about/for?",
+            "What is your guilds current member count?",
+            "What is the main focuses that you’d like criticism on?",
+            "How many text channels do you have? How many of those are accessible by everyone?",
+            "What is the invite to your server?",
+        ]
+        answers: List[str] = []
+        prompts: List[str] = [
+            "Do you understand that you may need to provide a higher privilege role "
+            "so we’re able to have a look at your private text channels/voice channels?",
+            "Do you understand that all reviews are simply opinionated suggestions "
+            "that are based on previous and current knowledge of server ownership?",
+        ]
+
         if await self.bot.db.guild_reviews.find_by_custom(
             {"requester_id": ctx.author.id, "pending": True}
         ):
@@ -42,39 +69,11 @@ class Review(commands.Cog):
                 "If this is an error please let us know."
             )
 
-        name = await ctx.author.get_input(
-            description="What is your guilds name?", delete_after=False
-        )
-        if not name:
-            return await ctx.send_basic_embed(
-                "I've cancelled the process. Please start over."
-            )
-
-        purpose = await ctx.author.get_input(
-            description="What is your guilds purpose? I.e. Whats it about.",
-            delete_after=False,
-        )
-        if not purpose:
-            return await ctx.send_basic_embed(
-                "I've cancelled the process. Please start over."
-            )
-
-        specifics = await ctx.author.get_input(
-            description="Any specifics we should know about?", delete_after=False
-        )
-        if not specifics:
-            return await ctx.send_basic_embed(
-                "I've cancelled the process. Please start over."
-            )
-
-        guild_invite = await ctx.author.get_input(
-            description="Can we get an invite for your server please.",
-            delete_after=False,
-        )
-        if not guild_invite:
-            return await ctx.send_basic_embed(
-                "I've cancelled the process. Please start over."
-            )
+        for question in questions:
+            try:
+                answers.append(await self.get_input(ctx.author, question))
+            except TimeoutError:
+                return await ctx.send_basic_embed()
 
         guild_review: GuildReview = GuildReview(
             name=name,
@@ -104,11 +103,7 @@ class Review(commands.Cog):
             {"requester_id": ctx.author.id}, guild_review.to_dict()
         )
 
-        embed = nextcord.Embed(
-            title=f"Guild review request for: `{ctx.author.display_name}`",
-            description=f"Guild Name: `{name}`\n---\nPurpose: {purpose}\n---\n"
-            f"Specifics: {specifics}\n---\nInvite: {guild_invite}",
-        )
+        embed = guild_review.as_embed(ctx.author.display_name)
 
         allowed_mentions: AllowedMentions = AllowedMentions.none()
         allowed_mentions.roles = [team]

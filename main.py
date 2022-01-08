@@ -10,10 +10,12 @@ import aiohttp
 import nextcord
 import motor.motor_asyncio
 from bot_base.db.document import Document
-from nextcord.ext import commands
+from nextcord.ext import commands, menus
 from nextcord.ext import tasks
 
+import checks
 from bot import Pyro
+from utils.pagination import EvalPageSource
 from utils.util import clean_code
 
 mongo_url = os.getenv("MONGO")
@@ -91,12 +93,11 @@ async def logout(ctx):
 
 
 @bot.command(name="eval", aliases=["exec"])
-@commands.is_owner()
+@checks.can_eval()
 async def _eval(ctx, *, code):
     """
     Evaluates given code.
     """
-    return await ctx.send("requires fixes")
     code = clean_code(code)
 
     local_variables = {
@@ -125,17 +126,11 @@ async def _eval(ctx, *, code):
     except Exception as e:
         result = "".join(format_exception(e, e, e.__traceback__))
 
-    # TODO Fix
-    pager = Pag(
-        timeout=180,
-        use_defaults=True,
-        entries=[result[i : i + 2000] for i in range(0, len(result), 2000)],
-        length=1,
-        prefix="```py\n",
-        suffix="```",
+    pages = menus.ButtonMenuPages(
+        source=EvalPageSource(bot, result, ctx.author),
+        clear_buttons_after=True,
     )
-
-    await pager.start(ctx)
+    await pages.start(ctx)
 
 
 @bot.command()

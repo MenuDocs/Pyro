@@ -58,5 +58,5 @@ class GuildReview:
             f"Review specific criticism: {self.criticism_question}\n---\n"
             f"Total text channels: {self.text_channel_question}\n---\n"
             f"Total member count: {self.member_count}\n---\n"
-            f"Discord invite: [here]({self.guild_invite})",
+            f"Discord invite: [{self.guild_invite}]({self.guild_invite})",
         )

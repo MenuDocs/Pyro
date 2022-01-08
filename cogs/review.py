@@ -42,7 +42,7 @@ class Review(commands.Cog):
         #     return await ctx.send("You need to have Developer membership to use this.")
 
         if ctx.author.id not in {203104843479515136, 271612318947868673}:
-            return await ctx.send("Not yet.")
+            return await ctx.send("Not yet available to the public.")
 
         questions: List[str] = [
             "What is the name of the guild you wish to get reviewed?",

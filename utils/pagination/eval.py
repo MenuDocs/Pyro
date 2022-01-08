@@ -18,7 +18,7 @@ class EvalPageSource(menus.ListPageSource):
 
     async def format_page(self, menu, code):
         embed = nextcord.Embed(title=f"Eval for {self.author.name}")
-        embed.description = f"```py{code}```"
+        embed.description = f"```{code}```"
 
         embed.set_footer(text=f"Page {menu.current_page + 1}/{self.get_max_pages()}")
         return embed

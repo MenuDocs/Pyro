@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 class Review(commands.Cog):
     def __init__(self, bot):
         self.bot: Pyro = bot
-        self.team_role_id: int = 659897739844517931
+        self.review_role_id: int = 928276706568052797
         self.review_category_id: int = 925723996585087016
 
     @staticmethod
@@ -41,7 +41,7 @@ class Review(commands.Cog):
         # if 917886722942062612 not in role_ids:
         #     return await ctx.send("You need to have Developer membership to use this.")
 
-        if ctx.author.id != 203104843479515136:
+        if ctx.author.id not in {203104843479515136, 271612318947868673}:
             return await ctx.send("Not yet.")
 
         questions: List[str] = [
@@ -73,19 +73,32 @@ class Review(commands.Cog):
             try:
                 answers.append(await self.get_input(ctx.author, question))
             except TimeoutError:
-                return await ctx.send_basic_embed()
+                return await ctx.author.send_basic_embed("Cancelling the process.")
 
-        guild_review: GuildReview = GuildReview(
-            name=name,
-            purpose=purpose,
-            specifics=specifics,
-            guild_invite=guild_invite,
-            requester_id=ctx.author.id,
-        )
+        for prompt in prompts:
+            yes_or_no = await ctx.author.prompt(prompt, delete_after=False)
+            if not yes_or_no:
+                return await ctx.author.send_basic_embed("Cancelling this process.")
+
+        try:
+            guild_review: GuildReview = GuildReview(
+                requester_id=ctx.author.id,
+                name=answers[0],
+                purpose=answers[2],
+                specifics=answers[1],
+                guild_invite=answers[6],
+                text_channel_question=answers[5],
+                criticism_question=answers[4],
+                member_count=int(answers[3]),
+            )
+        except ValueError:
+            return await ctx.author.send_basic_embed(
+                "Cancelling the command. Please provide an actual member count."
+            )
 
         category = await self.bot.get_or_fetch_channel(self.review_category_id)
         guild = ctx.guild
-        team = guild.get_role(self.team_role_id)
+        team = guild.get_role(self.review_role_id)
 
         chan = await guild.create_text_channel(
             name=f"{ctx.author.display_name} - Guild Review",
@@ -110,7 +123,7 @@ class Review(commands.Cog):
         allowed_mentions.users = [ctx.author]
 
         await chan.send(
-            f"{ctx.author.mention} - <@&{self.team_role_id}>",
+            f"{ctx.author.mention} - <@&{self.review_role_id}>",
             embed=embed,
             allowed_mentions=allowed_mentions,
         )

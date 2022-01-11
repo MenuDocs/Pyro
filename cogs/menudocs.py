@@ -14,12 +14,14 @@ log = logging.getLogger(__name__)
 BASE_MENUDOCS_URL = "https://github.com/menudocs"
 MAIN_GUILD = 416512197590777857
 PROJECT_GUILD = 566131499506860045
-MENUDOCS_GUILD_IDS = (MAIN_GUILD, PROJECT_GUILD)
+TESTING_GUILD = 888614043433197568
+MENUDOCS_GUILD_IDS = (MAIN_GUILD, PROJECT_GUILD, TESTING_GUILD)
 PYTHON_HELP_CHANNEL_IDS = (
     621912956627582976,  # discord.py
     621913007630319626,  # python
     702862760052129822,  # pyro
     416522595958259713,  # commands (main dc)
+    888614043835830300   # Testing Server
 )
 CODE_REVIEWER, PROFICIENT, TEAM = (
     850330300595699733,  # Code Reviewer
@@ -181,6 +183,23 @@ class Menudocs(commands.Cog):
                 A simple way to fix this is to google `pypi <package you want>`
                 This will 9 times out of 10 provide the pypi page for said package,
                 which will clearly indicate the correct way to install it.
+                """,
+        )
+        await ctx.send(embed=embed)
+
+    @commands.command(name='format')
+    @ensure_is_menudocs_guild()
+    async def _format(self, ctx):
+        """Sends a helpful embed about how to correctly format your question."""
+        embed = nextcord.Embed(
+            title="Uh oh, could you do us a favour please and re-phrase your question?",
+            description="""
+                > Looks like we are missing some information to properly help you out!\n
+                __Please make sure you have the following:__\n
+                • The code related to your question.
+                • Any errors that you are receiving.
+                • The taceback of your error. (If relevant)
+                • The expected action/output and recieved action/output.
                 """,
         )
         await ctx.send(embed=embed)

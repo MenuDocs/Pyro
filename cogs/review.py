@@ -34,6 +34,40 @@ class Review(commands.Cog):
 
     @commands.command()
     @commands.guild_only()
+    async def close(self, ctx: BotContext, *, summary):
+        """Close a review"""
+        if ctx.author.id not in {203104843479515136, 271612318947868673}:
+            return await ctx.send_basic_embed(
+                "You do not have permission to run this command."
+            )
+
+        guild_review: GuildReview = await self.bot.db.guild_reviews.find_by_custom(
+            {"channel_id": ctx.channel.id}
+        )
+        if not guild_review:
+            # TODO Add bot reviews here
+            return await ctx.send_basic_embed(
+                "Doesn't look like this channel is a review channel!"
+            )
+
+        try:
+            review_requester = await self.bot.get_or_fetch_user(
+                guild_review.requester_id
+            )
+            await review_requester.send_basic_embed(
+                "Hey, we have closed your review request. "
+                f"Please find your summary below.\n---\n{summary}"
+            )
+        except nextcord.Forbidden:
+            await ctx.author.send(
+                "Couldn't tell that person about closing there review, sorry!"
+            )
+
+        review_channel = await self.bot.get_or_fetch_channel(guild_review.channel_id)
+        await review_channel.delete(reason="Review is finished.")
+
+    @commands.command()
+    @commands.guild_only()
     @commands.max_concurrency(1, BucketType.user)
     async def review_guild(self, ctx: BotContext):
         """Start the review process for your guild."""

@@ -14,14 +14,14 @@ log = logging.getLogger(__name__)
 BASE_MENUDOCS_URL = "https://github.com/menudocs"
 MAIN_GUILD = 416512197590777857
 PROJECT_GUILD = 566131499506860045
-TESTING_GUILD = 888614043433197568
-MENUDOCS_GUILD_IDS = (MAIN_GUILD, PROJECT_GUILD, TESTING_GUILD)
+AUXTAL_TESTING_GUILD = 888614043433197568
+MENUDOCS_GUILD_IDS = (MAIN_GUILD, PROJECT_GUILD, AUXTAL_TESTING_GUILD)
 PYTHON_HELP_CHANNEL_IDS = (
     621912956627582976,  # discord.py
     621913007630319626,  # python
     702862760052129822,  # pyro
     416522595958259713,  # commands (main dc)
-    888614043835830300   # Testing Server
+    888614043835830300   # Auxtal testing channel
 )
 CODE_REVIEWER, PROFICIENT, TEAM = (
     850330300595699733,  # Code Reviewer
@@ -55,6 +55,13 @@ def ensure_is_menudocs_staff():
         return True
 
     return commands.check(check)
+
+def replied_reference(message):
+    ref = message.reference
+    if ref and isinstance(ref.resolved, nextcord.Message):
+        return ref.resolved.to_reference()
+
+    return None
 
 
 def extract_repo(regex):
@@ -202,7 +209,7 @@ class Menudocs(commands.Cog):
                 • The expected action/output and recieved action/output.
                 """,
         )
-        await ctx.send(embed=embed)
+        await ctx.send(embed=embed, reference=replied_reference(ctx.message))
 
     @commands.command()
     @ensure_is_menudocs_staff()

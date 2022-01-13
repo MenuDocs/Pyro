@@ -1,10 +1,10 @@
 import logging
-from typing import List
+from typing import List, Optional
 
 import nextcord
 from bot_base import BotContext
 from bot_base.wraps import WrappedMember
-from nextcord import AllowedMentions
+from nextcord import AllowedMentions, Interaction
 from nextcord.ext import commands
 from nextcord.ext.commands import BucketType
 
@@ -12,6 +12,53 @@ from bot import Pyro
 from db import GuildReview
 
 log = logging.getLogger(__name__)
+
+
+class Dropdown(nextcord.ui.Select):
+    def __init__(self):
+        options = [
+            nextcord.SelectOption(
+                label="Clubs",
+                description="Coding, Gaming etc",
+                # emoji="🟥",
+            ),
+            nextcord.SelectOption(
+                label="Social",
+                description="Twitch, YouTube etc",
+                # emoji="🟩",
+            ),
+            nextcord.SelectOption(
+                label="Misc",
+                description="Support server, Development support etc",
+                # emoji="🟦",
+            ),
+        ]
+        super().__init__(
+            placeholder="Choose your guilds genre",
+            options=options,
+        )
+
+
+class DropdownView(nextcord.ui.View):
+    def __init__(self, author: WrappedMember):
+        super().__init__(timeout=60)
+        self._author: WrappedMember = author
+        self.dropdown: Dropdown = Dropdown()
+        self.add_item(self.dropdown)
+        self._timeout = False
+
+    async def interaction_check(self, interaction: Interaction):
+        if self._author.id != interaction.user.id:
+            return
+
+        self.stop()
+
+    async def on_timeout(self) -> None:
+        self._timeout = True
+
+    @property
+    def result(self):
+        return self.dropdown.values[0] if not self._timeout else None
 
 
 class Review(commands.Cog):
@@ -113,6 +160,11 @@ class Review(commands.Cog):
             yes_or_no = await ctx.author.prompt(prompt, delete_after=False)
             if not yes_or_no:
                 return await ctx.author.send_basic_embed("Cancelling this process.")
+
+        view: DropdownView = DropdownView(ctx.author)
+        m = await ctx.author.send("Please answer this", view=view)
+        await view.wait()
+        await m.edit(view=None)
 
         try:
             guild_review: GuildReview = GuildReview(

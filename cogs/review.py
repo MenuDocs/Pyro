@@ -142,13 +142,14 @@ class Review(commands.Cog):
             "that are based on previous and current knowledge of server ownership?",
         ]
 
-        if await self.bot.db.guild_reviews.find_by_custom(
-            {"requester_id": ctx.author.id, "pending": True}
-        ):
-            return await ctx.send(
-                "You already have a review marked as pending.\n"
-                "If this is an error please let us know."
-            )
+        # TODO Re-enable
+        # if await self.bot.db.guild_reviews.find_by_custom(
+        #     {"requester_id": ctx.author.id, "pending": True}
+        # ):
+        #     return await ctx.send(
+        #         "You already have a review marked as pending.\n"
+        #         "If this is an error please let us know."
+        #     )
 
         for question in questions:
             try:
@@ -162,7 +163,9 @@ class Review(commands.Cog):
                 return await ctx.author.send_basic_embed("Cancelling this process.")
 
         view: DropdownView = DropdownView(ctx.author)
-        m = await ctx.author.send("Please answer this", view=view)
+        m = await ctx.author.send(
+            "Please answer this about your guilds genre.", view=view
+        )
         await view.wait()
         await m.edit(view=None)
 
@@ -176,6 +179,7 @@ class Review(commands.Cog):
                 text_channel_question=answers[5],
                 criticism_question=answers[4],
                 member_count=int(answers[3]),
+                guild_type=view.result,
             )
         except ValueError:
             return await ctx.author.send_basic_embed(

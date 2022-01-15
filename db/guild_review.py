@@ -14,6 +14,7 @@ class GuildReview:
         text_channel_question: str,
         criticism_question: str,
         member_count: int,
+        guild_type: str,
         _id=None,
         pending: bool = True,
         channel_id: Optional[int] = None,
@@ -25,6 +26,7 @@ class GuildReview:
         self.specifics: str = specifics
         self.guild_invite: str = guild_invite
         self.requester_id: int = requester_id
+        self.guild_type: str = guild_type
         self.member_count: int = member_count
         self.criticism_question: str = criticism_question
         self.channel_id: Optional[int] = channel_id
@@ -36,6 +38,7 @@ class GuildReview:
             "purpose": self.purpose,
             "pending": self.pending,
             "specifics": self.specifics,
+            "guild_type": self.guild_type,
             "guild_invite": self.guild_invite,
             "requester_id": self.requester_id,
             "member_count": self.member_count,
@@ -58,5 +61,6 @@ class GuildReview:
             f"Review specific criticism: {self.criticism_question}\n---\n"
             f"Total text channels: {self.text_channel_question}\n---\n"
             f"Total member count: {self.member_count}\n---\n"
-            f"Discord invite: [{self.guild_invite}]({self.guild_invite})",
+            f"Guild type: {self.guild_type}\n---\n"
+            f"Discord invite: {self.guild_invite}",
         )

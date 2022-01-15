@@ -1,10 +1,10 @@
 import logging
-from typing import List
+from typing import List, Optional
 
 import nextcord
 from bot_base import BotContext
 from bot_base.wraps import WrappedMember
-from nextcord import AllowedMentions
+from nextcord import AllowedMentions, Interaction
 from nextcord.ext import commands
 from nextcord.ext.commands import BucketType
 
@@ -12,6 +12,53 @@ from bot import Pyro
 from db import GuildReview
 
 log = logging.getLogger(__name__)
+
+
+class Dropdown(nextcord.ui.Select):
+    def __init__(self):
+        options = [
+            nextcord.SelectOption(
+                label="Clubs",
+                description="Coding, Gaming etc",
+                # emoji="🟥",
+            ),
+            nextcord.SelectOption(
+                label="Social",
+                description="Twitch, YouTube etc",
+                # emoji="🟩",
+            ),
+            nextcord.SelectOption(
+                label="Misc",
+                description="Support server, Development support etc",
+                # emoji="🟦",
+            ),
+        ]
+        super().__init__(
+            placeholder="Choose your guilds genre",
+            options=options,
+        )
+
+
+class DropdownView(nextcord.ui.View):
+    def __init__(self, author: WrappedMember):
+        super().__init__(timeout=60)
+        self._author: WrappedMember = author
+        self.dropdown: Dropdown = Dropdown()
+        self.add_item(self.dropdown)
+        self._timeout = False
+
+    async def interaction_check(self, interaction: Interaction):
+        if self._author.id != interaction.user.id:
+            return
+
+        self.stop()
+
+    async def on_timeout(self) -> None:
+        self._timeout = True
+
+    @property
+    def result(self):
+        return self.dropdown.values[0] if not self._timeout else None
 
 
 class Review(commands.Cog):
@@ -31,6 +78,40 @@ class Review(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         log.info(f"{self.__class__.__name__}: Ready")
+
+    @commands.command()
+    @commands.guild_only()
+    async def close(self, ctx: BotContext, *, summary):
+        """Close a review"""
+        if ctx.author.id not in {203104843479515136, 271612318947868673}:
+            return await ctx.send_basic_embed(
+                "You do not have permission to run this command."
+            )
+
+        guild_review: GuildReview = await self.bot.db.guild_reviews.find_by_custom(
+            {"channel_id": ctx.channel.id}
+        )
+        if not guild_review:
+            # TODO Add bot reviews here
+            return await ctx.send_basic_embed(
+                "Doesn't look like this channel is a review channel!"
+            )
+
+        try:
+            review_requester = await self.bot.get_or_fetch_user(
+                guild_review.requester_id
+            )
+            await review_requester.send_basic_embed(
+                "Hey, we have closed your review request. "
+                f"Please find your summary below.\n---\n{summary}"
+            )
+        except nextcord.Forbidden:
+            await ctx.author.send(
+                "Couldn't tell that person about closing there review, sorry!"
+            )
+
+        review_channel = await self.bot.get_or_fetch_channel(guild_review.channel_id)
+        await review_channel.delete(reason="Review is finished.")
 
     @commands.command()
     @commands.guild_only()
@@ -61,13 +142,14 @@ class Review(commands.Cog):
             "that are based on previous and current knowledge of server ownership?",
         ]
 
-        if await self.bot.db.guild_reviews.find_by_custom(
-            {"requester_id": ctx.author.id, "pending": True}
-        ):
-            return await ctx.send(
-                "You already have a review marked as pending.\n"
-                "If this is an error please let us know."
-            )
+        # TODO Re-enable
+        # if await self.bot.db.guild_reviews.find_by_custom(
+        #     {"requester_id": ctx.author.id, "pending": True}
+        # ):
+        #     return await ctx.send(
+        #         "You already have a review marked as pending.\n"
+        #         "If this is an error please let us know."
+        #     )
 
         for question in questions:
             try:
@@ -80,6 +162,13 @@ class Review(commands.Cog):
             if not yes_or_no:
                 return await ctx.author.send_basic_embed("Cancelling this process.")
 
+        view: DropdownView = DropdownView(ctx.author)
+        m = await ctx.author.send(
+            "Please answer this about your guilds genre.", view=view
+        )
+        await view.wait()
+        await m.edit(view=None)
+
         try:
             guild_review: GuildReview = GuildReview(
                 requester_id=ctx.author.id,
@@ -90,6 +179,7 @@ class Review(commands.Cog):
                 text_channel_question=answers[5],
                 criticism_question=answers[4],
                 member_count=int(answers[3]),
+                guild_type=view.result,
             )
         except ValueError:
             return await ctx.author.send_basic_embed(

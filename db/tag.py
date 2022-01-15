@@ -8,6 +8,7 @@ class Tag:
         self,
         name: str,
         content: str,
+        creator_id: int,
         description: str,
         is_embed: bool = True,
         _id=None,
@@ -17,12 +18,15 @@ class Tag:
         self.name: str = name
         self.content: str = content
         self.is_embed: bool = is_embed
+        self.creator_id: int = creator_id
         self.description: str = description
 
     def to_dict(self) -> Dict:
         data = {
             "name": self.name,
             "content": self.content,
+            "is_embed": self.is_embed,
+            "creator_id": self.creator_id,
             "description": self.description,
         }
         if self._id:

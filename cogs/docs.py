@@ -52,6 +52,8 @@ class Docs(commands.Cog, name="Documentation"):
         self.page_types = {
             "discord.py": "https://discordpy.readthedocs.io/en/latest",
             "nextcord": "https://nextcord.readthedocs.io/en/latest",
+            "disnake": "https://docs.disnake.dev/en/latest",
+            "pycord": "https://docs.pycord.dev/en/latest",
             "levelling": "https://discord-ext-levelling.readthedocs.io/en/latest/",
         }
 

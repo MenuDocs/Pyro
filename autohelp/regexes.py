@@ -18,6 +18,7 @@ requires_self_removal_pattern: re.Pattern = re.compile(
     r"@(?P<var>[a-zA-Z0-9_]*?)\.(command|slash_command|user_command|message_command)"
     r"\([a-zA-Z= _]*?\)\n\s{0,8}((?P<func>async def .*\(self,\s*?ctx.*\)):)",
 )
+# TODO Add events
 
 """Add self to all command types and cog listeners if required"""
 command_requires_self_addition_pattern: re.Pattern = re.compile(
@@ -30,7 +31,7 @@ event_requires_self_addition_pattern: re.Pattern = re.compile(
 
 """Stop using outdated features"""
 command_pass_context_pattern: re.Pattern = re.compile(
-    r"@commands\.command\(\s*?pass_context\s*?=\s*?True\)"
+    r"@([a-zA-Z0-9_]*?)\.command\(\s*?pass_context\s*?=\s*?True\)"
 )
 
 """Follow some practices"""

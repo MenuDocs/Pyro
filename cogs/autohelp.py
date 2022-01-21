@@ -20,8 +20,12 @@ class Autohelp(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: nextcord.Message):
-        if not message.guild or message.guild.id not in AUTOHELP_ALLOWED_DISCORDS:
-            # Not in an allowed discord
+        # We don't technically need this here anymore
+        # if not message.guild or message.guild.id not in AUTOHELP_ALLOWED_DISCORDS:
+        #     # Not in an allowed discord
+        #     return
+
+        if message.author.bot:
             return
 
         # Only process in python help channels

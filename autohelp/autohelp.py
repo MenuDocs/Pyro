@@ -70,7 +70,7 @@ class AutoHelp:
             self.process_invalid_ctx_or_inter_type,
             self.process_client_bot,
             self.process_pass_context,
-            self.process_on_message_without_process_commands,
+            # self.process_on_message_without_process_commands, # Add back once complete
         ]
 
         # Settings

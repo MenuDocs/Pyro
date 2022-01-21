@@ -22,10 +22,3 @@ class Pyro(BotBase):
         self.auto_help: AutoHelp = AutoHelp(self)
 
         self.is_debug_mode = bool(os.environ.get("IS_LOCAL", False))
-
-    async def on_message(self, message: nextcord.Message) -> None:
-        if self.is_debug_mode and message.author.id not in COMBINED_ACCOUNTS:
-            # During dev only run commands from us so as to not impact the end user
-            return None
-
-        return await super().on_message(message)

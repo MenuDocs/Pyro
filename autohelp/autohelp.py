@@ -54,7 +54,7 @@ class CloseButton(nextcord.ui.View):
 
 
 class AutoHelp:
-    def __init__(self):
+    def __init__(self, bot):
         self.requires_self_removal = requires_self_removal_pattern
         self.event_requires_self_addition = event_requires_self_addition_pattern
         self.command_requires_self_addition = command_requires_self_addition_pattern
@@ -72,7 +72,7 @@ class AutoHelp:
 
         # Settings
         self.color = 0x26F7FD
-        self._code_bin: CodeBinExtractor = CodeBinExtractor()
+        self._code_bin: CodeBinExtractor = CodeBinExtractor(bot)
 
     def build_embed(
         self, message: nextcord.Message, description: str
@@ -93,6 +93,10 @@ class AutoHelp:
     async def process_message(
         self, message: nextcord.Message
     ) -> Optional[List[nextcord.Embed]]:
+        code_bin_content = await self._code_bin.process(message.content)
+        message.content += code_bin_content
+        message.content = message.content = message.content.replace("\r", "")
+
         iters = [call(message) for call in self.patterns]
         results = await asyncio.gather(*iters)
         results = list(filter(None, results))

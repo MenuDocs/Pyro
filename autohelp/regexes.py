@@ -2,7 +2,7 @@ import re
 
 """Pastebin Regexs"""
 vco_cf_worker_boi: re.Pattern = re.compile(
-    r"https://paste.nextcord.dev/?\?(language=python&)?(id=(?P<id>[0-9]*))?"
+    r"https://(?P<url>paste.(nextcord|disnake).dev)/?\?(language=python&)?(id=(?P<id>[0-9]*))?"
 )
 
 """Remove self from all command types if not in a class"""

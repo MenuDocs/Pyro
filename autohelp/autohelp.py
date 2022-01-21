@@ -226,7 +226,7 @@ class AutoHelp:
 
         return self.build_embed(
             message,
-            description=f"Calling a `Bot`, `{client_bot.group('name')}` is not recommended. "
+            description=f"Calling a `Bot`, `{client_bot.group('name')}` is not recommended.\n"
             f"Read [here](https://tutorial.vcokltfre.dev/tips/clientbot/) for more detail.",
         )
 

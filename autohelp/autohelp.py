@@ -25,7 +25,9 @@ TESTING = 888614043433197568
 
 class CloseButton(nextcord.ui.View):
     def __init__(
-        self, message: nextcord.Message, actual_author: nextcord.Member
+        self,
+        message: nextcord.Message,
+        actual_author: nextcord.Member,
     ) -> None:
         super().__init__(timeout=None)
         self._message = message
@@ -158,7 +160,8 @@ class AutoHelp:
             "Looks like you override the `on_message` event "
             "without processing commands.\n This means your commands "
             "will not get called at all, you should change your event to the below."
-            f"\n\n**Old**\n```py\n{base}```\n**New | Fixed**\n```py\n{code}```"
+            f"\n\n**Old**\n```py\n{base}```\n**New | Fixed**\n```py\n{code}```\n\n"
+            f"Note: This may not be in the right place so double check."
         )
 
         if len(code.split("\n")) > 10:
@@ -242,9 +245,9 @@ class AutoHelp:
         return self.build_embed(
             message,
             description="Looks like your using `pass_context` still. That was a feature "
-            "back in version 0.x.x, your likely using a fork of the now "
+            "back in version 0.x.x five years ago, your likely using a fork of the now "
             "no longer maintained discord.py which means your on version "
-            "2.x.x. Please check where your getting this code from and read "
+            "2.x.x.\nPlease check where your getting this code from and read "
             "your forks migration guides.",
         )
 
@@ -320,7 +323,7 @@ class AutoHelp:
         return self.build_embed(
             message,
             description=f"Looks like your defining {msg} in a class (Cog) without "
-            "using `self` as the first variable. This will likely lead to issues and "
+            "using `self` as the first variable.\nThis will likely lead to issues and "
             "you should change it as per the following:"
             f"\n\n**Old**\n`{initial_func}`\n**New | Fixed**\n`{final_func}`",
         )

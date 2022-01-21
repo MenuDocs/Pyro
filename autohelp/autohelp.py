@@ -12,6 +12,7 @@ from autohelp.regexes import (
     command_pass_context_pattern,
     invalid_ctx_or_inter_type_pattern,
     client_bot_pattern,
+    on_message_without_process_commands,
 )
 
 log = logging.getLogger(__name__)
@@ -61,6 +62,7 @@ class AutoHelp:
         self.command_pass_context = command_pass_context_pattern
         self.invalid_ctx_or_inter_type = invalid_ctx_or_inter_type_pattern
         self.client_bot = client_bot_pattern
+        self.on_message_without_process_commands = on_message_without_process_commands
 
         self.patterns: List[Callable] = [
             self.process_requires_self_removal,
@@ -68,6 +70,7 @@ class AutoHelp:
             self.process_invalid_ctx_or_inter_type,
             self.process_client_bot,
             self.process_pass_context,
+            self.process_on_message_without_process_commands,
         ]
 
         # Settings
@@ -109,6 +112,43 @@ class AutoHelp:
         )
 
         await auto_message.edit(view=CloseButton(auto_message, message.author))
+
+    async def process_on_message_without_process_commands(
+        self, message: nextcord.Message
+    ):
+        on_message_without_process_commands_found = (
+            self.on_message_without_process_commands.search(message.content)
+        )
+        if on_message_without_process_commands_found is None:
+            return None
+
+        old_code = on_message_without_process_commands_found.group("code")
+        if "process_commands" in old_code:
+            return None
+
+        args = on_message_without_process_commands_found.group("args")
+        indent = on_message_without_process_commands_found.group("indent")
+        instance_name = on_message_without_process_commands_found.group("instance_name")
+
+        base = f"@{instance_name}.event\nasync def on_message({args}):\n{old_code}"
+        code = f"{base}\n{indent}await {instance_name}.process_commands()"
+        output = (
+            "Looks like you override the `on_message` event "
+            "without processing commands.\n This means your commands "
+            "will not get called at all, you should change your event to the below."
+            f"\n\n**Old**\n```py\n{base}```\n**New | Fixed**\n```py\n{code}```"
+        )
+
+        if len(code.split("\n")) > 10:
+            # Too big for one embed
+            output = (
+                "Looks like you override the `on_message` event "
+                "without processing commands.\n This means your commands "
+                "will not get called at all, you should make sure to add "
+                f"`await {instance_name}.process_commands()` into your `on_message` event."
+            )
+
+        return self.build_embed(message, description=output)
 
     async def process_invalid_ctx_or_inter_type(
         self, message: nextcord.Message

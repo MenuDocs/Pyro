@@ -8,53 +8,17 @@ from nextcord.ext import commands
 from nextcord.ext.commands import Greedy
 
 from bot import Pyro
+from checks.basic import (
+    MENUDOCS_GUILD_IDS,
+    PYTHON_HELP_CHANNEL_IDS,
+    ensure_is_menudocs_guild,
+    ensure_is_menudocs_staff,
+)
 
 log = logging.getLogger(__name__)
 
 BASE_MENUDOCS_URL = "https://github.com/menudocs"
-MAIN_GUILD = 416512197590777857
-PROJECT_GUILD = 566131499506860045
-AUXTAL_TESTING_GUILD = 888614043433197568
-MENUDOCS_GUILD_IDS = (MAIN_GUILD, PROJECT_GUILD, AUXTAL_TESTING_GUILD)
-PYTHON_HELP_CHANNEL_IDS = (
-    621912956627582976,  # discord.py
-    621913007630319626,  # python
-    702862760052129822,  # pyro
-    416522595958259713,  # commands (main dc)
-    888614043835830300   # Auxtal testing channel
-)
-CODE_REVIEWER, PROFICIENT, TEAM = (
-    850330300595699733,  # Code Reviewer
-    479199775590318080,  # Proficient
-    659897739844517931,  # ⚔ Team
-)
 
-
-def ensure_is_menudocs_guild():
-    async def check(ctx):
-        if not ctx.guild or ctx.guild.id not in MENUDOCS_GUILD_IDS:
-            return False
-        return True
-
-    return commands.check(check)
-
-
-def ensure_is_menudocs_project_guild():
-    async def check(ctx):
-        if not ctx.guild or ctx.guild.id != PROJECT_GUILD:
-            return False
-        return True
-
-    return commands.check(check)
-
-
-def ensure_is_menudocs_staff():
-    async def check(ctx):
-        if not commands.has_any_role(CODE_REVIEWER, PROFICIENT, TEAM):
-            return False
-        return True
-
-    return commands.check(check)
 
 def replied_reference(message):
     ref = message.reference
@@ -105,22 +69,6 @@ class Menudocs(commands.Cog):
             number = pr_regex.group("number")
             url = f"{BASE_MENUDOCS_URL}/{repo}/pull/{number}"
             await message.channel.send(url)
-
-        # Only process in python help channels
-        if message.channel.id not in PYTHON_HELP_CHANNEL_IDS:
-            return
-
-        auto_help_embeds: List[
-            nextcord.Embed
-        ] = await self.bot.auto_help.process_message(message)
-
-        if not auto_help_embeds:
-            return
-
-        await message.channel.send(
-            f"{message.author.mention} {'this' if len(auto_help_embeds) == 1 else 'these'} might help.",
-            embeds=auto_help_embeds,
-        )
 
     @commands.Cog.listener()
     async def on_thread_join(self, thread) -> None:
@@ -194,7 +142,7 @@ class Menudocs(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    @commands.command(name='format')
+    @commands.command(name="format")
     @ensure_is_menudocs_guild()
     async def _format(self, ctx):
         """Sends a helpful embed about how to correctly format your question."""

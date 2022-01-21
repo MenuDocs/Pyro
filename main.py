@@ -16,6 +16,7 @@ from nextcord.ext import tasks
 
 import checks
 from bot import Pyro
+from checks.basic import MENUDOCS_GUILD_IDS, COMBINED_ACCOUNTS
 from utils.pagination import EvalPageSource
 from utils.util import clean_code
 
@@ -62,8 +63,6 @@ async def main():
     # This basically ONLY matches a string that only consists of a mention
     mention = re.compile(r"^<@!?(?P<id>\d+)>$")
 
-    bot.DEFAULTPREFIX = "py."
-
     @bot.event
     async def on_ready():
         await bot.change_presence(activity=nextcord.Game(name="py.help"))
@@ -71,7 +70,7 @@ async def main():
         logger.info("I'm all up and ready like mom's spaghetti")
 
     @bot.event
-    async def on_message(message):
+    async def on_message(message: nextcord.Message):
         # Ignore messages sent by bots
         if message.author.bot:
             return
@@ -81,7 +80,7 @@ async def main():
             if int(match.group("id")) == bot.user.id:
                 data = await bot.db.config.find(message.guild.id)
                 if not data or "prefix" not in data:
-                    prefix = bot.DEFAULTPREFIX
+                    prefix = bot.DEFAULT_PREFIX
                 else:
                     prefix = data["prefix"]
 
@@ -89,13 +88,21 @@ async def main():
                     f"My prefix here is `{prefix}`", delete_after=15
                 )
 
+        if (
+            message.channel.id not in MENUDOCS_GUILD_IDS
+            and message.author.id not in COMBINED_ACCOUNTS
+        ):
+            return
+
+        # Only run commands in menudocs guild.
+        # Alternately run them if its Skelmis or Auxtal
         await bot.process_commands(message)
 
     @bot.command(description="Log the bot out.")
     @commands.is_owner()
     async def logout(ctx):
         await ctx.send("Cya :wave:")
-        await bot.logout()
+        await bot.close()
 
     @bot.command(name="eval", aliases=["exec"])
     @checks.can_eval()

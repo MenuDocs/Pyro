@@ -154,7 +154,7 @@ class Quiz(commands.Cog, name="Quiz"):
     async def on_ready(self):
         self.logger.info("I'm ready!")
 
-    @commands.group(invoke_without_command=True)
+    @commands.group(invoke_without_command=True, enabled=False, hidden=True)
     @commands.bot_has_permissions(manage_roles=True)
     @commands.guild_only()
     async def quiz(self, ctx):

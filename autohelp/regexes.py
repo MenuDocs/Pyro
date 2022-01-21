@@ -46,3 +46,9 @@ invalid_ctx_or_inter_type_pattern: re.Pattern = re.compile(
     r"\([a-zA-Z= _]*?\)\n\s{0,8}(async def .*\()(?P<all>(self,\s*)?"
     r"((?P<arg>[a-zA-Z_\s]+):(?P<arg_type>[a-zA-Z\s\.]+))(.*))(\).*:)"
 )
+
+"""Events with ()"""
+events_dont_use_brackets = re.compile(
+    r"(?P<all>@(?P<instance_name>[a-zA-Z0-9_]*?)\.event\([a-zA-Z0-9_]*?\))(?P<the_rest>\n"
+    r"async def [a-zA-Z0-9_]*?\(([a-zA-Z0-9_]*?)\):\n(\s+)(([a-zA-Z0-9_ ().=!*&^%$#@:])+)+(\s)?)"
+)

@@ -13,6 +13,7 @@ from autohelp.regexes import (
     invalid_ctx_or_inter_type_pattern,
     client_bot_pattern,
     on_message_without_process_commands,
+    events_dont_use_brackets,
 )
 
 log = logging.getLogger(__name__)
@@ -63,6 +64,7 @@ class AutoHelp:
         self.invalid_ctx_or_inter_type = invalid_ctx_or_inter_type_pattern
         self.client_bot = client_bot_pattern
         self.on_message_without_process_commands = on_message_without_process_commands
+        self.events_dont_use_brackets = events_dont_use_brackets
 
         self.patterns: List[Callable] = [
             self.process_requires_self_removal,
@@ -70,6 +72,7 @@ class AutoHelp:
             self.process_invalid_ctx_or_inter_type,
             self.process_client_bot,
             self.process_pass_context,
+            self.process_events_dont_use_brackets
             # self.process_on_message_without_process_commands, # Add back once complete
         ]
 
@@ -112,6 +115,25 @@ class AutoHelp:
         )
 
         await auto_message.edit(view=CloseButton(auto_message, message.author))
+
+    async def process_events_dont_use_brackets(self, message: nextcord.Message):
+        events_dont_use_brackets_found = self.events_dont_use_brackets.search(
+            message.content
+        )
+        if not events_dont_use_brackets_found:
+            return None
+
+        old = events_dont_use_brackets_found.group("all")
+        the_rest = events_dont_use_brackets_found.group("the_rest")
+        instance_name = events_dont_use_brackets_found.group("instance_name")
+
+        fixed = f"@{instance_name}.event"
+        return self.build_embed(
+            message,
+            description="When defining an event you do not need to use `()`.\n"
+            "See below for how to fix this:"
+            f"\n\n**Old**\n```py\n{old}{the_rest}```\n**New | Fixed**\n```py\n{fixed}{the_rest}```",
+        )
 
     async def process_on_message_without_process_commands(
         self, message: nextcord.Message

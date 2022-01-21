@@ -51,6 +51,7 @@ class Docs(commands.Cog, name="Documentation"):
 
         self.page_types = {
             "discord.py": "https://discordpy.readthedocs.io/en/latest",
+            "nextcord": "https://nextcord.readthedocs.io/en/latest",
             "levelling": "https://discord-ext-levelling.readthedocs.io/en/latest/",
         }
 
@@ -179,7 +180,7 @@ class Docs(commands.Cog, name="Documentation"):
             key = key or ""
 
             query = key + query
-            key = "discord.py"
+            key = "nextcord"
 
         if query is not None:
             if query.lower() == "rtfm":
@@ -198,8 +199,9 @@ class Docs(commands.Cog, name="Documentation"):
                     embed=nextcord.Embed.from_dict(
                         {
                             "title": "'It'll be finished before Mandroc still Connor' ~ Kindly, Pyro Devs",
-                            "description": "Primary dev:\n<@330566541156417536>\nDevs:\n"
-                            "<@271612318947868673>",
+                            "description": "Devs:\n"
+                            "<@271612318947868673>\n<@327745755789918208>\n\n"
+                            "Initial bot:\n<@330566541156417536>",
                             "footer": {
                                 "text": "Fun fact, the initial bot was coded on a phone."
                             },

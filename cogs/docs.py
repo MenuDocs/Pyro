@@ -173,7 +173,7 @@ class Docs(commands.Cog, name="Documentation"):
     @commands.command(
         name="rtfm",
         description="Gives you a documentation link for a d.py entity.",
-        aliases=["rtfd"],
+        aliases=["rtfd", "doc"],
     )
     async def rtfm(self, ctx, key: str = None, *, query: str = None):
         if not key or key.lower() not in self.page_types.keys():

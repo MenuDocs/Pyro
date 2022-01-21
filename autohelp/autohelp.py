@@ -4,6 +4,7 @@ from typing import Callable, Optional, List
 
 import nextcord
 
+from autohelp import CodeBinExtractor
 from autohelp.regexes import (
     requires_self_removal_pattern,
     event_requires_self_addition_pattern,
@@ -71,6 +72,7 @@ class AutoHelp:
 
         # Settings
         self.color = 0x26F7FD
+        self._code_bin: CodeBinExtractor = CodeBinExtractor()
 
     def build_embed(
         self, message: nextcord.Message, description: str
@@ -88,12 +90,14 @@ class AutoHelp:
         )
         return embed
 
-    async def process_message(self, message: nextcord.Message) -> List[nextcord.Embed]:
+    async def process_message(
+        self, message: nextcord.Message
+    ) -> Optional[List[nextcord.Embed]]:
         iters = [call(message) for call in self.patterns]
         results = await asyncio.gather(*iters)
         results = list(filter(None, results))
         if not results:
-            return
+            return None
 
         auto_message = await message.channel.send(
             f"{message.author.mention} {'this' if len(results) == 1 else 'these'} might help.",
@@ -187,6 +191,9 @@ class AutoHelp:
         injected_self = self.requires_self_removal.search(message.content)
         if injected_self is None:
             # Don't process
+            return
+
+        if injected_self.group("var") == "commands":
             return
 
         initial_func = injected_self.group("func")

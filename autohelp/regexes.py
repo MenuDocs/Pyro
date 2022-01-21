@@ -1,9 +1,14 @@
 import re
 
+"""Pastebin Regexs"""
+vco_cf_worker_boi: re.Pattern = re.compile(
+    r"https://paste.nextcord.dev/?\?(language=python&)?(id=(?P<id>[0-9]*))?"
+)
+
 """Remove self from all command types if not in a class"""
 requires_self_removal_pattern: re.Pattern = re.compile(
-    r"@[a-zA-Z0-9_]*?\.(command|slash_command|user_command|message_command)"
-    r"\([a-zA-Z= _]*?\)\n\s{0,8}(async def .*\((?P<func>self,\s*?ctx.*)\):)",
+    r"(?P<var>@[a-zA-Z0-9_]*?)\.(command|slash_command|user_command|message_command)"
+    r"\([a-zA-Z= _]*?\)\n\s{0,8}((?P<func>async def .*\(self,\s*?ctx.*\)):)",
 )
 
 """Add self to all command types and cog listeners if required"""

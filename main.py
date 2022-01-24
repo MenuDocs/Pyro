@@ -10,6 +10,7 @@ from traceback import format_exception
 import aiohttp
 import nextcord
 import motor.motor_asyncio
+from bot_base import BotContext
 from bot_base.db.document import Document
 from nextcord.ext import commands, menus
 from nextcord.ext import tasks
@@ -141,6 +142,18 @@ async def main():
             clear_buttons_after=True,
         )
         await pages.start(ctx)
+
+    @bot.command()
+    @commands.is_owner()
+    async def note(ctx: BotContext, *, note: str):
+        channel = await bot.get_or_fetch_channel(702862760052129822)
+        await channel.send(
+            embed=nextcord.Embed(
+                title=f"Note for {ctx.author.name}",
+                description=f"{note}\n\n[Jump to]({ctx.message.jump_url})",
+            )
+        )
+        await ctx.send("Made a note of it.")
 
     @bot.command()
     @commands.is_owner()

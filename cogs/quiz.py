@@ -7,7 +7,7 @@ import aiohttp
 import nextcord
 from nextcord.ext import commands
 
-from utils.util import clean_code
+from pyro.utils.util import clean_code
 
 
 class Choices:

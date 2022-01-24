@@ -1,13 +1,11 @@
 import os
 from typing import Optional
 
-import nextcord
 from aiohttp import ClientSession
 from bot_base import BotBase
 
-from autohelp import AutoHelp
-from checks.basic import COMBINED_ACCOUNTS
-from db import PyroMongoManager
+from pyro.autohelp import AutoHelp
+from pyro.db import PyroMongoManager
 
 
 class Pyro(BotBase):

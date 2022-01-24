@@ -14,11 +14,11 @@ from bot_base.db.document import Document
 from nextcord.ext import commands, menus
 from nextcord.ext import tasks
 
-import checks
-from bot import Pyro
-from checks.basic import MENUDOCS_GUILD_IDS, COMBINED_ACCOUNTS
-from utils.pagination import EvalPageSource
-from utils.util import clean_code
+from pyro import checks
+from pyro.bot import Pyro
+from pyro.checks import MENUDOCS_GUILD_IDS, COMBINED_ACCOUNTS
+from pyro.utils.pagination import EvalPageSource
+from pyro.utils.util import clean_code
 
 mongo_url = os.getenv("MONGO")
 token = os.getenv("TOKEN")
@@ -80,7 +80,7 @@ async def main():
             return
 
         if (
-            message.channel.id not in MENUDOCS_GUILD_IDS
+            message.guild.id not in MENUDOCS_GUILD_IDS
             and message.author.id not in COMBINED_ACCOUNTS
         ):
             return

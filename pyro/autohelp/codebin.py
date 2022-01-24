@@ -1,9 +1,7 @@
 import re
 from typing import Dict, Callable
 
-from aiohttp import ClientSession
-
-from autohelp.regexes import vco_cf_worker_boi
+from pyro.autohelp.regexes import vco_cf_worker_boi
 
 
 class CodeBinExtractor:
@@ -20,7 +18,7 @@ class CodeBinExtractor:
         # REGEX
         self.vco_cf_worker_boi = vco_cf_worker_boi
 
-        from bot import Pyro
+        from pyro.bot import Pyro
 
         self.bot: Pyro = bot
 

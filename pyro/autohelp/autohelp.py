@@ -4,8 +4,8 @@ from typing import Callable, Optional, List
 
 import nextcord
 
-from autohelp import CodeBinExtractor
-from autohelp.regexes import (
+from pyro.autohelp import CodeBinExtractor
+from pyro.autohelp.regexes import (
     requires_self_removal_pattern,
     event_requires_self_addition_pattern,
     command_requires_self_addition_pattern,

@@ -3,7 +3,7 @@ from typing import Union
 import nextcord
 from nextcord.ext import menus
 
-from bot import Pyro
+from pyro.bot import Pyro
 
 
 class EvalPageSource(menus.ListPageSource):

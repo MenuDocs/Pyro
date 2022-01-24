@@ -4,7 +4,7 @@ from math import inf as infinity
 
 import nextcord
 
-from utils.enums import Winner, Piece
+from pyro.utils.enums import Winner, Piece
 
 
 class InvalidMove(Exception):

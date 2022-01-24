@@ -4,8 +4,8 @@ from typing import List
 import nextcord
 from nextcord.ext import commands
 
-from bot import Pyro
-from checks.basic import AUTOHELP_ALLOWED_DISCORDS, ALLOWED_HELP_CHANNELS
+from pyro.bot import Pyro
+from pyro.checks import ALLOWED_HELP_CHANNELS
 
 log = logging.getLogger(__name__)
 

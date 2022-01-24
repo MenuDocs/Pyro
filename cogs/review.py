@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional
+from typing import List
 
 import nextcord
 from bot_base import BotContext
@@ -8,8 +8,8 @@ from nextcord import AllowedMentions, Interaction
 from nextcord.ext import commands
 from nextcord.ext.commands import BucketType
 
-from bot import Pyro
-from db import GuildReview
+from pyro.bot import Pyro
+from pyro.db import GuildReview
 
 log = logging.getLogger(__name__)
 

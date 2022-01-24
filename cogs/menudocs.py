@@ -1,14 +1,14 @@
 import logging
 import re
-from typing import List, Optional
+from typing import List
 
 import nextcord
 from axew import AxewClient, BaseAxewException
 from nextcord.ext import commands
 from nextcord.ext.commands import Greedy
 
-from bot import Pyro
-from checks.basic import (
+from pyro.bot import Pyro
+from pyro.checks import (
     MENUDOCS_GUILD_IDS,
     PYTHON_HELP_CHANNEL_IDS,
     ensure_is_menudocs_guild,

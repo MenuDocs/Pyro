@@ -8,8 +8,8 @@ from string import Template
 import nextcord
 from nextcord.ext import commands
 
-from utils import Winner, TicTacToe, InvalidMove, PlayerStats
-from utils.util import Pag
+from pyro.utils import Winner, TicTacToe, InvalidMove, PlayerStats
+from pyro.utils.util import Pag
 
 
 class Games(commands.Cog):

@@ -2,7 +2,7 @@ import logging
 
 from nextcord.ext import commands
 
-from utils.util import Pag
+from pyro.utils.util import Pag
 
 
 class Help(commands.Cog, name="Help command"):

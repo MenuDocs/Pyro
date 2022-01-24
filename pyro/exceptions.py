@@ -15,9 +15,11 @@ class BasePyroException(DiscordException):
         return self.message
 
 
-class MenudocsOnly(CheckFailure):
+class MenuDocsOnly(CheckFailure):
     """This module can only be used a Menudocs guild."""
 
-    def __init__(self, guild_id: int, module: str):
+    def __init__(self, guild_id: int, module: str, command_name: str, prefix: str):
         self.guild_id: int = guild_id
         self.module: str = module
+        self.command_name: str = command_name
+        self.prefix: str = prefix

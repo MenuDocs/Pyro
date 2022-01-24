@@ -1,4 +1,4 @@
+from pyro.exceptions import BasePyroException, MenuDocsOnly
 from pyro.bot import Pyro
-from pyro.exceptions import BasePyroException, MenudocsOnly
 
-__all__ = ("Pyro", "BasePyroException", "MenudocsOnly")
+__all__ = ("Pyro", "BasePyroException", "MenuDocsOnly")

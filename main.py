@@ -79,12 +79,6 @@ async def main():
         if message.author.bot:
             return
 
-        if (
-            message.guild.id not in MENUDOCS_GUILD_IDS
-            and message.author.id not in COMBINED_ACCOUNTS
-        ):
-            return
-
         # Whenever the bot is tagged, respond with its prefix
         if match := mention.match(message.content):
             if int(match.group("id")) == bot.user.id:

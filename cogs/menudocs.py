@@ -13,6 +13,7 @@ from pyro.checks import (
     PYTHON_HELP_CHANNEL_IDS,
     ensure_is_menudocs_guild,
     ensure_is_menudocs_staff,
+    MenuDocsCog,
 )
 
 log = logging.getLogger(__name__)
@@ -32,7 +33,7 @@ def extract_repo(regex):
     return regex.group("repo") or "pyro"
 
 
-class Menudocs(commands.Cog):
+class MenuDocs(MenuDocsCog):
     """A cog devoted to operations within the Menudocs guild"""
 
     def __init__(self, bot):
@@ -106,7 +107,7 @@ class Menudocs(commands.Cog):
         return content
 
     @commands.command()
-    @ensure_is_menudocs_guild()
+    # @ensure_is_menudocs_guild()
     async def init(self, ctx):
         """Sends a helpful embed about how to fix import errors."""
         embed = nextcord.Embed(
@@ -227,4 +228,4 @@ class Menudocs(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(Menudocs(bot))
+    bot.add_cog(MenuDocs(bot))

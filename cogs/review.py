@@ -9,6 +9,7 @@ from nextcord.ext import commands
 from nextcord.ext.commands import BucketType
 
 from pyro.bot import Pyro
+from pyro.checks import MenuDocsCog
 from pyro.db import GuildReview
 
 log = logging.getLogger(__name__)
@@ -61,7 +62,7 @@ class DropdownView(nextcord.ui.View):
         return self.dropdown.values[0] if not self._timeout else None
 
 
-class Review(commands.Cog):
+class Review(MenuDocsCog):
     def __init__(self, bot):
         self.bot: Pyro = bot
         self.review_role_id: int = 928276706568052797

@@ -107,7 +107,6 @@ class MenuDocs(MenuDocsCog):
         return content
 
     @commands.command()
-    # @ensure_is_menudocs_guild()
     async def init(self, ctx):
         """Sends a helpful embed about how to fix import errors."""
         embed = nextcord.Embed(
@@ -125,7 +124,6 @@ class MenuDocs(MenuDocsCog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    @ensure_is_menudocs_guild()
     async def pypi(self, ctx):
         """Sends a helpful embed about how to correctly download packages."""
         embed = nextcord.Embed(
@@ -144,7 +142,6 @@ class MenuDocs(MenuDocsCog):
         await ctx.send(embed=embed)
 
     @commands.command(name="format")
-    @ensure_is_menudocs_guild()
     async def _format(self, ctx):
         """Sends a helpful embed about how to correctly format your question."""
         embed = nextcord.Embed(

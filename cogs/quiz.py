@@ -7,6 +7,7 @@ import aiohttp
 import nextcord
 from nextcord.ext import commands
 
+from pyro.checks import MenuDocsCog
 from pyro.utils.util import clean_code
 
 
@@ -137,7 +138,7 @@ class CodeQuiz:
         return correct_answers
 
 
-class Quiz(commands.Cog, name="Quiz"):
+class Quiz(MenuDocsCog, name="Quiz"):
     def __init__(self, bot):
         self.bot = bot
         self.logger = logging.getLogger(__name__)

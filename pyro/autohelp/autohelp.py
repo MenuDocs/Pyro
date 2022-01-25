@@ -21,6 +21,7 @@ log = logging.getLogger(__name__)
 MENUDOCS = 416512197590777857
 NEXTCORD = 881118111967883295
 TESTING = 888614043433197568
+DISNAKE = 808030843078836254
 
 
 class CloseButton(nextcord.ui.View):
@@ -45,6 +46,7 @@ class CloseButton(nextcord.ui.View):
             MENUDOCS: {479199775590318080},
             NEXTCORD: {882192899519954944},
             TESTING: {888614043521269791},
+            DISNAKE: {},
         }
 
         return (

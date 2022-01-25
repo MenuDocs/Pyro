@@ -14,7 +14,7 @@ class GuildReview:
         text_channel_question: str,
         criticism_question: str,
         member_count: int,
-        guild_type: str,
+        guild_type: str = "Misc",
         _id=None,
         pending: bool = True,
         channel_id: Optional[int] = None,

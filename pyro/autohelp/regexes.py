@@ -7,10 +7,8 @@ vco_cf_worker_boi: re.Pattern = re.compile(
 
 """If you override it, make sure to process commands"""
 on_message_without_process_commands = re.compile(
-    r"@(?P<instance_name>[a-zA-Z0-9_]*?)\.event\nasync def on_message"
-    r"\((?P<args>[a-zA-Z0-9_]*?)\):\n((?P<indent>\s+)"
-    r"(?P<initial_code>[a-zA-Z0-9_ ().=!*&^%$#@:])+)(\s)?"
-    r"(?P<code>(\s+([a-zA-Z0-9_ ().=!*&^%$#@:])+)+)?(\s)?"
+    r"@(?P<instance_name>[a-zA-Z0-9_]*?)\.event(\(\))?\nasync def on_message\("
+    r"(?P<args>[a-zA-Z0-9_]*?)\):\n(?P<code>((\s)+([a-zA-Z0-9_ ().=!*&^%$#@:\"\'])+)+)(\n\s)?"
 )
 
 """Remove self from all command types if not in a class"""

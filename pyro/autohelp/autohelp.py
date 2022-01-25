@@ -1,9 +1,11 @@
 import asyncio
+import itertools
 import logging
 from typing import Callable, Optional, List
 
 import nextcord
 
+from pyro import checks
 from pyro.autohelp import CodeBinExtractor
 from pyro.autohelp.regexes import (
     requires_self_removal_pattern,
@@ -46,7 +48,12 @@ class CloseButton(nextcord.ui.View):
             MENUDOCS: {479199775590318080},
             NEXTCORD: {882192899519954944},
             TESTING: {888614043521269791},
-            DISNAKE: {},
+            DISNAKE: {
+                891619545356308481,  # Collaborator
+                922539851667091527,  # Smol mod
+                808033337767362570,  # Mod
+                847846236555968543,  # Solid contrib
+            },
         }
 
         return (
@@ -56,6 +63,7 @@ class CloseButton(nextcord.ui.View):
                 )
             )
             or interaction.user.id == self._author_id
+            or interaction.user.id in checks.COMBINED_ACCOUNTS
         )
 
 
@@ -76,8 +84,8 @@ class AutoHelp:
             self.process_invalid_ctx_or_inter_type,
             self.process_client_bot,
             self.process_pass_context,
-            self.process_events_dont_use_brackets
-            # self.process_on_message_without_process_commands, # Add back once complete
+            self.process_events_dont_use_brackets,
+            self.process_on_message_without_process_commands,
         ]
 
         # Settings
@@ -153,8 +161,9 @@ class AutoHelp:
             return None
 
         args = on_message_without_process_commands_found.group("args")
-        indent = on_message_without_process_commands_found.group("indent")
         instance_name = on_message_without_process_commands_found.group("instance_name")
+
+        indent = sum(1 for _ in itertools.takewhile(str.isspace, str(old_code))) * " "
 
         base = f"@{instance_name}.event\nasync def on_message({args}):\n{old_code}"
         code = f"{base}\n{indent}await {instance_name}.process_commands()"
@@ -163,7 +172,9 @@ class AutoHelp:
             "without processing commands.\n This means your commands "
             "will not get called at all, you should change your event to the below."
             f"\n\n**Old**\n```py\n{base}```\n**New | Fixed**\n```py\n{code}```\n\n"
-            f"Note: This may not be in the right place so double check."
+            f"Note: This may not be in the right place so double check it is.\n"
+            f"You can read more about it [here](https://nextcord.readthedocs.io"
+            f"/en/latest/faq.html?highlight=frequently#why-does-on-message-make-my-commands-stop-working)"
         )
 
         if len(code.split("\n")) > 10:

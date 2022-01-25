@@ -18,6 +18,7 @@ class GuildReview:
         _id=None,
         pending: bool = True,
         channel_id: Optional[int] = None,
+        closing_summary: Optional[str] = None,
     ):
         self._id = _id
         self.name: str = name
@@ -30,6 +31,7 @@ class GuildReview:
         self.member_count: int = member_count
         self.criticism_question: str = criticism_question
         self.channel_id: Optional[int] = channel_id
+        self.closing_summary: Optional[str] = closing_summary
         self.text_channel_question: str = text_channel_question
 
     def to_dict(self):
@@ -42,6 +44,7 @@ class GuildReview:
             "guild_invite": self.guild_invite,
             "requester_id": self.requester_id,
             "member_count": self.member_count,
+            "closing_summary": self.closing_summary,
             "criticism_question": self.criticism_question,
             "text_channel_question": self.text_channel_question,
         }
@@ -54,7 +57,7 @@ class GuildReview:
         return data
 
     def as_embed(self, requester_name: str) -> nextcord.Embed:
-        return nextcord.Embed(
+        embed = nextcord.Embed(
             title=f"Guild review request for: `{requester_name}`",
             description=f"Guild name: `{self.name}`\n---\nPurpose: {self.purpose}\n---\n"
             f"Review specifics: {self.specifics}\n---\n"
@@ -64,3 +67,8 @@ class GuildReview:
             f"Guild type: {self.guild_type}\n---\n"
             f"Discord invite: {self.guild_invite}",
         )
+
+        if self.closing_summary:
+            embed.description += f"\n---\nClosing summary: {closing_summary}"
+
+        return embed

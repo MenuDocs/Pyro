@@ -111,6 +111,11 @@ class Review(MenuDocsCog):
                 "Couldn't tell that person about closing there review, sorry!"
             )
 
+        guild_review.closing_summary = summary
+        await self.bot.db.guild_reviews.upsert_custom(
+            {"channel_id": ctx.channel.id}, guild_review.to_dict()
+        )
+
         review_channel = await self.bot.get_or_fetch_channel(guild_review.channel_id)
         await review_channel.delete(reason="Review is finished.")
 
@@ -217,6 +222,10 @@ class Review(MenuDocsCog):
             f"{ctx.author.mention} - <@&{self.review_role_id}>",
             embed=embed,
             allowed_mentions=allowed_mentions,
+        )
+
+        await ctx.author.send_basic_embed(
+            "That is all done. Please send any further correspondence in the channel I mentioned you in."
         )
 
 

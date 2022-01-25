@@ -2,7 +2,7 @@ import re
 
 """Pastebin Regexs"""
 vco_cf_worker_boi: re.Pattern = re.compile(
-    r"https://(?P<url>paste.(nextcord|disnake).dev)/?\?(language=python&)?(id=(?P<id>[0-9]*))?"
+    r"https://(?P<url>paste.((nextcord|disnake|vcokltfre).dev)|vcokltf.re)/?\?(language=python&)?(id=(?P<id>[0-9]*))?"
 )
 
 """If you override it, make sure to process commands"""

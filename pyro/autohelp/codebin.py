@@ -13,6 +13,8 @@ class CodeBinExtractor:
         self._mappings: Dict[str, Callable] = {
             "paste.nextcord.dev": self._extract_vco_bois,
             "paste.disnake.dev": self._extract_vco_bois,
+            "paste.vcokltfre.dev": self._extract_vco_bois,
+            "paste.vcokltf.re": self._extract_vco_bois,
         }
 
         # REGEX

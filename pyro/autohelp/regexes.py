@@ -20,7 +20,7 @@ requires_self_removal_pattern: re.Pattern = re.compile(
 
 """Add self to all command types and cog listeners if required"""
 command_requires_self_addition_pattern: re.Pattern = re.compile(
-    r"@((commands\.)?command|(nextcord\.)?(slash_command|user_command|message_command))"
+    r"@((commands\.)?command|((nextcord|disnake)\.)?(slash_command|user_command|message_command))"
     r"\([a-zA-Z= _]*?\)\n\s{0,8}(?P<def>async def .*\()(?P<func>.*)(?P<close>\).*:)"
 )
 event_requires_self_addition_pattern: re.Pattern = re.compile(

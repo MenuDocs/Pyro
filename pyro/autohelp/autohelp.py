@@ -22,8 +22,21 @@ log = logging.getLogger(__name__)
 
 MENUDOCS = 416512197590777857
 NEXTCORD = 881118111967883295
-TESTING = 888614043433197568
 DISNAKE = 808030843078836254
+AUTO_HELP_ROLES = {
+    MENUDOCS: {
+        479199775590318080,  # Proficient
+    },
+    NEXTCORD: {
+        882192899519954944,  # Help thread auto add
+    },
+    DISNAKE: {
+        891619545356308481,  # Collaborator
+        922539851667091527,  # Smol mod
+        808033337767362570,  # Mod
+        847846236555968543,  # Solid contrib
+    },
+}
 
 
 class CloseButton(nextcord.ui.View):
@@ -44,22 +57,10 @@ class CloseButton(nextcord.ui.View):
         await self._message.delete()
 
     async def interaction_check(self, interaction: nextcord.Interaction) -> bool:
-        autohelp_roles = {
-            MENUDOCS: {479199775590318080},
-            NEXTCORD: {882192899519954944},
-            TESTING: {888614043521269791},
-            DISNAKE: {
-                891619545356308481,  # Collaborator
-                922539851667091527,  # Smol mod
-                808033337767362570,  # Mod
-                847846236555968543,  # Solid contrib
-            },
-        }
-
         return (
             bool(
                 self._allowed_roles.intersection(
-                    autohelp_roles[interaction.channel.guild.id]
+                    AUTO_HELP_ROLES[interaction.channel.guild.id]
                 )
             )
             or interaction.user.id == self._author_id

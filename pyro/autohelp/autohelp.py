@@ -6,7 +6,7 @@ from typing import Callable, Optional, List
 import nextcord
 
 from pyro import checks
-from pyro.autohelp import CodeBinExtractor
+from pyro.autohelp import CodeBinExtractor, Conf, AUTO_HELP_CONF
 from pyro.autohelp.regexes import (
     requires_self_removal_pattern,
     event_requires_self_addition_pattern,
@@ -92,6 +92,13 @@ class AutoHelp:
         self.color = 0x26F7FD
         self._code_bin: CodeBinExtractor = CodeBinExtractor(bot)
 
+    @staticmethod
+    def get_conf(guild_id: int) -> Conf:
+        try:
+            return AUTO_HELP_CONF[guild_id]
+        except KeyError:
+            return AUTO_HELP_CONF[-1]
+
     def build_embed(
         self, message: nextcord.Message, description: str
     ) -> nextcord.Embed:
@@ -165,16 +172,17 @@ class AutoHelp:
 
         indent = sum(1 for _ in itertools.takewhile(str.isspace, str(old_code))) * " "
 
+        conf: Conf = self.get_conf(message.guild.id)
+
         base = f"@{instance_name}.event\nasync def on_message({args}):\n{old_code}"
-        code = f"{base}\n{indent}await {instance_name}.process_commands()"
+        code = f"{base}\n{indent}await {instance_name}.process_commands({args})"
         output = (
             "Looks like you override the `on_message` event "
             "without processing commands.\n This means your commands "
             "will not get called at all, you should change your event to the below."
             f"\n\n**Old**\n```py\n{base}```\n**New | Fixed**\n```py\n{code}```\n\n"
             f"Note: This may not be in the right place so double check it is.\n"
-            f"You can read more about it [here](https://nextcord.readthedocs.io"
-            f"/en/latest/faq.html?highlight=frequently#why-does-on-message-make-my-commands-stop-working)"
+            f"You can read more about it [here]({conf.on_message_process_commands_link})"
         )
 
         if len(code.split("\n")) > 10:
@@ -183,7 +191,8 @@ class AutoHelp:
                 "Looks like you override the `on_message` event "
                 "without processing commands.\n This means your commands "
                 "will not get called at all, you should make sure to add "
-                f"`await {instance_name}.process_commands()` into your `on_message` event."
+                f"`await {instance_name}.process_commands({args})` into your `on_message` event.\n"
+                f"You can read more about it [here]({conf.on_message_process_commands_link})"
             )
 
         return self.build_embed(message, description=output)
@@ -197,6 +206,7 @@ class AutoHelp:
         if invalid_ctx_or_inter_type is None:
             return None
 
+        conf: Conf = self.get_conf(message.guild.id)
         arg_type = invalid_ctx_or_inter_type.group("arg_type")
         command_type = invalid_ctx_or_inter_type.group("command_type")
         all_params = old_all_params = invalid_ctx_or_inter_type.group("all")
@@ -207,7 +217,7 @@ class AutoHelp:
             notes = (
                 "Make sure to `from nextcord.ext import commands`.\n"
                 "You can read more about `Context` "
-                "[here](https://nextcord.readthedocs.io/en/latest/ext/commands/api.html#nextcord.ext.commands.Context)"
+                f"[here]({conf.context_link})"
             )
             all_params = all_params.replace(arg_type, new_arg_type)
 
@@ -216,7 +226,7 @@ class AutoHelp:
             notes = (
                 "Make sure to `import nextcord`.\n"
                 "You can read more about `Interaction` "
-                "[here](https://nextcord.readthedocs.io/en/latest/api.html#nextcord.Interaction)"
+                f"[here]({conf.interaction_link})"
             )
             all_params = all_params.replace(arg_type, new_arg_type)
 
@@ -226,7 +236,7 @@ class AutoHelp:
 
         return self.build_embed(
             message,
-            description=f"Looks like your using a command, but typehinted the main parameter "
+            description=f"Looks like your using a command, but type-hinted the main parameter "
             f"incorrectly! This won't lead to errors but will seriously hinder your "
             f"development."
             f"\n\n**Old**\n```py{old_all_params}```\n**New | Fixed**\n```py{all_params}```\n\nNotes: {notes}",

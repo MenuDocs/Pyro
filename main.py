@@ -27,8 +27,8 @@ patch = os.getenv("UPTIME_PATCH")
 
 
 logging.basicConfig(
-    format="%(levelname)s | %(asctime)s | %(module)s | %(message)s",
-    datefmt="%d/%m/%Y %I:%M:%S %p",
+    format="%(levelname)-7s | %(asctime)s | %(filename)12s:%(funcName)-12s | %(message)s",
+    datefmt="%I:%M:%S %p %d/%m/%Y",
     level=logging.INFO,
 )
 gateway_logger = logging.getLogger("nextcord.gateway")

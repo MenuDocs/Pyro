@@ -1,4 +1,4 @@
-FROM python:3.8-slim
+FROM python:3.9-slim
 COPY . /pyro
 WORKDIR pyro
 RUN pip3 install -r requirements.txt

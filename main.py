@@ -93,8 +93,6 @@ async def main():
                     f"My prefix here is `{prefix}`", delete_after=15
                 )
 
-        # Only run commands in menudocs guild.
-        # Alternately run them if its Skelmis or Auxtal
         await bot.process_commands(message)
 
     @bot.command(aliases=["ac"])
@@ -205,6 +203,12 @@ async def main():
         await ctx.send(
             "https://giphy.com/gifs/deliverance-vN3fMMSAmVwoo\n\n*Database backup complete*"
         )
+
+    @bot.command()
+    @commands.is_owner()
+    async def process(ctx, msg: nextcord.Message):
+        msg.channel = ctx.channel
+        await bot.auto_help.process_message(msg)
 
     @tasks.loop(minutes=10)
     async def update_uptime():

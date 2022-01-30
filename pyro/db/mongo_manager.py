@@ -17,7 +17,7 @@ class PyroMongoManager(MongoManager):
 
         # Use the features
         self.bot_reviews: Document = Document(
-            self.db, "bot_reviews", converter=BotReview
+            self.db, "bot_review", converter=BotReview
         )
         self.guild_reviews: Document = Document(
             self.db, "guild_reviews", converter=GuildReview

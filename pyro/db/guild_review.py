@@ -13,7 +13,7 @@ class GuildReview:
         guild_invite: str,
         text_channel_question: str,
         criticism_question: str,
-        member_count: int,
+        member_count: str,
         guild_type: str = "Misc",
         _id=None,
         pending: bool = True,
@@ -28,7 +28,7 @@ class GuildReview:
         self.guild_invite: str = guild_invite
         self.requester_id: int = requester_id
         self.guild_type: str = guild_type
-        self.member_count: int = member_count
+        self.member_count: str = member_count
         self.criticism_question: str = criticism_question
         self.channel_id: Optional[int] = channel_id
         self.closing_summary: Optional[str] = closing_summary
@@ -69,6 +69,6 @@ class GuildReview:
         )
 
         if self.closing_summary:
-            embed.description += f"\n---\nClosing summary: {closing_summary}"
+            embed.description += f"\n---\nClosing summary: {self.closing_summary}"
 
         return embed

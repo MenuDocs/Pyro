@@ -237,7 +237,7 @@ class AutoHelp:
 
         return self.build_embed(
             message,
-            description=f"Looks like your using a command, but type-hinted the main parameter "
+            description=f"Looks like you're using a command, but type-hinted the main parameter "
             f"incorrectly! This won't lead to errors but will seriously hinder your "
             f"development."
             f"\n\n**Old**\n```py{old_all_params}```\n**New | Fixed**\n```py{all_params}```\n\nNotes: {notes}",
@@ -268,7 +268,7 @@ class AutoHelp:
         # Lol, cmon
         return self.build_embed(
             message,
-            description="Looks like your using `pass_context` still. That was a feature "
+            description="Looks like you're using `pass_context` still. That was a feature "
             "back in version 0.x.x five years ago, your likely using a fork of the now "
             "no longer maintained discord.py which means your on version "
             "2.x.x.\nPlease check where your getting this code from and read "
@@ -297,7 +297,7 @@ class AutoHelp:
         # We need to process this
         return self.build_embed(
             message,
-            description="Looks like your defining a command with `self` as the first argument "
+            description="Looks like you're defining a command with `self` as the first argument "
             "without using the correct decorator. Likely you want to remove `self` as this only "
             "applies to commands defined within a class (Cog).\nYou should change it as per the following:"
             f"\n\n**Old**\n```py{initial_func}```\n**New | Fixed**\n```py{fixed_func}```",
@@ -346,7 +346,7 @@ class AutoHelp:
         # We need to process this
         return self.build_embed(
             message,
-            description=f"Looks like your defining {msg} in a class (Cog) without "
+            description=f"Looks like you're defining {msg} in a class (Cog) without "
             "using `self` as the first variable.\nThis will likely lead to issues and "
             "you should change it as per the following:"
             f"\n\n**Old**\n```py{initial_func}```\n**New | Fixed**\n```py{final_func}```",

@@ -240,7 +240,7 @@ class AutoHelp:
             description=f"Looks like you're using a command, but type-hinted the main parameter "
             f"incorrectly! This won't lead to errors but will seriously hinder your "
             f"development."
-            f"\n\n**Old**\n```py{old_all_params}```\n**New | Fixed**\n```py{all_params}```\n\nNotes: {notes}",
+            f"\n\n**Old**\n```py\n{old_all_params}```\n**New | Fixed**\n```py\n{all_params}```\n\nNotes: {notes}",
         )
 
     async def process_client_bot(
@@ -300,7 +300,7 @@ class AutoHelp:
             description="Looks like you're defining a command with `self` as the first argument "
             "without using the correct decorator. Likely you want to remove `self` as this only "
             "applies to commands defined within a class (Cog).\nYou should change it as per the following:"
-            f"\n\n**Old**\n```py{initial_func}```\n**New | Fixed**\n```py{fixed_func}```",
+            f"\n\n**Old**\n```py\n{initial_func}```\n**New | Fixed**\n```py\n{fixed_func}```",
         )
 
     async def process_requires_self_addition(self, message) -> Optional[nextcord.Embed]:
@@ -349,5 +349,5 @@ class AutoHelp:
             description=f"Looks like you're defining {msg} in a class (Cog) without "
             "using `self` as the first variable.\nThis will likely lead to issues and "
             "you should change it as per the following:"
-            f"\n\n**Old**\n```py{initial_func}```\n**New | Fixed**\n```py{final_func}```",
+            f"\n\n**Old**\n```py\n{initial_func}```\n**New | Fixed**\n```py\n{final_func}```",
         )

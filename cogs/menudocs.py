@@ -151,7 +151,7 @@ class MenuDocs(MenuDocsCog):
                 __Please make sure you have the following:__\n
                 • The code related to your question.
                 • Any errors that you are receiving.
-                • The taceback of your error. (If relevant)
+                • The traceback of your error. (If relevant)
                 • The expected action/output and recieved action/output.
                 """,
         )

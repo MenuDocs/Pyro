@@ -212,7 +212,10 @@ class AutoHelp:
         command_type = invalid_ctx_or_inter_type.group("command_type")
         all_params = old_all_params = invalid_ctx_or_inter_type.group("all")
 
-        if command_type == "command" and "interaction" in arg_type.lower():
+        if (
+            command_type not in {"command", "group"}
+            and "interaction" in arg_type.lower()
+        ):
             # Replace interaction with ctx
             new_arg_type = " commands.Context"
             notes = (
@@ -222,7 +225,7 @@ class AutoHelp:
             )
             all_params = all_params.replace(arg_type, new_arg_type)
 
-        elif command_type != "command" and "context" in arg_type.lower():
+        elif command_type not in {"command", "group"} and "context" in arg_type.lower():
             new_arg_type = " nextcord.Interaction"
             notes = (
                 "Make sure to `import nextcord`.\n"

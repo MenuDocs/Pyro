@@ -157,12 +157,9 @@ class Review(MenuDocsCog):
     @commands.max_concurrency(1, BucketType.user)
     async def review_guild(self, ctx: BotContext):
         """Start the review process for your guild."""
-        # role_ids = [role.id for role in ctx.author.roles]
-        # if 917886722942062612 not in role_ids:
-        #     return await ctx.send("You need to have Developer membership to use this.")
-
-        if ctx.author.id not in {203104843479515136, 271612318947868673}:
-            return await ctx.send("Not yet available to the public.")
+        role_ids = [role.id for role in ctx.author.roles]
+        if 917886722942062612 not in role_ids:
+            return await ctx.send("You need to have Developer membership to use this.")
 
         questions: List[str] = [
             "What is the name of the guild you wish to get reviewed?",
@@ -181,14 +178,13 @@ class Review(MenuDocsCog):
             "that are based on previous and current knowledge of server ownership?",
         ]
 
-        # TODO Re-enable
-        # if await self.bot.db.guild_reviews.find_by_custom(
-        #     {"requester_id": ctx.author.id, "pending": True}
-        # ):
-        #     return await ctx.send(
-        #         "You already have a review marked as pending.\n"
-        #         "If this is an error please let us know."
-        #     )
+        if await self.bot.db.guild_reviews.find_by_custom(
+            {"requester_id": ctx.author.id, "pending": True}
+        ):
+            return await ctx.send(
+                "You already have a review marked as pending.\n"
+                "If this is an error please let us know."
+            )
 
         for question in questions:
             try:
@@ -260,12 +256,9 @@ class Review(MenuDocsCog):
     @commands.max_concurrency(1, BucketType.user)
     async def review_bot(self, ctx: BotContext):
         """Start the review process for your bot."""
-        # role_ids = [role.id for role in ctx.author.roles]
-        # if 917886722942062612 not in role_ids:
-        #     return await ctx.send("You need to have Developer membership to use this.")
-
-        if ctx.author.id not in {203104843479515136, 271612318947868673}:
-            return await ctx.send("Not yet available to the public.")
+        role_ids = [role.id for role in ctx.author.roles]
+        if 917886722942062612 not in role_ids:
+            return await ctx.send("You need to have Developer membership to use this.")
 
         questions: List[str] = [
             "What is the name of the bot you wish to get reviewed?",
@@ -282,14 +275,13 @@ class Review(MenuDocsCog):
             "that are based on previous and current knowledge of bot development?",
         ]
 
-        # TODO Re-enable
-        # if await self.bot.db.guild_reviews.find_by_custom(
-        #     {"requester_id": ctx.author.id, "pending": True}
-        # ):
-        #     return await ctx.send(
-        #         "You already have a review marked as pending.\n"
-        #         "If this is an error please let us know."
-        #     )
+        if await self.bot.db.bot_reviews.find_by_custom(
+            {"requester_id": ctx.author.id, "pending": True}
+        ):
+            return await ctx.send(
+                "You already have a review marked as pending.\n"
+                "If this is an error please let us know."
+            )
 
         for question in questions:
             try:

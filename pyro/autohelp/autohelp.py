@@ -82,7 +82,7 @@ class AutoHelp:
         self.patterns: List[Callable] = [
             self.process_requires_self_removal,
             self.process_requires_self_addition,
-            self.process_invalid_ctx_or_inter_type,
+            # self.process_invalid_ctx_or_inter_type,
             self.process_client_bot,
             self.process_pass_context,
             self.process_events_dont_use_brackets,

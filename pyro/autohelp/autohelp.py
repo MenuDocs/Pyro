@@ -1,9 +1,11 @@
 import asyncio
+import datetime
 import itertools
 import logging
 from typing import Callable, Optional, List
 
 import nextcord
+from bot_base.caches import TimedCache
 
 from pyro import checks
 from pyro.autohelp import CodeBinExtractor, Conf, AUTO_HELP_CONF
@@ -70,6 +72,8 @@ class CloseButton(nextcord.ui.View):
 
 class AutoHelp:
     def __init__(self, bot):
+        self._help_cache: TimedCache = TimedCache()
+
         self.requires_self_removal = requires_self_removal_pattern
         self.event_requires_self_addition = event_requires_self_addition_pattern
         self.command_requires_self_addition = command_requires_self_addition_pattern
@@ -119,6 +123,11 @@ class AutoHelp:
     async def process_message(
         self, message: nextcord.Message
     ) -> Optional[List[nextcord.Embed]]:
+        # Don't help people who have been helped in the last 5 minutes
+        key = f"{message.author.id}|{message.channel.id}"
+        if key in self._help_cache:
+            return
+
         code_bin_content = await self._code_bin.process(message.content)
         message.content += code_bin_content
         message.content = message.content = message.content.replace("\r", "")
@@ -128,6 +137,8 @@ class AutoHelp:
         results = list(filter(None, results))
         if not results:
             return None
+
+        self._help_cache.add_entry(key, None, ttl=datetime.timedelta(minutes=30))
 
         auto_message = await message.channel.send(
             f"{message.author.mention} {'this' if len(results) == 1 else 'these'} might help.",

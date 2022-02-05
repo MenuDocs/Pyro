@@ -170,6 +170,7 @@ async def main():
 
     @bot.command(aliases=["dbb", "dbbackup"])
     @commands.is_owner()
+    @commands.cooldown(1, 60 * 60)
     async def db_backup(ctx: BotContext):
         """Back up the database"""
         initial = await ctx.send("Starting to backup the database.")

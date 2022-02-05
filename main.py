@@ -172,9 +172,11 @@ async def main():
     @commands.is_owner()
     async def db_backup(ctx: BotContext):
         """Back up the database"""
+        initial = await ctx.send("Starting to backup the database.")
         async with ctx.typing():
             await bot.db.run_backup()
 
+        await initial.delete()
         await ctx.send_basic_embed("All backed up for you.")
 
     @bot.command()

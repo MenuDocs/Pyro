@@ -6,10 +6,10 @@ from itertools import islice
 from string import Template
 
 import nextcord
-from nextcord.ext import commands
+from nextcord.ext import commands, menus
 
 from pyro.utils import Winner, TicTacToe, InvalidMove, PlayerStats
-from pyro.utils.util import Pag
+from pyro.utils.pagination import EvalPageSource, TicTacToePageSource
 
 
 class Games(commands.Cog):
@@ -227,16 +227,22 @@ class Games(commands.Cog):
         pages = []
         for item in data:
             page = ""
-            for result in item:
-                page += f"<@{result.player_id}> - {getattr(result, stat_type)} {stat_type}\n"
-            pages.append(page)
 
-        await Pag(
-            title=f"TicTacToe leaderboard for `{stat_type}`",
-            colour=0x00008B,
-            entries=pages,
-            length=1,
-        ).start(ctx)
+            for result in item:
+                count = getattr(result, stat_type)
+                if not count:
+                    continue
+
+                page += f"<@{result.player_id}> - {count} {stat_type}\n"
+
+            if page:
+                pages.append(page)
+
+        pages = menus.ButtonMenuPages(
+            source=TicTacToePageSource(self.bot, stat_type, pages),
+            clear_buttons_after=True,
+        )
+        await pages.start(ctx)
 
 
 def setup(bot):

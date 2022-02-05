@@ -168,15 +168,14 @@ async def main():
         )
         await ctx.send("Made a note of it.")
 
-    @bot.command()
+    @bot.command(aliases=["dbb", "dbbackup"])
     @commands.is_owner()
-    async def dbbackup(ctx):
+    async def db_backup(ctx: BotContext):
         """Back up the database"""
-        await ctx.send("https://giphy.com/gifs/christmas-3P0oEX5oTmrkY")
-        await bot.db.run_backup()
-        await ctx.send(
-            "https://giphy.com/gifs/deliverance-vN3fMMSAmVwoo\n\n*Database backup complete*"
-        )
+        async with ctx.typing():
+            await bot.db.run_backup()
+
+        await ctx.send_basic_embed("All backed up for you.")
 
     @bot.command()
     @commands.is_owner()

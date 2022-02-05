@@ -95,21 +95,6 @@ async def main():
 
         await bot.process_commands(message)
 
-    @bot.command(aliases=["ac"])
-    async def attr_check(ctx: BotContext):
-        """Checks the bot template works as expected"""
-        is_gc = isinstance(ctx.channel, nextcord.abc.GuildChannel)
-        is_chan = isinstance(ctx.channel, nextcord.TextChannel)
-        is_thread = isinstance(ctx.channel, nextcord.Thread)
-
-        is_user = isinstance(ctx.author, nextcord.User)
-        is_member = isinstance(ctx.author, nextcord.Member)
-
-        await ctx.send_basic_embed(
-            f"Instance checks\n---\nGuildChannel: {is_gc}\nThread: {is_thread}\n"
-            f"TextChannel: {is_chan}\nUser: {is_user}\nMember: {is_member}"
-        )
-
     @bot.command(description="Log the bot out.")
     @commands.is_owner()
     async def logout(ctx):

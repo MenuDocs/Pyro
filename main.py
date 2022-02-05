@@ -9,15 +9,13 @@ from traceback import format_exception
 
 import aiohttp
 import nextcord
-import motor.motor_asyncio
 from bot_base import BotContext
-from bot_base.db.document import Document
 from nextcord.ext import commands, menus
 from nextcord.ext import tasks
 
 from pyro import checks
 from pyro.bot import Pyro
-from pyro.checks import MENUDOCS_GUILD_IDS, COMBINED_ACCOUNTS
+from pyro.checks import COMBINED_ACCOUNTS
 from pyro.utils.pagination import EvalPageSource
 from pyro.utils.util import clean_code
 

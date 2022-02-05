@@ -173,33 +173,7 @@ async def main():
     async def dbbackup(ctx):
         """Back up the database"""
         await ctx.send("https://giphy.com/gifs/christmas-3P0oEX5oTmrkY")
-
-        backup_db = motor.motor_asyncio.AsyncIOMotorClient(mongo_url).backup
-        backup_config = Document(backup_db, "config")
-        backup_quiz = Document(backup_db, "quiz")
-        backup_code = Document(backup_db, "code")
-        backup_quiz_answers = Document(backup_db, "quizAnswers")
-        backup_starboard = Document(backup_db, "starboard")
-        backup_tictactoe = Document(backup_db, "tictactoe")
-
-        for item in await bot.db.config.get_all():
-            await backup_config.upsert(item)
-
-        for item in await bot.db.quiz.get_all():
-            await backup_quiz.upsert(item)
-
-        for item in await bot.db.code.get_all():
-            await backup_code.upsert(item)
-
-        for item in await bot.db.quiz_answers.get_all():
-            await backup_quiz_answers.upsert(item)
-
-        for item in await bot.db.starboard.get_all():
-            await backup_starboard.upsert(item)
-
-        for item in await bot.db.tictactoe.get_all():
-            await backup_tictactoe.upsert(item)
-
+        await bot.db.run_backup()
         await ctx.send(
             "https://giphy.com/gifs/deliverance-vN3fMMSAmVwoo\n\n*Database backup complete*"
         )

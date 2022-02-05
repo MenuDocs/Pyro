@@ -4,7 +4,7 @@ Pyro is supposed to be a short sharp coded bot to help the MenuDocs community wi
 
 ## Installation
 
-Bundled with Mongo
+Bundled with Mongo (Not yet)
 ```shell
 - docker-compose build
 - docker-compose up

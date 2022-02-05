@@ -212,11 +212,12 @@ async def main():
 
     @tasks.loop(minutes=10)
     async def update_uptime():
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                url=f"https://betteruptime.com/api/v1/heartbeat/{patch}"
-            ):
-                pass
+        if patch:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    url=f"https://betteruptime.com/api/v1/heartbeat/{patch}"
+                ):
+                    pass
 
     @update_uptime.before_loop
     async def before_update_uptime():

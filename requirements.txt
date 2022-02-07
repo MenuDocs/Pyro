@@ -6,3 +6,4 @@ motor==2.5.1
 emojis==0.6.0
 axew
 nextcord-ext-menus==1.5.0
+libcst==0.4.1

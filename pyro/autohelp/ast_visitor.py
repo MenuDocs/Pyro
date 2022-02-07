@@ -106,6 +106,18 @@ class EventListenerVisitor(BaseHelpTransformer):
 class ClientIsNotBot(BaseHelpTransformer):
 
     BOT_CLASSES = ("Bot", "InteractionBot")
+
+    VAR_NAME = "client"
+
+    def __init__(self):
+        self.module = None
+        super().__init__()
+
+    def on_visit(self, node):
+        if not self.module:
+            self.module = node
+        return super().on_visit(node)
+
     def visit_Assign(self, node: libcst.Assign):
         # what
         if not isinstance(node.value, libcst.Call):
@@ -116,22 +128,21 @@ class ClientIsNotBot(BaseHelpTransformer):
         for target in node.targets:
             if hasattr(target, "attr"):
                 continue
-            if target.target.value == "client":
+            if target.target.value == self.VAR_NAME:
                 found_client = True
 
-                def possible_fix(node: libcst.Assign):
-                    targets = list([t for t in node.targets])
-                    pos = targets.index(target)
+                def possible_fix(module: libcst.Module):
+                    # every single node of Name where the name is `client` needs to be changed to `bot`
 
-                    targets.pop(pos)
+                    VAR_NAME = self.VAR_NAME
 
-                    targets.insert(
-                        pos,
-                        libcst.AssignTarget(
-                            target=target.target.with_changes(value="bot")
-                        ),
-                    )
-                    return node.with_changes(targets=targets)
+                    class Fixer(libcst.CSTTransformer):
+                        def leave_Name(self, node: libcst.Name, updated:libcst.Name) -> libcst.Name:
+                            if updated.value == VAR_NAME:
+                                return updated.with_changes(value="bot")
+                            return updated
+
+                    return module.visit(Fixer())
 
                 break
 
@@ -154,8 +165,7 @@ class ClientIsNotBot(BaseHelpTransformer):
             return
 
         self.found_errors.append(Actions.CLIENT_IS_NOT_BOT)
-        return
-        self.updates[node] = possible_fix
+        self.updates[self.module] = possible_fix
 
 
 class _FindProcessCommands(libcst.CSTTransformer):

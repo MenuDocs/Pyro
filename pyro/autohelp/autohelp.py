@@ -207,7 +207,7 @@ class AutoHelp:
             if error in errors:
                 actions.append(action(message))
         embed, last_fields = self.build_embed(message, original_code, new_code)
-        print(actions)
+
         fields = list(filter(None, await asyncio.gather(*actions)))
 
         if original_code != new_code:
@@ -241,14 +241,15 @@ class AutoHelp:
         )
 
     async def on_message_without_process_commands(self, message: nextcord.Message):
+        conf: Conf = self.get_conf(message.guild.id)
         return Field(
             name="Overriding on_message without process_commands",
             value=(
                 "Looks like you override the `on_message` event "
                 "without processing commands.\n This means your commands "
                 "will not get called at all, you should change your event to the below.\n"
-                f"*Note: This may not be in the right place so double check it is.*\n"
-                f"You can read more about it [here]()"
+                "*Note: This may not be in the right place so double check it is.*\n"
+                f"You can read more about it [here]({conf.on_message_process_commands_link})"
             ),
         )
 

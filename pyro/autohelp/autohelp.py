@@ -13,22 +13,20 @@ from pyro.autohelp import AUTO_HELP_CONF, CodeBinExtractor, Conf
 from pyro.autohelp.regexes import (
     FORMATTED_CODE_REGEX,
     command_pass_context_pattern,
-    command_requires_self_addition_pattern,
-    event_requires_self_addition_pattern,
     invalid_ctx_or_inter_type_pattern,
-    on_message_without_process_commands,
 )
 
 from .ast_visitor import (
     Actions,
     BaseHelpTransformer,
+    CallbackRequiresSelfVisitor,
     ClientIsNotBot,
     EventListenerVisitor,
+    IncorrectTypeHints,
     ProcessCommandsTransformer,
 )
 
 log = logging.getLogger(__name__)
-
 
 
 class Field(TypedDict):
@@ -71,22 +69,24 @@ class AutoHelp:
         self.bot = bot
         self._help_cache: TimedCache = TimedCache()
 
-        self.event_requires_self_addition = event_requires_self_addition_pattern
-        self.command_requires_self_addition = command_requires_self_addition_pattern
         self.command_pass_context = command_pass_context_pattern
-        self.invalid_ctx_or_inter_type = invalid_ctx_or_inter_type_pattern
 
         self.actions = {
             Actions.CLIENT_IS_NOT_BOT: self.client_bot,
             Actions.DECORATOR_EVENT_CALLED: self.events_dont_use_brackets,
             Actions.USING_SELF_ON_BOT_COMMAND: self.requires_self_removal,
             Actions.PROCESS_COMMANDS_NOT_CALLED: self.on_message_without_process_commands,
+            Actions.MISSING_SELF_IN_EVENT_OR_COMMAND: self.requires_self_addition,
+            Actions.INCORRECT_CTX_TYPEHINT: self.invalid_ctx_typehint,
+            Actions.INCORRECT_INTERACTION_TYPEHINT: self.invalid_interaction_typehint,
         }
 
         self.visitors: list[Type[BaseHelpTransformer]] = [
             EventListenerVisitor,
             ClientIsNotBot,
             ProcessCommandsTransformer,
+            CallbackRequiresSelfVisitor,
+            IncorrectTypeHints,
         ]
 
         # Settings
@@ -253,76 +253,49 @@ class AutoHelp:
             ),
         )
 
-    async def process_invalid_ctx_or_inter_type(
-        self, message: nextcord.Message
-    ) -> Optional[nextcord.Embed]:
-        invalid_ctx_or_inter_type = self.invalid_ctx_or_inter_type.search(
-            message.content
-        )
-        if invalid_ctx_or_inter_type is None:
-            return None
+    async def invalid_ctx_typehint(self, message: nextcord.Message) -> Field:
 
         conf: Conf = self.get_conf(message.guild.id)
-        arg_type = invalid_ctx_or_inter_type.group("arg_type")
-        command_type = invalid_ctx_or_inter_type.group("command_type")
-        all_params = old_all_params = invalid_ctx_or_inter_type.group("all")
 
-        if (
-            command_type not in {"command", "group"}
-            and "interaction" in arg_type.lower()
-        ):
-            # Replace interaction with ctx
-            new_arg_type = " commands.Context"
-            notes = (
-                "Make sure to `from nextcord.ext import commands`.\n"
-                "You can read more about `Context` "
-                f"[here]({conf.context_link})"
-            )
-            all_params = all_params.replace(arg_type, new_arg_type)
+        return Field(
+            name="Incorrect context typehint",
+            value=(
+                "Looks like you're using a prefix command, but type-hinted the main parameter "
+                "incorrectly! This won't lead to errors but will seriously hinder your "
+                f"development. See more about interaction here: [here]({conf.context_link}"
+            ),
+        )
 
-        elif command_type not in {"command", "group"} and "context" in arg_type.lower():
-            new_arg_type = " nextcord.Interaction"
-            notes = (
-                "Make sure to `import nextcord`.\n"
-                "You can read more about `Interaction` "
-                f"[here]({conf.interaction_link})"
-            )
-            all_params = all_params.replace(arg_type, new_arg_type)
+    async def invalid_interaction_typehint(self, message: nextcord.Message) -> Field:
+        conf: Conf = self.get_conf(message.guild.id)
 
-        else:
-            log.warning("Idk how I got here.")
-            return None
-
-        return self.build_embed(
-            message,
-            description=f"Looks like you're using a command, but type-hinted the main parameter "
-            f"incorrectly! This won't lead to errors but will seriously hinder your "
-            f"development."
-            f"\n\n**Old**\n```py\n{old_all_params}```\n**New | Fixed**\n```py\n{all_params}```\n\nNotes: {notes}",
+        return Field(
+            name="Incorrect interaction typehint",
+            value=(
+                "Looks like you're using a application command, but type-hinted the main parameter "
+                "incorrectly! This won't lead to errors but will seriously hinder your "
+                f"development. See more about interaction here: [here]({conf.interaction_link}"
+            ),
         )
 
     async def client_bot(self, message: nextcord.Message) -> Field:
         """Checks good naming conventions"""
         return Field(
             name="Calling a `Bot` `client` is not recommended.",
-            value=f"Read [here](https://tutorial.vcokltfre.dev/tips/clientbot/) for more detail.\n\n",
+            value="Read [here](https://tutorial.vcokltfre.dev/tips/clientbot/) for more detail.\n\n",
         )
 
     async def process_pass_context(
         self, message: nextcord.Message
     ) -> Optional[nextcord.Embed]:
         """Checks, and notifies if people use pass_context"""
-        pass_context = self.command_pass_context.search(message.content)
-        if pass_context is None:
-            return None
-
         # Lol, cmon
         return self.build_embed(
             message,
             description="Looks like you're using `pass_context` still. That was a feature "
-            "back in version 0.x.x five years ago, your likely using a fork of the now "
+            "back in version 0.x.x five years ago, you're likely using a fork of the now "
             "no longer maintained discord.py which means your on version "
-            "2.x.x.\nPlease check where your getting this code from and read "
+            "2.x.x.\nPlease check where you're getting this code from and read "
             "your forks migration guides.",
         )
 
@@ -332,59 +305,22 @@ class AutoHelp:
         instances where members send code NOT in a cog
         that also contains self
         """
-        # We need to process this
         return Field(
-            name="Commands in the global scope don't take self",
-            value="Looks like you're defining a command with `self` as the first argument "
+            name="Commands/events in the global scope don't take self",
+            value="Looks like you're defining a command/self with `self` as the first argument "
             "without using the correct decorator. Likely you want to remove `self` as this only "
-            "applies to commands defined within a class (Cog).",
+            "applies to method defined within a class (Cog).",
         )
 
-    async def process_requires_self_addition(self, message) -> Optional[nextcord.Embed]:
+    async def requires_self_addition(self, message) -> Optional[nextcord.Embed]:
         """
         Look in a message and attempt to auto-help on
         instances where members send code IN a cog
         that doesnt contain self
         """
-        event_requires_self_addition = self.event_requires_self_addition.search(
-            message.content
-        )
-        command_requires_self_addition = self.command_requires_self_addition.search(
-            message.content
-        )
-
-        if event_requires_self_addition is not None:
-            # Event posted, check if it needs self
-            to_use_regex = event_requires_self_addition
-            msg = "an event"
-        elif command_requires_self_addition is not None:
-            # Command posted, check if it needs self
-            to_use_regex = command_requires_self_addition
-            msg = "a command"
-        else:
-            return None
-
-        args_group = to_use_regex.group("func")
-        if args_group.startswith("self"):
-            return
-
-        initial_func = (
-            to_use_regex.group("def")
-            + to_use_regex.group("func")
-            + to_use_regex.group("close")
-        )
-
-        args_group = f"self, {args_group}"
-
-        final_func = (
-            to_use_regex.group("def") + args_group + to_use_regex.group("close")
-        )
-
-        # We need to process this
-        return self.build_embed(
-            message,
-            description=f"Looks like you're defining {msg} in a class (Cog) without "
+        return Field(
+            name="Missing self param.",
+            value="Looks like you're defining an event or command in a class (Cog) without "
             "using `self` as the first variable.\nThis will likely lead to issues and "
-            "you should change it as per the following:"
-            f"\n\n**Old**\n```py\n{initial_func}```\n**New | Fixed**\n```py\n{final_func}```",
+            "you should change it as per the below:",
         )

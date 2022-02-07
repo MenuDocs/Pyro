@@ -1,4 +1,5 @@
 import enum
+from re import S
 from typing import Optional
 
 import libcst
@@ -11,6 +12,9 @@ class Actions(enum.Enum):
     USING_SELF_ON_BOT_COMMAND = enum.auto()
     CLIENT_IS_NOT_BOT = enum.auto()
     PROCESS_COMMANDS_NOT_CALLED = enum.auto()
+    MISSING_SELF_IN_EVENT_OR_COMMAND = enum.auto()
+    INCORRECT_CTX_TYPEHINT = enum.auto()
+    INCORRECT_INTERACTION_TYPEHINT = enum.auto()
 
 
 class BaseHelpTransformer(libcst.CSTTransformer):
@@ -39,23 +43,31 @@ class BaseHelpTransformer(libcst.CSTTransformer):
         return updated_node
 
 
-class _FindCommandDecorator(libcst.CSTVisitor):
+class _FindNeedsSelfDecorator(libcst.CSTVisitor):
     def __init__(self):
         super().__init__()
-        self.is_command_dec = False
+        self.has_deco = False
+        self.needs_self = False
+        self.deco: Optional[str] = None
 
     def visit_Decorator(self, node):
-        if not isinstance(node.decorator, libcst.Call):
-            return True
-        func = node.decorator.func
+        if isinstance(node.decorator, libcst.Call):
+            root = node.decorator.func.value.value
+            meth = node.decorator.func.attr.value
+        elif isinstance(node.decorator, libcst.Attribute):
+            root = node.decorator.attr.value
+            meth = node.decorator.value.value
+        else:
+            return
         # find decorators that are like @thing.slash_command
         # but ensure to ignore @commands.command` since that should have self.`
-        if func.attr.value.endswith("command") and func.value not in (
-            "commands",
-            "nextcord",
-        ):
-            self.is_command_dec = True
-        return True
+        if meth in ("event", "group") or meth.endswith("command"):
+            self.has_deco = True
+            if root in ("commands", "nextcord"):
+                self.needs_self = True
+
+            self.deco: str = meth
+            return True
 
 
 class EventListenerVisitor(BaseHelpTransformer):
@@ -84,21 +96,59 @@ class EventListenerVisitor(BaseHelpTransformer):
             )
 
     def visit_FunctionDef_params(self, node: libcst.FunctionDef) -> Optional[bool]:
-        if not node.params or not node.decorators:
+        if not node.params.params or not node.decorators:
             return False
         first_param: libcst.Param = node.params.params[0]
         if not first_param.name.value == "self":
             return False
         # its self and a top level method, so check for a bot decorator
         # needs a decorator with `command` in the last section and to be called
-        visitor = _FindCommandDecorator()
+        visitor = _FindNeedsSelfDecorator()
         node.visit(visitor)
-        if visitor.is_command_dec:
+        if visitor.has_deco and not visitor.needs_self:
             self.found_errors.append(Actions.USING_SELF_ON_BOT_COMMAND)
 
             def update(node: libcst.FunctionDef):
                 params = node.params.with_changes(params=node.params.params[1:])
                 return node.with_changes(params=params)
+
+            self.updates[node] = update
+
+
+class CallbackRequiresSelfVisitor(BaseHelpTransformer):
+    def __init__(self):
+        self.in_class_def = []
+        super().__init__()
+
+    def visit_ClassDef(self, node: libcst.ClassDef):
+        # don't check classdefs for decorators
+        self.in_class_def.append("")
+
+    def leave_ClassDef(self, node: libcst.ClassDef, updated_node: libcst.ClassDef):
+        self.in_class_def.pop()
+
+    def visit_FunctionDef(self, node: libcst.FunctionDef):
+        # if not self.in_class_def:
+        #     return
+        if not node.decorators:
+            return False
+
+        if node.params.params:
+            first_param: libcst.Param = node.params.params[0]
+            if first_param.name.value == "self":
+                return False
+
+        # its self and a top level method, so check for a bot decorator
+        # needs a decorator with `command` in the last section and to be called
+        visitor = _FindNeedsSelfDecorator()
+        node.visit(visitor)
+        if visitor.has_deco and visitor.needs_self:
+            self.found_errors.append(Actions.MISSING_SELF_IN_EVENT_OR_COMMAND)
+
+            def update(node: libcst.FunctionDef):
+                params = list(node.params.params)
+                params.insert(0, libcst.Param(libcst.Name("self")))
+                return node.with_deep_changes(node.params, params=params)
 
             self.updates[node] = update
 
@@ -137,7 +187,9 @@ class ClientIsNotBot(BaseHelpTransformer):
                     VAR_NAME = self.VAR_NAME
 
                     class Fixer(libcst.CSTTransformer):
-                        def leave_Name(self, node: libcst.Name, updated:libcst.Name) -> libcst.Name:
+                        def leave_Name(
+                            self, node: libcst.Name, updated: libcst.Name
+                        ) -> libcst.Name:
                             if updated.value == VAR_NAME:
                                 return updated.with_changes(value="bot")
                             return updated
@@ -254,3 +306,44 @@ class ProcessCommandsTransformer(BaseHelpTransformer):
             return node.with_changes(body=body)
 
         self.updates[node] = update
+
+
+class IncorrectTypeHints(BaseHelpTransformer):
+    def __init__(self):
+        super().__init__()
+        self._typehint = None
+
+    def visit_FunctionDef(self, node: libcst.FunctionDef):
+        # check if it is a command def
+        if not node.decorators:
+            return False
+        visitor = _FindNeedsSelfDecorator()
+        node.visit(visitor)
+        if not visitor.has_deco:
+            return False
+        if visitor.deco in ("group", "command"):
+            # check typehints for an interaction parameter
+            self._typehint = ("Interaction", "Context")
+            self._error = Actions.INCORRECT_CTX_TYPEHINT
+        elif visitor.deco in ("slash_command", "message_command", "user_command"):
+            # check typehints for a commands parameter
+            self._typehint = ("Context", "Interaction")
+            self._error = Actions.INCORRECT_INTERACTION_TYPEHINT
+        return True
+
+    def visit_FunctionDef_params(self, node: libcst.FunctionDef) -> None:
+        if not node.params.params:
+            # different error, no params
+            return False
+        params_list = list(node.params.params)
+        # this runs after checking for self checking
+        index = 0
+        if params_list[0].name.value == "self":
+            index = 1
+        annotation = params_list[index].annotation
+        if not annotation:
+            return
+        annotation = annotation.annotation
+        typehint: libcst.Name = getattr(annotation, "attr", annotation).value
+        if self._typehint[0] in typehint:
+            self.found_errors.append(self._error)

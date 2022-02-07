@@ -92,7 +92,7 @@ class DropdownView(nextcord.ui.View):
 class Review(MenuDocsCog):
     def __init__(self, bot):
         self.bot: Pyro = bot
-        self.review_role_id: int = 928276706568052797
+        self.review_role_id: int = 939373151844958228
         self.review_category_id: int = 925723996585087016
 
     @staticmethod
@@ -158,7 +158,7 @@ class Review(MenuDocsCog):
     async def review_guild(self, ctx: BotContext):
         """Start the review process for your guild."""
         role_ids = [role.id for role in ctx.author.roles]
-        if 917886722942062612 not in role_ids:
+        if 917886722942062612 not in role_ids and ctx.author.id != 271612318947868673:
             return await ctx.send("You need to have Developer membership to use this.")
 
         questions: List[str] = [

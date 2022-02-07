@@ -158,7 +158,7 @@ class Review(MenuDocsCog):
     async def review_guild(self, ctx: BotContext):
         """Start the review process for your guild."""
         role_ids = [role.id for role in ctx.author.roles]
-        if 917886722942062612 not in role_ids and ctx.author.id != 271612318947868673:
+        if 917886722942062612 not in role_ids:
             return await ctx.send("You need to have Developer membership to use this.")
 
         questions: List[str] = [

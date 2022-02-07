@@ -261,7 +261,7 @@ class AutoHelp:
             value=(
                 "Looks like you're using a prefix command, but type-hinted the main parameter "
                 "incorrectly! This won't lead to errors but will seriously hinder your "
-                f"development. See more about interaction here: [here]({conf.context_link}"
+                f"development. See more about contexts [here]({conf.context_link})"
             ),
         )
 
@@ -273,7 +273,7 @@ class AutoHelp:
             value=(
                 "Looks like you're using a application command, but type-hinted the main parameter "
                 "incorrectly! This won't lead to errors but will seriously hinder your "
-                f"development. See more about interaction here: [here]({conf.interaction_link}"
+                f"development. See more about interactions [here]({conf.interaction_link})"
             ),
         )
 

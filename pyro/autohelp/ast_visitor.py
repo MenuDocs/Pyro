@@ -15,6 +15,7 @@ class Actions(enum.Enum):
     MISSING_SELF_IN_EVENT_OR_COMMAND = enum.auto()
     INCORRECT_CTX_TYPEHINT = enum.auto()
     INCORRECT_INTERACTION_TYPEHINT = enum.auto()
+    USED_PASS_CONTEXT = enum.auto()
 
 
 class BaseHelpTransformer(libcst.CSTTransformer):
@@ -347,3 +348,9 @@ class IncorrectTypeHints(BaseHelpTransformer):
         typehint: libcst.Name = getattr(annotation, "attr", annotation).value
         if self._typehint[0] in typehint:
             self.found_errors.append(self._error)
+
+class FindPassContext(BaseHelpTransformer):
+
+    def visit_Name(self, node):
+        if node.value == 'pass_context':
+            self.found_errors.append(Actions.USED_PASS_CONTEXT)

@@ -3,6 +3,7 @@ import datetime
 import difflib
 import itertools
 import logging
+import time
 from typing import Callable, List, Optional, Tuple, Type, TypedDict
 
 import libcst
@@ -12,8 +13,6 @@ from pyro import checks
 from pyro.autohelp import AUTO_HELP_CONF, CodeBinExtractor, Conf
 from pyro.autohelp.regexes import (
     FORMATTED_CODE_REGEX,
-    command_pass_context_pattern,
-    invalid_ctx_or_inter_type_pattern,
 )
 
 from .ast_visitor import (
@@ -22,6 +21,7 @@ from .ast_visitor import (
     CallbackRequiresSelfVisitor,
     ClientIsNotBot,
     EventListenerVisitor,
+    FindPassContext,
     IncorrectTypeHints,
     ProcessCommandsTransformer,
 )
@@ -69,8 +69,6 @@ class AutoHelp:
         self.bot = bot
         self._help_cache: TimedCache = TimedCache()
 
-        self.command_pass_context = command_pass_context_pattern
-
         self.actions = {
             Actions.CLIENT_IS_NOT_BOT: self.client_bot,
             Actions.DECORATOR_EVENT_CALLED: self.events_dont_use_brackets,
@@ -79,6 +77,7 @@ class AutoHelp:
             Actions.MISSING_SELF_IN_EVENT_OR_COMMAND: self.requires_self_addition,
             Actions.INCORRECT_CTX_TYPEHINT: self.invalid_ctx_typehint,
             Actions.INCORRECT_INTERACTION_TYPEHINT: self.invalid_interaction_typehint,
+            Actions.USED_PASS_CONTEXT: self.pass_context,
         }
 
         self.visitors: list[Type[BaseHelpTransformer]] = [
@@ -87,6 +86,7 @@ class AutoHelp:
             ProcessCommandsTransformer,
             CallbackRequiresSelfVisitor,
             IncorrectTypeHints,
+            FindPassContext,
         ]
 
         # Settings
@@ -221,7 +221,7 @@ class AutoHelp:
 
             embed.add_field(**field)
 
-        # self._help_cache.add_entry(key, None, ttl=datetime.timedelta(minutes=30))
+        self._help_cache.add_entry(key, None, ttl=datetime.timedelta(minutes=30))
 
         auto_message = await message.channel.send(
             f"{message.author.mention} {'this' if len(fields) == 1 else 'these'} might help.",
@@ -230,17 +230,16 @@ class AutoHelp:
 
         await auto_message.edit(view=CloseButton(auto_message, message.author))
 
-    async def events_dont_use_brackets(
-        self,
-        message: nextcord.Message,
-    ) -> Field:
+    async def events_dont_use_brackets(self, message: nextcord.Message) -> Field:
         return Field(
             name="Events don't use brackets",
             value="When defining an event you do not need to use `()`.\n"
             "See below for how to fix this.",
         )
 
-    async def on_message_without_process_commands(self, message: nextcord.Message):
+    async def on_message_without_process_commands(
+        self, message: nextcord.Message
+    ) -> Field:
         conf: Conf = self.get_conf(message.guild.id)
         return Field(
             name="Overriding on_message without process_commands",
@@ -285,21 +284,19 @@ class AutoHelp:
             value="Read [here](https://tutorial.vcokltfre.dev/tips/clientbot/) for more detail.\n\n",
         )
 
-    async def process_pass_context(
-        self, message: nextcord.Message
-    ) -> Optional[nextcord.Embed]:
+    async def pass_context(self, message: nextcord.Message) -> Field:
         """Checks, and notifies if people use pass_context"""
         # Lol, cmon
-        return self.build_embed(
-            message,
-            description="Looks like you're using `pass_context` still. That was a feature "
+        return Field(
+            name="pass_context is no longer supported.",
+            value="Looks like you're still using `pass_context`. That was a feature "
             "back in version 0.x.x five years ago, you're likely using a fork of the now "
-            "no longer maintained discord.py which means your on version "
+            "no longer maintained discord.py which means you're on version "
             "2.x.x.\nPlease check where you're getting this code from and read "
-            "your forks migration guides.",
+            "your fork's migration guides.",
         )
 
-    async def requires_self_removal(self, message) -> Optional[nextcord.Embed]:
+    async def requires_self_removal(self, message) -> Field:
         """
         Look in a message and attempt to auto-help on
         instances where members send code NOT in a cog
@@ -312,7 +309,7 @@ class AutoHelp:
             "applies to method defined within a class (Cog).",
         )
 
-    async def requires_self_addition(self, message) -> Optional[nextcord.Embed]:
+    async def requires_self_addition(self, message) -> Field:
         """
         Look in a message and attempt to auto-help on
         instances where members send code IN a cog

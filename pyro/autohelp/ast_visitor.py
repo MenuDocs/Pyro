@@ -75,6 +75,9 @@ class EventListenerVisitor(BaseHelpTransformer):
 
     Eg, bot.listen and bot.event should not have a self argument.
     """
+    def __init__(self, find_all: bool = True):
+        super().__init__(find_all)
+
     def visit_ClassDef(self, node: libcst.ClassDef):
         # don't check classdefs for decorators
         return False

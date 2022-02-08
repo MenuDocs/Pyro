@@ -19,14 +19,12 @@ class Actions(enum.Enum):
 
 
 class BaseHelpTransformer(libcst.CSTTransformer):
+    """Base Help Transformer which modifies nodes based on update methods and stores a list of found errors."""
     def __init__(self, find_all: bool = False):
         super().__init__()
         self.found_errors: list[Actions] = []
         self.find_all = find_all
         self.updates = {}
-
-    def _check_code(self) -> bool:
-        return bool(self.found_errors)
 
     def on_visit(self, node):
         if self.found_errors and not self.find_all:
@@ -45,6 +43,7 @@ class BaseHelpTransformer(libcst.CSTTransformer):
 
 
 class _FindNeedsSelfDecorator(libcst.CSTVisitor):
+    """Find a method that requires a self argument based on the decorators."""
     def __init__(self):
         super().__init__()
         self.has_deco = False
@@ -72,6 +71,10 @@ class _FindNeedsSelfDecorator(libcst.CSTVisitor):
 
 
 class EventListenerVisitor(BaseHelpTransformer):
+    """Listeners and events should not have a self argument when not part of a class definition.
+
+    Eg, bot.listen and bot.event should not have a self argument.
+    """
     def visit_ClassDef(self, node: libcst.ClassDef):
         # don't check classdefs for decorators
         return False
@@ -82,8 +85,7 @@ class EventListenerVisitor(BaseHelpTransformer):
             and node.decorator.func.attr.value == "event"
         ):
             self.found_errors.append(Actions.DECORATOR_EVENT_CALLED)
-            # there's two solutions here. This needs to either be a listener or an event with no call.
-            # this will be left up to implement later, for now, we convert it to just an uncalled event
+            # switch the event to not be called
             self.updates[node] = lambda node: node.with_changes(
                 decorator=node.decorator.func
             )
@@ -117,20 +119,8 @@ class EventListenerVisitor(BaseHelpTransformer):
 
 
 class CallbackRequiresSelfVisitor(BaseHelpTransformer):
-    def __init__(self):
-        self.in_class_def = []
-        super().__init__()
-
-    def visit_ClassDef(self, node: libcst.ClassDef):
-        # don't check classdefs for decorators
-        self.in_class_def.append("")
-
-    def leave_ClassDef(self, node: libcst.ClassDef, updated_node: libcst.ClassDef):
-        self.in_class_def.pop()
-
+    """"Callbacks require self if they are not top level or have the proper decorators."""
     def visit_FunctionDef(self, node: libcst.FunctionDef):
-        # if not self.in_class_def:
-        #     return
         if not node.decorators:
             return False
 
@@ -155,7 +145,7 @@ class CallbackRequiresSelfVisitor(BaseHelpTransformer):
 
 
 class ClientIsNotBot(BaseHelpTransformer):
-
+    """Client should not be a Bot instance."""
     BOT_CLASSES = ("Bot", "InteractionBot")
 
     VAR_NAME = "client"
@@ -243,6 +233,7 @@ class _FindProcessCommands(libcst.CSTTransformer):
 
 
 class ProcessCommandsTransformer(BaseHelpTransformer):
+    """In an on_message event, the bot should call process_commands."""
     def visit_FunctionDef(self, node: libcst.FunctionDef):
         if not node.decorators:
             return
@@ -310,6 +301,7 @@ class ProcessCommandsTransformer(BaseHelpTransformer):
 
 
 class IncorrectTypeHints(BaseHelpTransformer):
+    """Context objects typehinted with Interaction or vice versa."""
     def __init__(self):
         super().__init__()
         self._typehint = None
@@ -350,7 +342,7 @@ class IncorrectTypeHints(BaseHelpTransformer):
             self.found_errors.append(self._error)
 
 class FindPassContext(BaseHelpTransformer):
-
+    """Find anywhere someone uses pass_context. This should only check decorators, but you really don't need it anywhere."""
     def visit_Name(self, node):
         if node.value == 'pass_context':
             self.found_errors.append(Actions.USED_PASS_CONTEXT)

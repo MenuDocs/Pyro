@@ -135,6 +135,9 @@ class Tags(commands.Cog):
             if not tag_name:
                 return await ctx.send_basic_embed("Cancelling tag creation.")
 
+        if len(tag_name.split(" ")) != 1:
+            return await ctx.send_basic_embed("Tag names cannot contain spaces.")
+
         if self.bot.get_command(tag_name):
             return await ctx.send_basic_embed(
                 f"You cannot create a tag called `{tag_name}` "
@@ -148,18 +151,18 @@ class Tags(commands.Cog):
             if not wants_to_override:
                 return await ctx.send_basic_embed("Cancelling tag creation.")
 
-        tag_content = await ctx.get_input(
-            description="What should the content for this tag be?"
-        )
-        if not tag_content:
-            return await ctx.send_basic_embed("Cancelling tag creation.")
-
         tag_description = await ctx.get_input(
             description="Provide a description of 40 characters or less."
         )
         if not tag_description or (
             isinstance(tag_description, str) and len(tag_description) > 40
         ):
+            return await ctx.send_basic_embed("Cancelling tag creation.")
+
+        tag_content = await ctx.get_input(
+            description="What should the content for this tag be?"
+        )
+        if not tag_content:
             return await ctx.send_basic_embed("Cancelling tag creation.")
 
         view: DropdownView = DropdownView(ctx.author)  # type: ignore
@@ -245,6 +248,9 @@ class Tags(commands.Cog):
             if not tag_name:
                 return await ctx.send_basic_embed("Cancelling alias creation.")
 
+        if len(tag_name.split(" ")) != 1:
+            return await ctx.send_basic_embed("Tag names cannot contain spaces.")
+
         tag: Optional[Tag] = self.tags.get(tag_name)
         if not tag:
             return await ctx.send_basic_embed("No tag found with this name.")
@@ -276,8 +282,13 @@ class Tags(commands.Cog):
             except KeyError:
                 tag_category_splits[tag.category] = [tag]
 
-        for cat, tags in tag_category_splits.values():
-            desc = f"**{cat}**"
+        for cat, tags in tag_category_splits.items():
+            desc = f"**{cat}**\n---\n"
+            for tag in tags:
+                desc += f"`{ctx.prefix}{tag.name}` - {tag.description}\n"
+
+            desc += "\n"
+            categories.append(desc)
 
         pages = menus.ButtonMenuPages(
             source=TagsPageSource(

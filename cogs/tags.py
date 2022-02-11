@@ -168,7 +168,7 @@ class Tags(commands.Cog):
         view: DropdownView = DropdownView(ctx.author)  # type: ignore
         m = await ctx.send("Please choose your tag category", view=view)
         await view.wait()
-        await m.edit(view=None)
+        await m.delete()
 
         should_embed = await ctx.prompt("Should this tag be sent in an embed?")
 

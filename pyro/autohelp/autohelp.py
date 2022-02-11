@@ -107,7 +107,7 @@ class AutoHelp:
     def build_embed(
         self, message: nextcord.Message, description: str
     ) -> nextcord.Embed:
-        description = description.replace("```py", "").replace("```", "")
+        # description = description.replace("```py", "").replace("```", "")
 
         embed = nextcord.Embed(
             description=description,

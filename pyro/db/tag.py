@@ -1,6 +1,7 @@
 from typing import Dict
 
-from nextcord import abc
+import nextcord
+from nextcord import Message, abc
 
 
 class Tag:
@@ -12,6 +13,7 @@ class Tag:
         description: str,
         category: str,
         is_embed: bool = True,
+        aliases: list[str] = None,
         _id=None,
     ):
         # _id is auto genned
@@ -23,11 +25,15 @@ class Tag:
         self.creator_id: int = creator_id
         self.description: str = description
 
+        if not aliases:
+            aliases = []
+        self.aliases: set = set(aliases)
+
     def __repr__(self):
         return (
-            f"<Tag(name={self.name}, description={repr(self.description)}, "
+            f"<Tag(name={repr(self.name)}, description={repr(self.description)}, "
             f"content={repr(self.content)}, creator_id={self.creator_id}, "
-            f"category={self.category}, is_embed={self.is_embed})>"
+            f"category={repr(self.category)}, is_embed={self.is_embed})>"
         )
 
     def __str__(self):
@@ -39,6 +45,7 @@ class Tag:
             "content": self.content,
             "category": self.category,
             "is_embed": self.is_embed,
+            "aliases": list(self.aliases),
             "creator_id": self.creator_id,
             "description": self.description,
         }
@@ -47,6 +54,15 @@ class Tag:
 
         return data
 
-    async def send(self, target: abc.Messageable) -> None:
+    async def send(self, target: abc.Messageable, invoked_with: str = None) -> Message:
         """Sends the given tag to the target"""
-        raise NotImplementedError
+        if not invoked_with:
+            invoked_with = self.name
+
+        if self.is_embed:
+            embed = nextcord.Embed(
+                title=f"Tag: `{invoked_with}`", description=self.content
+            )
+            return await target.send(embed=embed)
+
+        return await target.send(self.content)

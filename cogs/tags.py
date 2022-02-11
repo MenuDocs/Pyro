@@ -6,10 +6,11 @@ from bot_base import PrefixNotFound, BotContext
 from bot_base.db import Document
 from bot_base.wraps import WrappedMember
 from nextcord import Interaction
-from nextcord.ext import commands
+from nextcord.ext import commands, menus
 
 from pyro import Pyro, checks
 from pyro.db import Tag
+from pyro.utils.pagination import TagsPageSource
 
 log = logging.getLogger(__name__)
 
@@ -75,7 +76,20 @@ class Tags(commands.Cog):
         """
         all_tags: List[Tag] = await self.tags_db.get_all()
         for tag in all_tags:
-            self.tags[tag.name] = tag
+            self.tags[tag.name.casefold()] = tag
+            for alias in tag.aliases:
+                self.tags[alias.casefold()] = tag
+
+    def is_tag_alias(self, tag_name) -> bool:
+        """
+        Returns
+        -------
+        bool
+            True if the given tag_name is
+            actually an alias
+        """
+        tag: Tag = self.tags[tag_name.casefold()]
+        return tag_name in tag.aliases
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -86,8 +100,8 @@ class Tags(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: nextcord.Message):
         try:
-            prefix = self.bot.get_guild_prefix(message.guild.id)
-        except PrefixNotFound:
+            prefix = await self.bot.get_guild_prefix(message.guild.id)
+        except (PrefixNotFound, AttributeError):
             prefix = self.bot.DEFAULT_PREFIX
 
         prefix = self.bot.get_case_insensitive_prefix(message.content, prefix)
@@ -96,20 +110,22 @@ class Tags(commands.Cog):
             return
 
         tag_name = message.content.replace(prefix, "").split(" ")[0]
-        tag: Optional[Tag] = self.tags.get(tag_name)
+        tag: Optional[Tag] = self.tags.get(tag_name.casefold())
         if not tag:
             # No tag found with this name
             return
 
-        await tag.send(message.channel)
+        log.info("Sending tag %s", tag.name)
+
+        await tag.send(message.channel, invoked_with=tag_name)
 
     @commands.group(aliases=["tag"], invoke_without_command=True)
     async def tags(self, ctx: BotContext):
         """Entry level tag intro."""
-        await ctx.send_help()
+        await ctx.send_help(ctx.command)
 
     @tags.command()
-    @commands.check_any(checks.can_eval())
+    @commands.check_any(checks.can_eval(), checks.ensure_is_menudocs_staff())
     async def create(self, ctx: BotContext, *, tag_name: str = None):
         """Create a new tag."""
         if not tag_name:
@@ -132,24 +148,26 @@ class Tags(commands.Cog):
             if not wants_to_override:
                 return await ctx.send_basic_embed("Cancelling tag creation.")
 
-        tag_content = await ctx.get_input("What should the content for this tag be?")
+        tag_content = await ctx.get_input(
+            description="What should the content for this tag be?"
+        )
         if not tag_content:
             return await ctx.send_basic_embed("Cancelling tag creation.")
 
         tag_description = await ctx.get_input(
-            "Provide a description of 40 characters or less."
+            description="Provide a description of 40 characters or less."
         )
         if not tag_description or (
             isinstance(tag_description, str) and len(tag_description) > 40
         ):
             return await ctx.send_basic_embed("Cancelling tag creation.")
 
-        should_embed = await ctx.prompt("Should this tag be sent in an embed?")
-
         view: DropdownView = DropdownView(ctx.author)  # type: ignore
-        m = await ctx.author.send("Please choose your tag category", view=view)
+        m = await ctx.send("Please choose your tag category", view=view)
         await view.wait()
         await m.edit(view=None)
+
+        should_embed = await ctx.prompt("Should this tag be sent in an embed?")
 
         tag: Tag = Tag(
             name=tag_name,
@@ -159,6 +177,7 @@ class Tags(commands.Cog):
             is_embed=bool(should_embed),
             category=view.result,
         )
+        self.tags[tag_name.casefold()] = tag
         await self.tags_db.upsert_custom({"name": tag.name}, tag.to_dict())
         await ctx.send_basic_embed(
             f"I have created the tag `{tag_name}` for you.\n"
@@ -166,6 +185,7 @@ class Tags(commands.Cog):
         )
 
     @tags.command()
+    @commands.check_any(checks.can_eval(), checks.ensure_is_menudocs_staff())
     async def repr(self, ctx: BotContext, *, tag_name: str = None):
         """Send the raw tag."""
         if not tag_name:
@@ -173,11 +193,100 @@ class Tags(commands.Cog):
                 "Please provide a tag name when calling this command."
             )
 
-        tag: Optional[Tag] = self.tags.get(tag_name)
+        tag: Optional[Tag] = self.tags.get(tag_name.casefold())
         if not tag:
             return await ctx.send_basic_embed("No tag found with that name.")
 
         await ctx.send(f"Raw tag for `{tag_name}`\n```py\n{repr(tag)}\n```")
+
+    @tags.command()
+    @commands.check_any(checks.can_eval(), checks.ensure_is_menudocs_staff())
+    async def delete(self, ctx: BotContext, *, tag_name: str = None):
+        """Delete the given tag or tag alias."""
+        if not tag_name:
+            return await ctx.send_basic_embed(
+                "Please provide a tag name when calling this command."
+            )
+
+        if tag_name not in self.tags:
+            return await ctx.send_basic_embed("Invalid tag provided.")
+
+        check_delete = await ctx.prompt(
+            f"Are you sure you want to delete the tag `{tag_name}`?"
+        )
+        if not check_delete:
+            return await ctx.send_basic_embed("That was close, cancelling deletion.")
+
+        is_alias = self.is_tag_alias(tag_name)
+
+        tag: Tag = self.tags.pop(tag_name.casefold())
+        if is_alias:
+            tag.aliases.discard(tag_name)
+            await self.tags_db.update_by_custom({"name": tag.name}, tag.to_dict())
+
+        else:
+            # Primary tag
+            for alias in tag.aliases:
+                self.tags.pop(alias, None)
+            await self.tags_db.delete_by_custom({"name": tag_name})
+
+        await ctx.send_basic_embed(
+            f"Deleted that tag {'alias ' if is_alias else ''}for you!"
+        )
+
+    @tags.command()
+    @commands.check_any(checks.can_eval(), checks.ensure_is_menudocs_staff())
+    async def alias(self, ctx: BotContext, tag_name: str = None, new_alias: str = None):
+        """Create tag aliases."""
+        if not tag_name:
+            tag_name = await ctx.get_input(
+                description="What is the name of the tag to be aliased?"
+            )
+            if not tag_name:
+                return await ctx.send_basic_embed("Cancelling alias creation.")
+
+        tag: Optional[Tag] = self.tags.get(tag_name)
+        if not tag:
+            return await ctx.send_basic_embed("No tag found with this name.")
+
+        if not new_alias:
+            new_alias = await ctx.get_input(
+                description="What is the name of the alias?"
+            )
+            if not new_alias:
+                return await ctx.send_basic_embed("Cancelling alias creation.")
+
+        tag.aliases.add(new_alias)
+        self.tags[new_alias] = tag
+        await self.tags_db.update_by_custom({"name": tag.name}, tag.to_dict())
+
+        await ctx.send_basic_embed(
+            f"Created an alias '`{new_alias}`' to pre-existing tag `{tag.name}`"
+        )
+
+    @tags.command(aliases=["all"])
+    async def list(self, ctx: BotContext):
+        """List all current tags."""
+        categories: list[str] = []
+        tag_category_splits: dict[str, list[Tag]] = {}
+        all_tags: List[Tag] = await self.tags_db.get_all()
+        for tag in all_tags:
+            try:
+                tag_category_splits[tag.category].append(tag)
+            except KeyError:
+                tag_category_splits[tag.category] = [tag]
+
+        for cat, tags in tag_category_splits.values():
+            desc = f"**{cat}**"
+
+        pages = menus.ButtonMenuPages(
+            source=TagsPageSource(
+                self.bot,
+                categories,
+            ),
+            clear_buttons_after=True,
+        )
+        await pages.start(ctx)
 
 
 def setup(bot):

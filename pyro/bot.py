@@ -1,8 +1,10 @@
+import logging
 import os
 from typing import Optional, TYPE_CHECKING
 
 from aiohttp import ClientSession
 from bot_base import BotBase
+from nextcord.ext.commands import CommandNotFound
 
 from pyro import MenuDocsOnly
 from pyro.autohelp import AutoHelp
@@ -11,6 +13,8 @@ from pyro.db import PyroMongoManager
 if TYPE_CHECKING:
     from bot_base import BotContext
     from nextcord.errors import DiscordException
+
+log = logging.getLogger(__name__)
 
 
 class Pyro(BotBase):
@@ -33,5 +37,8 @@ class Pyro(BotBase):
             await ctx.send_basic_embed(
                 f"I'm sorry, the command `{error.prefix}{error.command_name}` can only be used in MenuDocs guilds."
             )
+        elif isinstance(error, CommandNotFound):
+            log.debug(str(error))
+            return
 
         await super().on_command_error(ctx, error)

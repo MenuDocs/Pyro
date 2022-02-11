@@ -107,8 +107,6 @@ class AutoHelp:
     def build_embed(
         self, message: nextcord.Message, description: str
     ) -> nextcord.Embed:
-        # description = description.replace("```py", "").replace("```", "")
-
         embed = nextcord.Embed(
             description=description,
             timestamp=message.created_at,
@@ -159,7 +157,11 @@ class AutoHelp:
             return None
 
         old = events_dont_use_brackets_found.group("all")
-        the_rest = events_dont_use_brackets_found.group("the_rest")
+        the_rest = (
+            events_dont_use_brackets_found.group("the_rest")
+            .replace("```py", "")
+            .replace("```", "")
+        )
         instance_name = events_dont_use_brackets_found.group("instance_name")
 
         fixed = f"@{instance_name}.event"
@@ -190,8 +192,16 @@ class AutoHelp:
 
         conf: Conf = self.get_conf(message.guild.id)
 
-        base = f"@{instance_name}.event\nasync def on_message({args}):\n{old_code}"
-        code = f"{base}\n{indent}await {instance_name}.process_commands({args})"
+        base = f"@{instance_name}.event\nasync def on_message({args}):\n{old_code}".replace(
+            "```py", ""
+        ).replace(
+            "```", ""
+        )
+        code = (
+            f"{base}\n{indent}await {instance_name}.process_commands({args})".replace(
+                "```py", ""
+            ).replace("```", "")
+        )
         output = (
             "Looks like you override the `on_message` event "
             "without processing commands.\n This means your commands "

@@ -18,20 +18,41 @@ log = logging.getLogger(__name__)
 class Dropdown(nextcord.ui.Select):
     def __init__(self):
         options = [
-            nextcord.SelectOption(label="Python"),
-            nextcord.SelectOption(label="Python discord bots"),
-            nextcord.SelectOption(label="Javascript"),
-            nextcord.SelectOption(label="Javascript discord bots"),
-            nextcord.SelectOption(label="Java"),
-            nextcord.SelectOption(label="Java discord bots"),
-            nextcord.SelectOption(label="Coding"),
+            nextcord.SelectOption(
+                label="Python",
+                description="Anything Python related except bots.",
+            ),
+            nextcord.SelectOption(
+                label="Python discord bots",
+                description="Anything todo with Python discord bots.",
+            ),
+            nextcord.SelectOption(
+                label="Javascript",
+                description="Anything Javascript related except bots.",
+            ),
+            nextcord.SelectOption(
+                label="Javascript discord bots",
+                description="Anything todo with Javascript discord bots.",
+            ),
+            nextcord.SelectOption(
+                label="Java",
+                description="Anything Java related except bots.",
+            ),
+            nextcord.SelectOption(
+                label="Java discord bots",
+                description="Anything todo with Java discord bots.",
+            ),
+            nextcord.SelectOption(
+                label="Coding",
+                description="Anything general and coding related.",
+            ),
             nextcord.SelectOption(
                 label="Discord",
                 description="Idk, ask Mandroc devs",
             ),
             nextcord.SelectOption(
                 label="Misc",
-                description="Anything else",
+                description="Anything not covered.",
             ),
         ]
 

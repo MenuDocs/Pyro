@@ -175,10 +175,12 @@ class Tags(commands.Cog):
         tag_description = await ctx.get_input(
             description="Provide a description of 40 characters or less."
         )
-        if not tag_description or (
-            isinstance(tag_description, str) and len(tag_description) > 40
-        ):
+        if not tag_description:
             return await ctx.send_basic_embed("Cancelling tag creation.")
+        elif len(tag_description) > 40:
+            return await ctx.send_basic_embed(
+                "Description should be 40 characters or less."
+            )
 
         tag_content = await ctx.get_input(
             description="What should the content for this tag be?"

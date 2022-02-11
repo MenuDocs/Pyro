@@ -126,7 +126,7 @@ class AutoHelp:
         # Don't help people who have been helped in the last 5 minutes
         key = f"{message.author.id}|{message.channel.id}"
         if key in self._help_cache:
-            return
+            return None
 
         code_bin_content = await self._code_bin.process(message.content)
         message.content += code_bin_content
@@ -146,6 +146,8 @@ class AutoHelp:
         )
 
         await auto_message.edit(view=CloseButton(auto_message, message.author))
+
+        return results
 
     async def process_events_dont_use_brackets(self, message: nextcord.Message):
         events_dont_use_brackets_found = self.events_dont_use_brackets.search(

@@ -1,7 +1,7 @@
 from bot_base.db import MongoManager
 from bot_base.db.document import Document
 
-from db import GuildReview, BotReview
+from db import GuildReview, BotReview, Tag
 
 
 class PyroMongoManager(MongoManager):

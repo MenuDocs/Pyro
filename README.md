@@ -30,3 +30,10 @@ You can view `pyro/checks/basic.py` if you require things during development.
 - docker-compose build
 - docker-compose up
 ```
+
+#### Tests
+
+```shell
+> pip install -r dev-requirements.txt
+> pytest
+```

@@ -92,7 +92,7 @@ class DropdownView(nextcord.ui.View):
 class Review(MenuDocsCog):
     def __init__(self, bot):
         self.bot: Pyro = bot
-        self.review_role_id: int = 928276706568052797
+        self.review_role_id: int = 939373151844958228
         self.review_category_id: int = 925723996585087016
 
     @staticmethod

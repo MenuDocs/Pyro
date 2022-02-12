@@ -151,7 +151,7 @@ class AutoHelp:
         # Don't help people who have been helped in the last 5 minutes
         key = f"{message.author.id}|{message.channel.id}"
         if key in self._help_cache:
-            return
+            return None
 
         contents = await self.find_code(message)
         if not contents:

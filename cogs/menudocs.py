@@ -4,6 +4,8 @@ from typing import List
 
 import nextcord
 from axew import AxewClient, BaseAxewException
+from bot_base import BotContext
+from bot_base.wraps import WrappedChannel
 from nextcord.ext import commands
 from nextcord.ext.commands import Greedy
 
@@ -14,6 +16,7 @@ from pyro.checks import (
     ensure_is_menudocs_guild,
     ensure_is_menudocs_staff,
     MenuDocsCog,
+    ensure_is_menudocs_project_guild,
 )
 
 log = logging.getLogger(__name__)
@@ -222,6 +225,29 @@ class MenuDocs(MenuDocsCog):
 
         await ctx.send(f"Hey, {mention_turnery}", embed=embed)
         await ctx.message.delete()
+
+    @commands.command(aliases=["hc", "huhcount"])
+    @ensure_is_menudocs_project_guild()
+    async def huh_count(self, ctx: BotContext) -> None:
+        """Count the huh's!"""
+        mappin: dict[nextcord.Member, int] = {}
+        channel: WrappedChannel = await self.bot.get_or_fetch_channel(
+            566133462986391553
+        )
+        async for message in channel.history():
+            try:
+                mappin[message.author] += 1
+            except KeyError:
+                mappin[message.author] = 1
+
+        sorted_mappin: dict[nextcord.Member, int] = dict(
+            sorted(mappin.items(), key=lambda item: item[1], reverse=True)
+        )
+        desc = "**Huh count**\n-----\n\n"
+        for k, v in sorted_mappin.items():
+            desc += f"{k.mention} - {v}\n"
+
+        await ctx.send_basic_embed(desc)
 
 
 def setup(bot):

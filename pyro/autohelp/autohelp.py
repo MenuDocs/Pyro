@@ -189,7 +189,6 @@ class AutoHelp:
         new_code = []
 
         for diff in difflib.unified_diff(original_code_split, new_code_split, n=1):
-
             if diff.startswith("@@"):
                 original_code.append("")
                 new_code.append("")

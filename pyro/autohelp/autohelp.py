@@ -221,7 +221,7 @@ class AutoHelp:
 
             embed.add_field(**field)
 
-        self._help_cache.add_entry(key, None, ttl=datetime.timedelta(minutes=30))
+        # self._help_cache.add_entry(key, None, ttl=datetime.timedelta(minutes=30))
 
         auto_message = await message.channel.send(
             f"{message.author.mention} {'this' if len(fields) == 1 else 'these'} might help.",

@@ -20,6 +20,7 @@ class Actions(enum.Enum):
 
 class BaseHelpTransformer(libcst.CSTTransformer):
     """Base Help Transformer which modifies nodes based on update methods and stores a list of found errors."""
+
     def __init__(self, find_all: bool = False):
         super().__init__()
         self.found_errors: list[Actions] = []
@@ -44,6 +45,7 @@ class BaseHelpTransformer(libcst.CSTTransformer):
 
 class _FindNeedsSelfDecorator(libcst.CSTVisitor):
     """Find a method that requires a self argument based on the decorators."""
+
     def __init__(self):
         super().__init__()
         self.has_deco = False
@@ -75,6 +77,7 @@ class EventListenerVisitor(BaseHelpTransformer):
 
     Eg, bot.listen and bot.event should not have a self argument.
     """
+
     def __init__(self, find_all: bool = True):
         super().__init__(find_all)
 
@@ -122,7 +125,8 @@ class EventListenerVisitor(BaseHelpTransformer):
 
 
 class CallbackRequiresSelfVisitor(BaseHelpTransformer):
-    """"Callbacks require self if they are not top level or have the proper decorators."""
+    """ "Callbacks require self if they are not top level or have the proper decorators."""
+
     def visit_FunctionDef(self, node: libcst.FunctionDef):
         if not node.decorators:
             return False
@@ -149,6 +153,7 @@ class CallbackRequiresSelfVisitor(BaseHelpTransformer):
 
 class ClientIsNotBot(BaseHelpTransformer):
     """Client should not be a Bot instance."""
+
     BOT_CLASSES = ("Bot", "InteractionBot")
 
     VAR_NAME = "client"
@@ -178,17 +183,18 @@ class ClientIsNotBot(BaseHelpTransformer):
                 def possible_fix(module: libcst.Module):
                     # every single node of Name where the name is `client` needs to be changed to `bot`
 
-                    VAR_NAME = self.VAR_NAME
-
                     class Fixer(libcst.CSTTransformer):
+                        def __init__(self, var_name):
+                            self.var_name = var_name
+
                         def leave_Name(
                             self, node: libcst.Name, updated: libcst.Name
                         ) -> libcst.Name:
-                            if updated.value == VAR_NAME:
+                            if updated.value == self.var_name:
                                 return updated.with_changes(value="bot")
                             return updated
 
-                    return module.visit(Fixer())
+                    return module.visit(Fixer(self.VAR_NAME))
 
                 break
 
@@ -237,6 +243,7 @@ class _FindProcessCommands(libcst.CSTTransformer):
 
 class ProcessCommandsTransformer(BaseHelpTransformer):
     """In an on_message event, the bot should call process_commands."""
+
     def visit_FunctionDef(self, node: libcst.FunctionDef):
         if not node.decorators:
             return
@@ -305,6 +312,7 @@ class ProcessCommandsTransformer(BaseHelpTransformer):
 
 class IncorrectTypeHints(BaseHelpTransformer):
     """Context objects typehinted with Interaction or vice versa."""
+
     def __init__(self):
         super().__init__()
         self._typehint = None
@@ -344,8 +352,10 @@ class IncorrectTypeHints(BaseHelpTransformer):
         if self._typehint[0] in typehint:
             self.found_errors.append(self._error)
 
+
 class FindPassContext(BaseHelpTransformer):
     """Find anywhere someone uses pass_context. This should only check decorators, but you really don't need it anywhere."""
+
     def visit_Name(self, node):
-        if node.value == 'pass_context':
+        if node.value == "pass_context":
             self.found_errors.append(Actions.USED_PASS_CONTEXT)

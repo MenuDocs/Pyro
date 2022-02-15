@@ -156,24 +156,36 @@ class AutoHelp:
         contents = await self.find_code(message)
         if not contents:
             return
-        content = contents[0]
-        # prelim check
-        # TODO: implement prelimary check and iterate over all provided code snippets
 
         # parse the contents
-        try:
-            parsed = libcst.parse_module(content)
-        except libcst.ParserSyntaxError:
-            return
-        results = parsed
-        visitors: list[libcst.CSTTransformer] = []
+        # test the first valid code snippet for now
+        total_old = ''
+        total_new = ''
         errors = []
-        for visitor in self.visitors:
-            visitor = visitor()
-            visitors.append(visitor)
-            results = results.visit(visitor)
-            if visitor.found_errors:
-                errors.extend(visitor.found_errors)
+        # attempt to parse the full code
+        for num , code in enumerate(['\n'.join(contents),*contents]):
+            try:
+                parsed = libcst.parse_module(code)
+            except libcst.ParserSyntaxError:
+                continue
+            results = parsed
+            total_old += parsed.code + '\n'
+            visitors: list[libcst.CSTTransformer] = []
+            local_errors = []
+            for visitor in self.visitors:
+                visitor = visitor()
+                visitors.append(visitor)
+                results = results.visit(visitor)
+                if visitor.found_errors:
+                    local_errors.extend(visitor.found_errors)
+
+            total_new += results.code + '\n'
+            if local_errors:
+                errors.extend(local_errors)
+
+            if num == 0:
+                # stop short if we're running all code blocks successfully
+                break
 
         if not errors:
             return None
@@ -181,7 +193,7 @@ class AutoHelp:
         errors = set(errors)
         actions = []
         original_code = parsed.code
-        new_code = results.code
+        new_code = total_new
 
         original_code_split = original_code.splitlines(keepends=True)
         new_code_split = new_code.splitlines(keepends=True)

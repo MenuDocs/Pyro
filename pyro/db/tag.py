@@ -1,7 +1,7 @@
 from typing import Dict
 
 import nextcord
-from nextcord import Message, abc
+from nextcord import Message, abc, utils
 
 
 class Tag:
@@ -32,7 +32,7 @@ class Tag:
     def __repr__(self):
         return (
             f"<Tag(name={repr(self.name)}, description={repr(self.description)}, "
-            f"content={repr(self.content)}, creator_id={self.creator_id}, "
+            f"content={utils.escape_markdown(self.content)}, creator_id={self.creator_id}, "
             f"category={repr(self.category)}, is_embed={self.is_embed})>"
         )
 

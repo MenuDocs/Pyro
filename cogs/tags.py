@@ -47,12 +47,12 @@ class Dropdown(nextcord.ui.Select):
                 description="Anything general and coding related.",
             ),
             nextcord.SelectOption(
-                label="Discord",
-                description="Idk, ask Mandroc devs",
+                label="Misc",
+                description="Anything not covered above.",
             ),
             nextcord.SelectOption(
-                label="Misc",
-                description="Anything not covered.",
+                label="Discord",
+                description="Backwards compatibility.",
             ),
         ]
 
@@ -173,13 +173,13 @@ class Tags(commands.Cog):
                 return await ctx.send_basic_embed("Cancelling tag creation.")
 
         tag_description = await ctx.get_input(
-            description="Provide a description of 40 characters or less."
+            description="Provide a description of 75 characters or less."
         )
         if not tag_description:
             return await ctx.send_basic_embed("Cancelling tag creation.")
-        elif len(tag_description) > 40:
+        elif len(tag_description) > 75:
             return await ctx.send_basic_embed(
-                "Description should be 40 characters or less."
+                "Description should be 75 characters or less."
             )
 
         tag_content = await ctx.get_input(

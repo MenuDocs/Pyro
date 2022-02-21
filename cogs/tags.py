@@ -227,7 +227,7 @@ class Tags(commands.Cog):
             file: nextcord.File = tag.as_file()
             return await ctx.send(f"Raw tag for `{tag_name}`", file=file)
 
-        await ctx.send(f"Raw tag for `{tag_name}`\n```py\n{repr(tag)}\n```")
+        await ctx.send(f"Raw tag for `{tag_name}`\n```\n{repr(tag)}\n```")
 
     @tags.command()
     @commands.check_any(checks.can_eval(), checks.ensure_is_menudocs_staff())

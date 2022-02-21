@@ -312,19 +312,64 @@ class Tags(commands.Cog):
         for cat, tags in tag_category_splits.items():
             desc = f"**{cat}**\n---\n"
             for tag in tags:
-                desc += f"`{ctx.prefix}{tag.name}` - {tag.description}\n"
+                desc += f"`{tag.name}` - {tag.description}\n"
 
             desc += "\n"
             categories.append(desc)
 
         pages = menus.ButtonMenuPages(
-            source=TagsPageSource(
-                self.bot,
-                categories,
-            ),
+            source=TagsPageSource(self.bot, categories, ctx.prefix),
             clear_buttons_after=True,
         )
         await pages.start(ctx)
+
+    @tags.command(aliases=["sd", "setdescription", "set_description", "setdesc"])
+    @commands.check_any(checks.can_eval(), checks.ensure_is_menudocs_staff())
+    async def set_desc(
+        self,
+        ctx: BotContext,
+        tag_name: str = None,
+        *,
+        tag_description: str = None,
+    ):
+        """Modify the description for a tag."""
+        if not tag_name:
+            tag_name = await ctx.get_input(
+                description="Whats the name of the tag to modify?"
+            )
+            if not tag_name:
+                return await ctx.send_basic_embed("Cancelling tag modification.")
+
+        try:
+            tag: Tag = self.tags[tag_name]
+        except KeyError:
+            return await ctx.send_basic_embed("A tag with that name does not exist.")
+
+        if tag.description:
+            wants_to_override = await ctx.prompt(
+                "This tag already has a description, are you sure you wish to override it?"
+            )
+            if not wants_to_override:
+                return await ctx.send_basic_embed("Cancelling tag modification.")
+
+        if not tag_description:
+            tag_description = await ctx.get_input(
+                description="Provide a description of 75 characters or less."
+            )
+
+        # Validate desc
+        if not tag_description:
+            return await ctx.send_basic_embed("Cancelling tag modification.")
+        elif len(tag_description) > 75:
+            return await ctx.send_basic_embed(
+                "Description should be 75 characters or less. Please run the command again."
+            )
+
+        tag.description = tag_description
+        await self.tags_db.upsert_custom({"name": tag.name}, tag.to_dict())
+        await ctx.send_basic_embed(
+            "I have changed the description of that tag for you."
+        )
 
 
 def setup(bot):

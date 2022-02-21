@@ -138,6 +138,9 @@ class Tags(commands.Cog):
 
         log.info("Sending tag '%s'", tag.name)
 
+        tag.uses += 1
+        await self.tags_db.increment_by_custom({"name": tag.name}, 1, "uses")
+
         await tag.send(message.channel, invoked_with=tag_name)
 
     @commands.group(aliases=["tag"], invoke_without_command=True)
@@ -386,7 +389,8 @@ class Tags(commands.Cog):
             title=f"Viewing tag `{tag.name}`",
             description=f"{tag_desc}Aliases: {tag_aliases}"
             f"\nCategory: {tag.category}\nCreated by: <@{tag.creator_id}>\n"
-            f"Sent as embed? {tag.is_embed}\nContent:\n{tag.content}",
+            f"Sent as embed? {tag.is_embed}\nUses: **{tag.uses}**"
+            f"Content:\n{tag.content}",
         )
         await ctx.send(embed=embed)
 

@@ -389,7 +389,7 @@ class Tags(commands.Cog):
             title=f"Viewing tag `{tag.name}`",
             description=f"{tag_desc}Aliases: {tag_aliases}"
             f"\nCategory: {tag.category}\nCreated by: <@{tag.creator_id}>\n"
-            f"Sent as embed? {tag.is_embed}\nUses: **{tag.uses}**"
+            f"Sent as embed? {tag.is_embed}\nUses: **{tag.uses}**\n"
             f"Content:\n{tag.content}",
         )
         await ctx.send(embed=embed)

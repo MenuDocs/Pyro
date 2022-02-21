@@ -223,6 +223,10 @@ class Tags(commands.Cog):
         if not tag:
             return await ctx.send_basic_embed("No tag found with that name.")
 
+        if tag.has_codeblocks:
+            file: nextcord.File = tag.as_file()
+            return await ctx.send(f"Raw tag for `{tag_name}`", file=file)
+
         await ctx.send(f"Raw tag for `{tag_name}`\n```py\n{repr(tag)}\n```")
 
     @tags.command()

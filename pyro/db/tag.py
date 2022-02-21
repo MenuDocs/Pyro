@@ -1,3 +1,4 @@
+from io import BytesIO
 from typing import Dict
 
 import nextcord
@@ -32,12 +33,16 @@ class Tag:
     def __repr__(self):
         return (
             f"<Tag(name={repr(self.name)}, description={repr(self.description)}, "
-            f"content={utils.escape_markdown(self.content)}, creator_id={self.creator_id}, "
+            f"content={self.content}, creator_id={self.creator_id}, "
             f"category={repr(self.category)}, is_embed={self.is_embed})>"
         )
 
     def __str__(self):
         return f"<Tag(name={self.name}, description={self.description})>"
+
+    @property
+    def has_codeblocks(self) -> bool:
+        return "```" in self.content
 
     def to_dict(self) -> Dict:
         data = {
@@ -54,10 +59,19 @@ class Tag:
 
         return data
 
+    def as_file(self) -> nextcord.File:
+        buffer = BytesIO(self.content.encode("utf-8"))
+        return nextcord.File(buffer, filename="tag.txt")
+
     async def send(self, target: abc.Messageable, invoked_with: str = None) -> Message:
         """Sends the given tag to the target"""
         if not invoked_with:
             invoked_with = self.name
+
+        if self.has_codeblocks:
+            # Send as 'file'
+            await target.send(file=self.as_file())
+            return
 
         if self.is_embed:
             embed = nextcord.Embed(

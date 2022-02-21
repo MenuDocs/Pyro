@@ -2,7 +2,7 @@ from io import BytesIO
 from typing import Dict
 
 import nextcord
-from nextcord import Message, abc, utils
+from nextcord import Message, abc, utils, AllowedMentions
 
 
 class Tag:
@@ -73,12 +73,16 @@ class Tag:
 
         if self.has_codeblocks:
             # Send as 'file'
-            return await target.send(file=self.as_file())
+            return await target.send(
+                file=self.as_file(), allowed_mentions=AllowedMentions.none()
+            )
 
         if self.is_embed:
             embed = nextcord.Embed(
                 title=f"Tag: `{invoked_with}`", description=self.content
             )
-            return await target.send(embed=embed)
+            return await target.send(
+                embed=embed, allowed_mentions=AllowedMentions.none()
+            )
 
-        return await target.send(self.content)
+        return await target.send(self.content, allowed_mentions=AllowedMentions.none())

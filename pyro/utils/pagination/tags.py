@@ -8,7 +8,7 @@ from pyro.bot import Pyro
 
 class TagsPageSource(menus.ListPageSource):
     def __init__(self, bot: Pyro, categories: list[str]):
-        super().__init__(categories, per_page=3)
+        super().__init__(categories, per_page=1)
         self.bot = bot
 
     async def format_page(self, menu, pages):

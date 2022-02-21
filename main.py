@@ -1,5 +1,6 @@
 import asyncio
 import io
+import json
 import os
 import re
 import logging
@@ -16,6 +17,7 @@ from nextcord.ext import tasks
 from pyro import checks
 from pyro.bot import Pyro
 from pyro.checks import COMBINED_ACCOUNTS
+from pyro.db import Tag
 from pyro.utils.pagination import EvalPageSource
 from pyro.utils.util import clean_code
 
@@ -98,6 +100,43 @@ async def main():
     async def logout(ctx):
         await ctx.send("Cya :wave:")
         await bot.close()
+
+    @bot.command()
+    @commands.is_owner()
+    async def ingest(ctx: BotContext):
+        """Load old tags into pyro"""
+        cat_map: dict = {
+            None: "Misc",
+            "java": "Java",
+            "hosting": "Misc",
+            "coding": "Coding",
+            "partners": "Misc",
+            "python": "Python",
+            "discord": "Discord",
+            "miscellaneous": "Misc",
+            "apis/packages": "Misc",
+            "javascript": "Javascript",
+        }
+        with open(
+            os.path.join(os.getcwd(), "tags.json"), "r", encoding="UTF-8"
+        ) as file:
+            data = json.load(file)
+
+        tags: list[dict] = []
+        for raw_tag in data:
+            tag: Tag = Tag(
+                name=raw_tag["name"],
+                content=raw_tag["description"],
+                creator_id=int(raw_tag["addedBy"]),
+                description="",
+                category=cat_map[raw_tag["category"]],
+                aliases=raw_tag["aliases"],
+                is_embed=False,
+            )
+            tags.append(tag.to_dict())
+
+        await bot.db.tags.bulk_insert(tags)
+        await ctx.send("Ported the tags for you!")
 
     @bot.command(name="eval", aliases=["exec"])
     @checks.can_eval()

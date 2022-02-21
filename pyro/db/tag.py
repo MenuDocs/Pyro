@@ -15,10 +15,12 @@ class Tag:
         category: str,
         is_embed: bool = True,
         aliases: list[str] = None,
+        uses: int = 0,
         _id=None,
     ):
         # _id is auto genned
         self._id = _id
+        self.uses: int = uses
         self.name: str = name
         self.content: str = content
         self.category: str = category
@@ -34,7 +36,7 @@ class Tag:
         return (
             f"<Tag(name={repr(self.name)}, description={repr(self.description)}, "
             f"content={self.content}, creator_id={self.creator_id}, "
-            f"category={repr(self.category)}, is_embed={self.is_embed})>"
+            f"category={repr(self.category)}, is_embed={self.is_embed}, uses={self.uses})>"
         )
 
     def __str__(self):
@@ -47,6 +49,7 @@ class Tag:
     def to_dict(self) -> Dict:
         data = {
             "name": self.name,
+            "uses": self.uses,
             "content": self.content,
             "category": self.category,
             "is_embed": self.is_embed,

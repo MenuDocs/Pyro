@@ -136,7 +136,7 @@ class Tags(commands.Cog):
             # No tag found with this name
             return
 
-        log.info("Sending tag %s", tag.name)
+        log.info("Sending tag '%s'", tag.name)
 
         await tag.send(message.channel, invoked_with=tag_name)
 

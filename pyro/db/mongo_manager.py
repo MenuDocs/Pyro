@@ -1,7 +1,7 @@
 from bot_base.db import MongoManager
 from bot_base.db.document import Document
 
-from pyro.db import GuildReview, BotReview
+from pyro.db import GuildReview, BotReview, Tag
 
 
 class PyroMongoManager(MongoManager):
@@ -22,3 +22,4 @@ class PyroMongoManager(MongoManager):
         self.guild_reviews: Document = Document(
             self.db, "guild_reviews", converter=GuildReview
         )
+        self.tags: Document = Document(self.db, "tags", converter=Tag)

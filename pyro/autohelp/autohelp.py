@@ -243,7 +243,7 @@ class AutoHelp:
 
             embed.add_field(**field)
 
-        auto_message = await message.channel.send(
+        auto_message = await message.reply(
             f"{message.author.mention} {'this' if len(fields) == 1 else 'these'} might help.",
             embed=embed,
         )

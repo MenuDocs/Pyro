@@ -5,8 +5,9 @@ from typing import Optional
 import libcst
 
 
-class Actions(enum.Enum):
-    # we don't care about any of these values, just using them as sentinels
+class Actions(enum.IntFlag):
+    # we don't care about any of these values being specific, as long as they're consistent per run
+    # we use them for caching and determining how to handle the error
     DECORATOR_EVENT_CALLED = enum.auto()
     DECORATOR_LISTEN_NOT_CALLED = enum.auto()
     USING_SELF_ON_BOT_COMMAND = enum.auto()
@@ -125,7 +126,7 @@ class EventListenerVisitor(BaseHelpTransformer):
 
 
 class CallbackRequiresSelfVisitor(BaseHelpTransformer):
-    """ "Callbacks require self if they are not top level or have the proper decorators."""
+    """Callbacks require self if they are not top level or have the proper decorators."""
 
     def visit_FunctionDef(self, node: libcst.FunctionDef):
         if not node.decorators:
@@ -220,7 +221,9 @@ class ClientIsNotBot(BaseHelpTransformer):
         self.updates[self.module] = possible_fix
 
 
-class _FindProcessCommands(libcst.CSTTransformer):
+class _FindProcessCommands(libcst.CSTVisitor):
+    """Finds all calls of a function named `process_commands()`"""
+
     def __init__(self):
         self.found_process_commands = False
 

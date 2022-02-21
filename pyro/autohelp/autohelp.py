@@ -56,7 +56,7 @@ class CloseButton(nextcord.ui.View):
         return (
             bool(
                 self._allowed_roles.intersection(
-                    checks.AUTO_HELP_ROLES.get(interaction.channel.guild.id) or set()
+                    checks.AUTO_HELP_ROLES.get(interaction.guild_id) or set()
                 )
             )
             or interaction.user.id == self._author_id
@@ -148,10 +148,6 @@ class AutoHelp:
     async def process_message(
         self, message: nextcord.Message
     ) -> Optional[List[nextcord.Embed]]:
-        # Don't help people who have been helped in the last 5 minutes
-        key = f"{message.author.id}|{message.channel.id}"
-        if key in self._help_cache:
-            return None
 
         contents = await self.find_code(message)
         if not contents:
@@ -159,17 +155,17 @@ class AutoHelp:
 
         # parse the contents
         # test the first valid code snippet for now
-        total_old = ''
-        total_new = ''
+        total_old = ""
+        total_new = ""
         errors = []
         # attempt to parse the full code
-        for num , code in enumerate(['\n'.join(contents),*contents]):
+        for num, code in enumerate(["\n".join(contents), *contents]):
             try:
                 parsed = libcst.parse_module(code)
             except libcst.ParserSyntaxError:
                 continue
             results = parsed
-            total_old += parsed.code + '\n'
+            total_old += parsed.code + "\n"
             visitors: list[libcst.CSTTransformer] = []
             local_errors = []
             for visitor in self.visitors:
@@ -179,7 +175,7 @@ class AutoHelp:
                 if visitor.found_errors:
                     local_errors.extend(visitor.found_errors)
 
-            total_new += results.code + '\n'
+            total_new += results.code + "\n"
             if local_errors:
                 errors.extend(local_errors)
 
@@ -214,9 +210,24 @@ class AutoHelp:
                 original_code[-1] += diff[1:]
                 new_code[-1] += diff[1:]
 
+        # Don't help people who have been helped in the last 5 minutes
+        base_key = f"{message.author.id}|{message.channel.id}"
         for error, action in self.actions.items():
-            if error in errors:
+            if (
+                error in errors
+                and (key := base_key + f"|{error.value}") not in self._help_cache
+            ):
                 actions.append(action(message))
+                self._help_cache.add_entry(
+                    key,
+                    None,
+                    ttl=datetime.timedelta(minutes=30),
+                )
+
+        # everything was sent in the last 5 minutes
+        if not actions:
+            return
+
         embed, last_fields = self.build_embed(message, original_code, new_code)
 
         fields = list(filter(None, await asyncio.gather(*actions)))
@@ -231,8 +242,6 @@ class AutoHelp:
                 field["inline"] = False
 
             embed.add_field(**field)
-
-        # self._help_cache.add_entry(key, None, ttl=datetime.timedelta(minutes=30))
 
         auto_message = await message.channel.send(
             f"{message.author.mention} {'this' if len(fields) == 1 else 'these'} might help.",

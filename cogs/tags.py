@@ -223,11 +223,8 @@ class Tags(commands.Cog):
         if not tag:
             return await ctx.send_basic_embed("No tag found with that name.")
 
-        if tag.has_codeblocks:
-            file: nextcord.File = tag.as_file()
-            return await ctx.send(f"Raw tag for `{tag_name}`", file=file)
-
-        await ctx.send(f"Raw tag for `{tag_name}`\n```\n{repr(tag)}\n```")
+        file: nextcord.File = tag.as_file()
+        await ctx.send(f"Raw tag for `{tag_name}`", file=file)
 
     @tags.command()
     @commands.check_any(checks.can_eval(), checks.ensure_is_menudocs_staff())
@@ -370,6 +367,28 @@ class Tags(commands.Cog):
         await ctx.send_basic_embed(
             "I have changed the description of that tag for you."
         )
+
+    @tags.command(aliases=["detail", "details"])
+    async def show(self, ctx: BotContext, tag_name: str = None):
+        """Show a specific tags details."""
+        if not tag_name:
+            return await ctx.send("The name of the tag to view is a required argument.")
+
+        try:
+            tag: Tag = self.tags[tag_name]
+        except KeyError:
+            return await ctx.send_basic_embed("A tag with that name does not exist.")
+
+        tag_desc = f"'{tag.description}'\n---\n" if tag.description else ""
+        tag_aliases = ", ".join(tag.aliases) if tag.aliases else "No aliases"
+
+        embed = nextcord.Embed(
+            title=f"Viewing tag `{tag.name}`",
+            description=f"{tag_desc}Aliases: {tag_aliases}"
+            f"\nCategory: {tag.category}\nCreated by: <@{tag.creator_id}>\n"
+            f"Sent as embed? {tag.is_embed}\nContent:\n{tag.content}",
+        )
+        await ctx.send(embed=embed)
 
 
 def setup(bot):

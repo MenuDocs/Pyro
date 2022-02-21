@@ -71,12 +71,6 @@ class Tag:
         if not invoked_with:
             invoked_with = self.name
 
-        if self.has_codeblocks:
-            # Send as 'file'
-            return await target.send(
-                file=self.as_file(), allowed_mentions=AllowedMentions.none()
-            )
-
         if self.is_embed:
             embed = nextcord.Embed(
                 title=f"Tag: `{invoked_with}`", description=self.content

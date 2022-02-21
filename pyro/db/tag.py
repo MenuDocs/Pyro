@@ -61,7 +61,7 @@ class Tag:
 
     def as_file(self) -> nextcord.File:
         buffer = BytesIO(self.content.encode("utf-8"))
-        return nextcord.File(buffer, filename="tag.txt")
+        return nextcord.File(buffer, filename="tag.md")
 
     async def send(self, target: abc.Messageable, invoked_with: str = None) -> Message:
         """Sends the given tag to the target"""
@@ -70,8 +70,7 @@ class Tag:
 
         if self.has_codeblocks:
             # Send as 'file'
-            await target.send(file=self.as_file())
-            return
+            return await target.send(file=self.as_file())
 
         if self.is_embed:
             embed = nextcord.Embed(

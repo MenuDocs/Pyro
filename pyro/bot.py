@@ -90,4 +90,7 @@ class Pyro(BotBase):
                 f"`{ctx.command.qualified_name}` can only be used {err.number} command at a time under {str(err.per)}"
             )
 
+        elif isinstance(err, (commands.CheckFailure, commands.CheckAnyFailure)):
+            await ctx.send("You do not have permission to run this command.")
+
         log.error("".join(format_exception(err, err, err.__traceback__)))

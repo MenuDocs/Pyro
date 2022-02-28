@@ -38,17 +38,7 @@ class Autohelp(commands.Cog):
 
             # Process shit in threads if its parent is an allowed channel
 
-        auto_help_embeds: List[
-            nextcord.Embed
-        ] = await self.bot.auto_help.process_message(message)
-
-        if not auto_help_embeds:
-            return
-
-        await message.channel.send(
-            f"{message.author.mention} {'this' if len(auto_help_embeds) == 1 else 'these'} might help.",
-            embeds=auto_help_embeds,
-        )
+        await self.bot.auto_help.process_message(message)
 
 
 def setup(bot):

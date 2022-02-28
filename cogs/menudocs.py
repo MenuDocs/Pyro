@@ -110,57 +110,6 @@ class MenuDocs(MenuDocsCog):
         return content
 
     @commands.command()
-    async def init(self, ctx):
-        """Sends a helpful embed about how to fix import errors."""
-        embed = nextcord.Embed(
-            title="Seeing something like?\n`ModuleNotFoundError: No module named 'utils.utils'`\nRead on!",
-            description="""
-            In order to fix import issues, please add an empty file called
-            `__init__.py` in your directory you are attempting to import from.
-            If you are following our tutorials this is likely `utils`
-            
-            This happens because python is not aware of your folder
-            being 'importable', by adding this file we explicitly
-            declare it 'importable'. This generally resolves this issue.
-            """,
-        )
-        await ctx.send(embed=embed)
-
-    @commands.command()
-    async def pypi(self, ctx):
-        """Sends a helpful embed about how to correctly download packages."""
-        embed = nextcord.Embed(
-            title="Trying to `pip install` something and getting the following?\n`Could not find a version that "
-            "satisfies the requirement <package here>`",
-            description="""
-                Most likely the package you are trying to install isn't named
-                the same as what you import. `discord.py` can be seen as an example
-                here since you `import discord` and `pip install discord.py`
-                
-                A simple way to fix this is to google `pypi <package you want>`
-                This will 9 times out of 10 provide the pypi page for said package,
-                which will clearly indicate the correct way to install it.
-                """,
-        )
-        await ctx.send(embed=embed)
-
-    @commands.command(name="format")
-    async def _format(self, ctx):
-        """Sends a helpful embed about how to correctly format your question."""
-        embed = nextcord.Embed(
-            title="Uh oh, could you do us a favour please and re-phrase your question?",
-            description="""
-                > Looks like we are missing some information to properly help you out!\n
-                __Please make sure you have the following:__\n
-                • The code related to your question.
-                • Any errors that you are receiving.
-                • The traceback of your error. (If relevant)
-                • The expected action/output and recieved action/output.
-                """,
-        )
-        await ctx.send(embed=embed, reference=replied_reference(ctx.message))
-
-    @commands.command()
     @ensure_is_menudocs_staff()
     @ensure_is_menudocs_guild()
     async def paste(

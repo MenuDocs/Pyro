@@ -1,5 +1,6 @@
 import asyncio
 import io
+import json
 import os
 import re
 import logging
@@ -16,6 +17,7 @@ from nextcord.ext import tasks
 from pyro import checks
 from pyro.bot import Pyro
 from pyro.checks import COMBINED_ACCOUNTS
+from pyro.db import Tag
 from pyro.utils.pagination import EvalPageSource
 from pyro.utils.util import clean_code
 
@@ -140,7 +142,7 @@ async def main():
         await pages.start(ctx)
 
     @bot.command()
-    @commands.is_owner()
+    @commands.check(checks.can_eval())
     async def note(ctx: BotContext, *, note: str):
         channel = await bot.get_or_fetch_channel(702862760052129822)
         await channel.send(
@@ -164,7 +166,7 @@ async def main():
         await ctx.send_basic_embed("All backed up for you.")
 
     @bot.command()
-    @commands.is_owner()
+    @commands.check(checks.can_eval())
     async def process(ctx, msg: nextcord.Message):
         msg.channel = ctx.channel
         await bot.auto_help.process_message(msg)

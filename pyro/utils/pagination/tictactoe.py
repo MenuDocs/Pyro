@@ -19,7 +19,7 @@ class TicTacToePageSource(menus.ListPageSource):
 
     async def format_page(self, menu, page):
         embed = nextcord.Embed(title=f"TicTacToe leaderboard for `{self.stat_type}`")
-        embed.description = f"{page}"
+        embed.description = page
 
         embed.set_footer(text=f"Page {menu.current_page + 1}/{self.get_max_pages()}")
         return embed

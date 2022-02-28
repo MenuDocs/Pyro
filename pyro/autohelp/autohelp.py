@@ -35,6 +35,7 @@ class Field(TypedDict):
     inline: bool
 
 
+
 class CloseButton(nextcord.ui.View):
     def __init__(
         self,

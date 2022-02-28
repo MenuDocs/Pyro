@@ -1,4 +1,12 @@
+from typing import TYPE_CHECKING
+
+import nextcord
 from nextcord.ext import commands
+
+if TYPE_CHECKING:
+    from pyro import Pyro
+    from bot_base import BotContext
+    from bot_base.wraps import WrappedMember
 
 SKELMIS_ACCOUNTS = {
     271612318947868673,  # Skelmis
@@ -91,9 +99,25 @@ def ensure_is_menudocs_project_guild():
 
 
 def ensure_is_menudocs_staff():
-    async def check(ctx):
-        if not commands.has_any_role(CODE_REVIEWER, PROFICIENT, TEAM):
+    async def check(ctx: "BotContext"):
+        bot: "Pyro" = ctx.bot  # type: ignore
+        guild: nextcord.Guild = await bot.get_or_fetch_guild(MAIN_GUILD)
+
+        try:
+            main_guild_member: "WrappedMember" = await bot.get_or_fetch_member(
+                MAIN_GUILD, ctx.author.id
+            )
+        except nextcord.DiscordException:
             return False
-        return True
+
+        team = guild.get_role(TEAM)
+        proficient = guild.get_role(PROFICIENT)
+        code_reviewer = guild.get_role(CODE_REVIEWER)
+
+        return (
+            team in main_guild_member.roles
+            or proficient in main_guild_member.roles
+            or code_reviewer in main_guild_member.roles
+        )
 
     return commands.check(check)

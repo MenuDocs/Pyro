@@ -10,7 +10,7 @@ from nextcord.ext import commands, menus
 
 from pyro import Pyro, checks
 from pyro.db import Tag
-from pyro.utils.pagination import TagsPageSource
+from pyro.utils.pagination import TagsPageSource, TagUsagePageSource
 
 log = logging.getLogger(__name__)
 
@@ -393,6 +393,22 @@ class Tags(commands.Cog):
             f"Content:\n{tag.content}",
         )
         await ctx.send(embed=embed)
+
+    @tags.command(aliases=["usages"])
+    async def usage(self, ctx: "BotContext"):
+        """Show tags, sorted by usage."""
+        all_tags: List[Tag] = await self.tags_db.get_all()
+        all_tags: List[Tag] = sorted(all_tags, key=lambda x: x.uses, reverse=True)
+        tag_lists: List[str] = [
+            f"Used `{tag.uses}` time{'s' if tag.uses == 1 else ''} - __{tag.name}__\n"
+            for tag in all_tags
+        ]
+
+        pages = menus.ButtonMenuPages(
+            source=TagUsagePageSource(self.bot, tag_lists, ctx.prefix),
+            clear_buttons_after=True,
+        )
+        await pages.start(ctx)
 
 
 def setup(bot):

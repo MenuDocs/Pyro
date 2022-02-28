@@ -1,5 +1,4 @@
 import enum
-from re import S
 from typing import Optional
 
 import libcst

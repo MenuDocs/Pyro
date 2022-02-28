@@ -35,7 +35,6 @@ class Field(TypedDict):
     inline: bool
 
 
-
 class CloseButton(nextcord.ui.View):
     def __init__(
         self,
@@ -148,11 +147,11 @@ class AutoHelp:
 
     async def process_message(
         self, message: nextcord.Message
-    ) -> Optional[List[nextcord.Embed]]:
+    ) -> Optional[nextcord.Embed]:
 
         contents = await self.find_code(message)
         if not contents:
-            return
+            return None
 
         # parse the contents
         # test the first valid code snippet for now
@@ -225,9 +224,9 @@ class AutoHelp:
                     ttl=datetime.timedelta(minutes=30),
                 )
 
-        # everything was sent in the last 5 minutes
+        # everything was sent in the last 30 minutes
         if not actions:
-            return
+            return None
 
         embed, last_fields = self.build_embed(message, original_code, new_code)
 
@@ -250,6 +249,8 @@ class AutoHelp:
         )
 
         await auto_message.edit(view=CloseButton(auto_message, message.author))
+
+        return embed
 
     async def events_dont_use_brackets(self, message: nextcord.Message) -> Field:
         return Field(

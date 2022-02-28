@@ -1,45 +1,39 @@
 import asyncio
 import datetime
+import difflib
 import itertools
 import logging
-from typing import Callable, Optional, List
+import time
+from typing import Callable, List, Optional, Tuple, Type, TypedDict
 
+import libcst
 import nextcord
 from bot_base.caches import TimedCache
-
 from pyro import checks
-from pyro.autohelp import CodeBinExtractor, Conf, AUTO_HELP_CONF
+from pyro.autohelp import AUTO_HELP_CONF, CodeBinExtractor, Conf
 from pyro.autohelp.regexes import (
-    requires_self_removal_pattern,
-    event_requires_self_addition_pattern,
-    command_requires_self_addition_pattern,
-    command_pass_context_pattern,
-    invalid_ctx_or_inter_type_pattern,
-    client_bot_pattern,
-    on_message_without_process_commands,
-    events_dont_use_brackets,
+    FORMATTED_CODE_REGEX,
+)
+
+from .ast_visitor import (
+    Actions,
+    BaseHelpTransformer,
+    CallbackRequiresSelfVisitor,
+    ClientIsNotBot,
+    EventListenerVisitor,
+    FindPassContext,
+    IncorrectTypeHints,
+    ProcessCommandsTransformer,
 )
 
 log = logging.getLogger(__name__)
 
-MENUDOCS = 416512197590777857
-NEXTCORD = 881118111967883295
-DISNAKE = 808030843078836254
-AUTO_HELP_ROLES = {
-    MENUDOCS: {
-        479199775590318080,  # Proficient
-    },
-    NEXTCORD: {
-        882192899519954944,  # Help thread auto add
-    },
-    DISNAKE: {
-        891619545356308481,  # Collaborator
-        922539851667091527,  # Smol mod
-        808033337767362570,  # Mod
-        847846236555968543,  # Solid contrib
-        944118765723975690,  # Helps a lot
-    },
-}
+
+class Field(TypedDict):
+    name: str
+    value: str
+    inline: bool
+
 
 
 class CloseButton(nextcord.ui.View):
@@ -63,7 +57,7 @@ class CloseButton(nextcord.ui.View):
         return (
             bool(
                 self._allowed_roles.intersection(
-                    AUTO_HELP_ROLES[interaction.channel.guild.id]
+                    checks.AUTO_HELP_ROLES.get(interaction.guild_id) or set()
                 )
             )
             or interaction.user.id == self._author_id
@@ -73,25 +67,27 @@ class CloseButton(nextcord.ui.View):
 
 class AutoHelp:
     def __init__(self, bot):
+        self.bot = bot
         self._help_cache: TimedCache = TimedCache()
 
-        self.requires_self_removal = requires_self_removal_pattern
-        self.event_requires_self_addition = event_requires_self_addition_pattern
-        self.command_requires_self_addition = command_requires_self_addition_pattern
-        self.command_pass_context = command_pass_context_pattern
-        self.invalid_ctx_or_inter_type = invalid_ctx_or_inter_type_pattern
-        self.client_bot = client_bot_pattern
-        self.on_message_without_process_commands = on_message_without_process_commands
-        self.events_dont_use_brackets = events_dont_use_brackets
+        self.actions = {
+            Actions.CLIENT_IS_NOT_BOT: self.client_bot,
+            Actions.DECORATOR_EVENT_CALLED: self.events_dont_use_brackets,
+            Actions.USING_SELF_ON_BOT_COMMAND: self.requires_self_removal,
+            Actions.PROCESS_COMMANDS_NOT_CALLED: self.on_message_without_process_commands,
+            Actions.MISSING_SELF_IN_EVENT_OR_COMMAND: self.requires_self_addition,
+            Actions.INCORRECT_CTX_TYPEHINT: self.invalid_ctx_typehint,
+            Actions.INCORRECT_INTERACTION_TYPEHINT: self.invalid_interaction_typehint,
+            Actions.USED_PASS_CONTEXT: self.pass_context,
+        }
 
-        self.patterns: List[Callable] = [
-            self.process_requires_self_removal,
-            self.process_requires_self_addition,
-            # self.process_invalid_ctx_or_inter_type,
-            self.process_client_bot,
-            self.process_pass_context,
-            self.process_events_dont_use_brackets,
-            self.process_on_message_without_process_commands,
+        self.visitors: list[Type[BaseHelpTransformer]] = [
+            EventListenerVisitor,
+            ClientIsNotBot,
+            ProcessCommandsTransformer,
+            CallbackRequiresSelfVisitor,
+            IncorrectTypeHints,
+            FindPassContext,
         ]
 
         # Settings
@@ -106,10 +102,12 @@ class AutoHelp:
             return AUTO_HELP_CONF[-1]
 
     def build_embed(
-        self, message: nextcord.Message, description: str
-    ) -> nextcord.Embed:
+        self,
+        message: nextcord.Message,
+        original_code: List[str],
+        updated_code: List[str],
+    ) -> Tuple[nextcord.Embed, Tuple[Field, Field]]:
         embed = nextcord.Embed(
-            description=description,
             timestamp=message.created_at,
             color=self.color,
         )
@@ -119,264 +117,228 @@ class AutoHelp:
         embed.set_footer(
             text="Believe this is incorrect? Let Skelmis know in discord.gg/menudocs"
         )
-        return embed
+        original_code = "```py\n" + "\n``````py\n".join(original_code) + "\n```"
+        updated_code = "```py\n" + "\n``````py\n".join(updated_code) + "\n```"
+        return embed, (
+            Field(name="Old code", value=original_code),
+            Field(name="New | Fixed", value=updated_code),
+        )
+
+    async def find_code(self, message: nextcord.Message) -> Optional[List[str]]:
+        """
+        Parses the code out of the passed message.
+
+        Returns None if no code is found.
+        """
+        code = []
+        paste_code = await self._code_bin.process(message.content)
+
+        if matches := list(FORMATTED_CODE_REGEX.finditer(message.content)):
+            for match in matches:
+                if not match.group("block"):
+                    continue
+                code.append(match.group("code"))
+        else:
+            code.append(message.content)
+
+        if paste_code:
+            code.append(paste_code)
+
+        return code or None
 
     async def process_message(
         self, message: nextcord.Message
     ) -> Optional[List[nextcord.Embed]]:
+
+        contents = await self.find_code(message)
+        if not contents:
+            return
+
+        # parse the contents
+        # test the first valid code snippet for now
+        total_old = ""
+        total_new = ""
+        errors = []
+        # attempt to parse the full code
+        for num, code in enumerate(["\n".join(contents), *contents]):
+            try:
+                parsed = libcst.parse_module(code)
+            except libcst.ParserSyntaxError:
+                continue
+            results = parsed
+            total_old += parsed.code + "\n"
+            visitors: list[libcst.CSTTransformer] = []
+            local_errors = []
+            for visitor in self.visitors:
+                visitor = visitor()
+                visitors.append(visitor)
+                results = results.visit(visitor)
+                if visitor.found_errors:
+                    local_errors.extend(visitor.found_errors)
+
+            total_new += results.code + "\n"
+            if local_errors:
+                errors.extend(local_errors)
+
+            if num == 0:
+                # stop short if we're running all code blocks successfully
+                break
+
+        if not errors:
+            return None
+
+        errors = set(errors)
+        actions = []
+        original_code = parsed.code
+        new_code = total_new
+
+        original_code_split = original_code.splitlines(keepends=True)
+        new_code_split = new_code.splitlines(keepends=True)
+        original_code = []
+        new_code = []
+
+        for diff in difflib.unified_diff(original_code_split, new_code_split, n=1):
+            if diff.startswith("@@"):
+                original_code.append("")
+                new_code.append("")
+            elif diff.strip() in ("+++", "---"):
+                continue
+            elif diff.startswith("+"):
+                new_code[-1] += diff[1:]
+            elif diff.startswith("-"):
+                original_code[-1] += diff[1:]
+            elif diff.startswith(" "):
+                original_code[-1] += diff[1:]
+                new_code[-1] += diff[1:]
+
         # Don't help people who have been helped in the last 5 minutes
-        key = f"{message.author.id}|{message.channel.id}"
-        if key in self._help_cache:
-            return None
+        base_key = f"{message.author.id}|{message.channel.id}"
+        for error, action in self.actions.items():
+            if (
+                error in errors
+                and (key := base_key + f"|{error.value}") not in self._help_cache
+            ):
+                actions.append(action(message))
+                self._help_cache.add_entry(
+                    key,
+                    None,
+                    ttl=datetime.timedelta(minutes=30),
+                )
 
-        code_bin_content = await self._code_bin.process(message.content)
-        message.content += code_bin_content
-        message.content = message.content = message.content.replace("\r", "")
+        # everything was sent in the last 5 minutes
+        if not actions:
+            return
 
-        iters = [call(message) for call in self.patterns]
-        results = await asyncio.gather(*iters)
-        results = list(filter(None, results))
-        if not results:
-            return None
+        embed, last_fields = self.build_embed(message, original_code, new_code)
 
-        self._help_cache.add_entry(key, None, ttl=datetime.timedelta(minutes=30))
+        fields = list(filter(None, await asyncio.gather(*actions)))
 
-        auto_message = await message.channel.send(
-            f"{message.author.mention} {'this' if len(results) == 1 else 'these'} might help.",
-            embeds=results,
+        if original_code != new_code:
+            all_fields = [*fields, *last_fields]
+        else:
+            all_fields = [*fields]
+
+        for field in all_fields:
+            if field.get("inline") is None:
+                field["inline"] = False
+
+            embed.add_field(**field)
+
+        auto_message = await message.reply(
+            f"{message.author.mention} {'this' if len(fields) == 1 else 'these'} might help.",
+            embed=embed,
         )
 
         await auto_message.edit(view=CloseButton(auto_message, message.author))
 
-        return results
-
-    async def process_events_dont_use_brackets(self, message: nextcord.Message):
-        events_dont_use_brackets_found = self.events_dont_use_brackets.search(
-            message.content
-        )
-        if not events_dont_use_brackets_found:
-            return None
-
-        old = events_dont_use_brackets_found.group("all")
-        the_rest = (
-            events_dont_use_brackets_found.group("the_rest")
-            .replace("```py", "")
-            .replace("```", "")
-        )
-        instance_name = events_dont_use_brackets_found.group("instance_name")
-
-        fixed = f"@{instance_name}.event"
-        return self.build_embed(
-            message,
-            description="When defining an event you do not need to use `()`.\n"
-            "See below for how to fix this:"
-            f"\n\n**Old**\n```py\n{old}{the_rest}```\n**New | Fixed**\n```py\n{fixed}{the_rest}```",
+    async def events_dont_use_brackets(self, message: nextcord.Message) -> Field:
+        return Field(
+            name="Events don't use brackets",
+            value="When defining an event you do not need to use `()`.\n"
+            "See below for how to fix this.",
         )
 
-    async def process_on_message_without_process_commands(
+    async def on_message_without_process_commands(
         self, message: nextcord.Message
-    ):
-        on_message_without_process_commands_found = (
-            self.on_message_without_process_commands.search(message.content)
-        )
-        if on_message_without_process_commands_found is None:
-            return None
-
-        old_code = on_message_without_process_commands_found.group("code")
-        if "process_commands" in old_code:
-            return None
-
-        args = on_message_without_process_commands_found.group("args")
-        instance_name = on_message_without_process_commands_found.group("instance_name")
-
-        indent = sum(1 for _ in itertools.takewhile(str.isspace, str(old_code))) * " "
-
+    ) -> Field:
         conf: Conf = self.get_conf(message.guild.id)
-
-        base = f"@{instance_name}.event\nasync def on_message({args}):\n{old_code}".replace(
-            "```py", ""
-        ).replace(
-            "```", ""
-        )
-        code = (
-            f"{base}\n{indent}await {instance_name}.process_commands({args})".replace(
-                "```py", ""
-            ).replace("```", "")
-        )
-        output = (
-            "Looks like you override the `on_message` event "
-            "without processing commands.\n This means your commands "
-            "will not get called at all, you should change your event to the below."
-            f"\n\n**Old**\n```py\n{base}```\n**New | Fixed**\n```py\n{code}```\n\n"
-            f"Note: This may not be in the right place so double check it is.\n"
-            f"You can read more about it [here]({conf.on_message_process_commands_link})"
-        )
-
-        if len(code.split("\n")) > 10:
-            # Too big for one embed
-            output = (
+        return Field(
+            name="Overriding on_message without process_commands",
+            value=(
                 "Looks like you override the `on_message` event "
                 "without processing commands.\n This means your commands "
-                "will not get called at all, you should make sure to add "
-                f"`await {instance_name}.process_commands({args})` into your `on_message` event.\n"
+                "will not get called at all, you should change your event to the below.\n"
+                "*Note: This may not be in the right place so double check it is.*\n"
                 f"You can read more about it [here]({conf.on_message_process_commands_link})"
-            )
-
-        return self.build_embed(message, description=output)
-
-    async def process_invalid_ctx_or_inter_type(
-        self, message: nextcord.Message
-    ) -> Optional[nextcord.Embed]:
-        invalid_ctx_or_inter_type = self.invalid_ctx_or_inter_type.search(
-            message.content
+            ),
         )
-        if invalid_ctx_or_inter_type is None:
-            return None
+
+    async def invalid_ctx_typehint(self, message: nextcord.Message) -> Field:
 
         conf: Conf = self.get_conf(message.guild.id)
-        arg_type = invalid_ctx_or_inter_type.group("arg_type")
-        command_type = invalid_ctx_or_inter_type.group("command_type")
-        all_params = old_all_params = invalid_ctx_or_inter_type.group("all")
 
-        if (
-            command_type not in {"command", "group"}
-            and "interaction" in arg_type.lower()
-        ):
-            # Replace interaction with ctx
-            new_arg_type = " commands.Context"
-            notes = (
-                "Make sure to `from nextcord.ext import commands`.\n"
-                "You can read more about `Context` "
-                f"[here]({conf.context_link})"
-            )
-            all_params = all_params.replace(arg_type, new_arg_type)
-
-        elif command_type not in {"command", "group"} and "context" in arg_type.lower():
-            new_arg_type = " nextcord.Interaction"
-            notes = (
-                "Make sure to `import nextcord`.\n"
-                "You can read more about `Interaction` "
-                f"[here]({conf.interaction_link})"
-            )
-            all_params = all_params.replace(arg_type, new_arg_type)
-
-        else:
-            log.warning("Idk how I got here.")
-            return None
-
-        return self.build_embed(
-            message,
-            description=f"Looks like you're using a command, but type-hinted the main parameter "
-            f"incorrectly! This won't lead to errors but will seriously hinder your "
-            f"development."
-            f"\n\n**Old**\n```py\n{old_all_params}```\n**New | Fixed**\n```py\n{all_params}```\n\nNotes: {notes}",
+        return Field(
+            name="Incorrect context typehint",
+            value=(
+                "Looks like you're using a prefix command, but type-hinted the main parameter "
+                "incorrectly! This won't lead to errors but will seriously hinder your "
+                f"development. See more about contexts [here]({conf.context_link})"
+            ),
         )
 
-    async def process_client_bot(
-        self, message: nextcord.Message
-    ) -> Optional[nextcord.Embed]:
+    async def invalid_interaction_typehint(self, message: nextcord.Message) -> Field:
+        conf: Conf = self.get_conf(message.guild.id)
+
+        return Field(
+            name="Incorrect interaction typehint",
+            value=(
+                "Looks like you're using a application command, but type-hinted the main parameter "
+                "incorrectly! This won't lead to errors but will seriously hinder your "
+                f"development. See more about interactions [here]({conf.interaction_link})"
+            ),
+        )
+
+    async def client_bot(self, message: nextcord.Message) -> Field:
         """Checks good naming conventions"""
-        client_bot = self.client_bot.search(message.content)
-        if client_bot is None:
-            return None
-
-        return self.build_embed(
-            message,
-            description=f"Calling a `Bot`, `{client_bot.group('name')}` is not recommended.\n"
-            f"Read [here](https://tutorial.vcokltfre.dev/tips/clientbot/) for more detail.",
+        return Field(
+            name="Calling a `Bot` `client` is not recommended.",
+            value="Read [here](https://tutorial.vcokltfre.dev/tips/clientbot/) for more detail.\n\n",
         )
 
-    async def process_pass_context(
-        self, message: nextcord.Message
-    ) -> Optional[nextcord.Embed]:
+    async def pass_context(self, message: nextcord.Message) -> Field:
         """Checks, and notifies if people use pass_context"""
-        pass_context = self.command_pass_context.search(message.content)
-        if pass_context is None:
-            return None
-
         # Lol, cmon
-        return self.build_embed(
-            message,
-            description="Looks like you're using `pass_context` still. That was a feature "
-            "back in version 0.x.x five years ago, your likely using a fork of the now "
-            "no longer maintained discord.py which means your on version "
-            "2.x.x.\nPlease check where your getting this code from and read "
-            "your forks migration guides.",
+        return Field(
+            name="pass_context is no longer supported.",
+            value="Looks like you're still using `pass_context`. That was a feature "
+            "back in version 0.x.x five years ago, you're likely using a fork of the now "
+            "no longer maintained discord.py which means you're on version "
+            "2.x.x.\nPlease check where you're getting this code from and read "
+            "your fork's migration guides.",
         )
 
-    async def process_requires_self_removal(self, message) -> Optional[nextcord.Embed]:
+    async def requires_self_removal(self, message) -> Field:
         """
         Look in a message and attempt to auto-help on
         instances where members send code NOT in a cog
         that also contains self
         """
-        injected_self = self.requires_self_removal.search(message.content)
-        if injected_self is None:
-            # Don't process
-            return
-
-        if injected_self.group("var") == "commands":
-            return
-
-        initial_func = injected_self.group("func")
-        fixed_func = initial_func.replace("self,", "")
-        if "( c" in fixed_func:
-            fixed_func = fixed_func.replace("( c", "(c")
-
-        # We need to process this
-        return self.build_embed(
-            message,
-            description="Looks like you're defining a command with `self` as the first argument "
+        return Field(
+            name="Commands/events in the global scope don't take self",
+            value="Looks like you're defining a command/self with `self` as the first argument "
             "without using the correct decorator. Likely you want to remove `self` as this only "
-            "applies to commands defined within a class (Cog).\nYou should change it as per the following:"
-            f"\n\n**Old**\n```py\n{initial_func}```\n**New | Fixed**\n```py\n{fixed_func}```",
+            "applies to method defined within a class (Cog).",
         )
 
-    async def process_requires_self_addition(self, message) -> Optional[nextcord.Embed]:
+    async def requires_self_addition(self, message) -> Field:
         """
         Look in a message and attempt to auto-help on
         instances where members send code IN a cog
         that doesnt contain self
         """
-        event_requires_self_addition = self.event_requires_self_addition.search(
-            message.content
-        )
-        command_requires_self_addition = self.command_requires_self_addition.search(
-            message.content
-        )
-
-        if event_requires_self_addition is not None:
-            # Event posted, check if it needs self
-            to_use_regex = event_requires_self_addition
-            msg = "an event"
-        elif command_requires_self_addition is not None:
-            # Command posted, check if it needs self
-            to_use_regex = command_requires_self_addition
-            msg = "a command"
-        else:
-            return None
-
-        args_group = to_use_regex.group("func")
-        if args_group.startswith("self"):
-            return
-
-        initial_func = (
-            to_use_regex.group("def")
-            + to_use_regex.group("func")
-            + to_use_regex.group("close")
-        )
-
-        args_group = f"self, {args_group}"
-
-        final_func = (
-            to_use_regex.group("def") + args_group + to_use_regex.group("close")
-        )
-
-        # We need to process this
-        return self.build_embed(
-            message,
-            description=f"Looks like you're defining {msg} in a class (Cog) without "
+        return Field(
+            name="Missing self param.",
+            value="Looks like you're defining an event or command in a class (Cog) without "
             "using `self` as the first variable.\nThis will likely lead to issues and "
-            "you should change it as per the following:"
-            f"\n\n**Old**\n```py\n{initial_func}```\n**New | Fixed**\n```py\n{final_func}```",
+            "you should change it as per the below:",
         )

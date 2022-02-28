@@ -173,7 +173,7 @@ class Docs(commands.Cog, name="Documentation"):
     @commands.command(
         name="doc",
         description="Gives you a documentation link for a d.py entity.",
-        aliases=["rtfd", "rtfm"],
+        aliases=["rtfd", "rtfm", "docs"],
     )
     async def rtfm(self, ctx, key: str = None, *, query: str = None):
         if not key or key.lower() not in self.page_types.keys():
@@ -196,13 +196,13 @@ class Docs(commands.Cog, name="Documentation"):
                     )
                 )
 
-            elif query.lower() in ["developers", "devs"]:
+            elif query.lower() in {"developers", "devs"}:
                 await ctx.send(
                     embed=nextcord.Embed.from_dict(
                         {
                             "title": "'It'll be finished before Mandroc still Connor' ~ Kindly, Pyro Devs",
                             "description": "Devs:\n"
-                            "<@271612318947868673>\n<@327745755789918208>\n\n"
+                            "<@271612318947868673>\n<@327745755789918208>\n<@717983911824588862>\n\n"
                             "Initial bot:\n<@330566541156417536>",
                             "footer": {
                                 "text": "Fun fact, the initial bot was coded on a phone."

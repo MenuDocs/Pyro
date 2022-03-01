@@ -35,6 +35,8 @@ class CodeBinExtractor:
 
     async def _extract_vco_bois(self, url: str, paste_id: str) -> str:
         async with self.bot.session.get(f"https://{url}/api/item?key={paste_id}") as r:
-            content = await r.text() if r.status == 200 else ""
+            if r.status != 200:
+                return ""
 
-        return content
+            data = await r.json()
+            return data["content"]

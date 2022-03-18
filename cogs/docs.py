@@ -55,6 +55,8 @@ class Docs(commands.Cog, name="Documentation"):
             "disnake": "https://docs.disnake.dev/en/latest",
             # "pycord": "https://docs.pycord.dev/en/latest",
             "levelling": "https://discord-ext-levelling.readthedocs.io/en/latest",
+            "py": "https://docs.python.org/3",
+            "python": "https://docs.python.org/3",
         }
 
     def finder(self, text, collection, *, key=None, lazy=True):

@@ -161,11 +161,17 @@ class Docs(commands.Cog, name="Documentation"):
 
         self.matches = self.finder(obj, cache, key=lambda t: t[0], lazy=False)[:8]
 
-        e = nextcord.Embed(colour=0xCE2029)
+        e = nextcord.Embed(
+            colour=0xCE2029,
+            timestamp=ctx.message.created_at,
+        )
         if len(self.matches) == 0:
             return await ctx.send("Could not find anything. Sorry.")
 
         e.description = "\n".join(f"[`{key}`]({url})" for key, url in self.matches)
+        e.set_footer(
+            text=ctx.author.display_name, icon_url=ctx.author.display_avatar.url
+        )
         await ctx.send(embed=e)
 
     @commands.Cog.listener()

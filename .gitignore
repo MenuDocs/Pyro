@@ -4,3 +4,7 @@ __pycache__
 /venv
 docker-compose.override.yml
 .git/
+
+# Auxtal related
+pyproject.toml
+poetry.lock

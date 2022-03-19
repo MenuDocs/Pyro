@@ -12,6 +12,7 @@ from nextcord.ext.commands import Greedy
 from pyro.bot import Pyro
 from pyro.checks import (
     MENUDOCS_GUILD_IDS,
+    MENUDOCS_SUGGESTIONS_CHANNEL,
     PYTHON_HELP_CHANNEL_IDS,
     ensure_is_menudocs_guild,
     ensure_is_menudocs_staff,
@@ -73,6 +74,16 @@ class MenuDocs(MenuDocsCog):
             number = pr_regex.group("number")
             url = f"{BASE_MENUDOCS_URL}/{repo}/pull/{number}"
             await message.channel.send(url)
+
+    @commands.Cog.listener()
+    async def on_message(self, message: nextcord.Message) -> None:
+        if message.channel.id != MENUDOCS_SUGGESTIONS_CHANNEL:
+            # Not in suggestions channel
+            return
+
+        reactions = {"\U0001f44d", "\U0001f44e", "\U0001f937"}  # 👍👎🤷
+        for reaction in reactions:
+            await message.add_reaction(reaction)
 
     @commands.Cog.listener()
     async def on_thread_join(self, thread) -> None:

@@ -77,10 +77,6 @@ class MenuDocs(MenuDocsCog):
 
     @commands.Cog.listener()
     async def on_message(self, message: nextcord.Message) -> None:
-        if not message.guild or message.guild.id not in MENUDOCS_GUILD_IDS:
-            # Not in menudocs
-            return
-
         if message.channel.id != MENUDOCS_SUGGESTIONS_CHANNEL:
             # Not in suggestions channel
             return

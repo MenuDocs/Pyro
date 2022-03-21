@@ -123,7 +123,7 @@ class MenuDocs(MenuDocsCog):
     @commands.command()
     @ensure_is_menudocs_staff()
     @ensure_is_menudocs_guild()
-    async def paste(
+    async def make_paste(
         self, ctx: commands.Context, messages: Greedy[nextcord.Message] = None
     ):
         """Given a message, create a pastebin for it"""

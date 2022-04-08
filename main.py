@@ -142,7 +142,7 @@ async def main():
         await pages.start(ctx)
 
     @bot.command()
-    @commands.check(checks.can_eval())
+    @checks.can_eval()
     async def note(ctx: BotContext, *, note: str):
         channel = await bot.get_or_fetch_channel(702862760052129822)
         await channel.send(
@@ -166,7 +166,7 @@ async def main():
         await ctx.send_basic_embed("All backed up for you.")
 
     @bot.command()
-    @commands.check(checks.can_eval())
+    @checks.can_eval()
     async def process(ctx, msg: nextcord.Message):
         msg.channel = ctx.channel
         await bot.auto_help.process_message(msg)

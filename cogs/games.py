@@ -6,10 +6,10 @@ from itertools import islice
 from string import Template
 
 import nextcord
-from nextcord.ext import commands, menus
+from nextcord.ext import commands
 
 from pyro.utils import Winner, TicTacToe, InvalidMove, PlayerStats
-from pyro.utils.pagination import EvalPageSource, TicTacToePageSource
+from pyro.utils.pagination import TicTacToePageSource, PyroPag
 
 
 class Games(commands.Cog):
@@ -238,9 +238,10 @@ class Games(commands.Cog):
             if page:
                 pages.append(page)
 
-        pages = menus.ButtonMenuPages(
+        pages = PyroPag(
             source=TicTacToePageSource(self.bot, stat_type, pages),
             clear_buttons_after=True,
+            author=ctx.author,
         )
         await pages.start(ctx)
 

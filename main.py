@@ -1,6 +1,5 @@
 import asyncio
 import io
-import json
 import os
 import re
 import logging
@@ -11,14 +10,13 @@ from traceback import format_exception
 import aiohttp
 import nextcord
 from bot_base import BotContext
-from nextcord.ext import commands, menus
+from nextcord.ext import commands
 from nextcord.ext import tasks
 
 from pyro import checks
 from pyro.bot import Pyro
 from pyro.checks import COMBINED_ACCOUNTS
-from pyro.db import Tag
-from pyro.utils.pagination import EvalPageSource
+from pyro.utils.pagination import EvalPageSource, PyroPag
 from pyro.utils.util import clean_code
 
 mongo_url = os.getenv("MONGO")
@@ -135,9 +133,10 @@ async def main():
         except Exception as e:
             result = "".join(format_exception(e, e, e.__traceback__))
 
-        pages = menus.ButtonMenuPages(
+        pages = PyroPag(
             source=EvalPageSource(bot, result, ctx.author),
             clear_buttons_after=True,
+            author=ctx.author,
         )
         await pages.start(ctx)
 

@@ -1,5 +1,3 @@
-from typing import Union
-
 import nextcord
 from nextcord.ext import menus
 

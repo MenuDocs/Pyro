@@ -6,11 +6,11 @@ from bot_base import PrefixNotFound, BotContext
 from bot_base.db import Document
 from bot_base.wraps import WrappedMember
 from nextcord import Interaction
-from nextcord.ext import commands, menus
+from nextcord.ext import commands
 
 from pyro import Pyro, checks
 from pyro.db import Tag
-from pyro.utils.pagination import TagsPageSource, TagUsagePageSource
+from pyro.utils.pagination import TagsPageSource, TagUsagePageSource, PyroPag
 
 log = logging.getLogger(__name__)
 
@@ -317,9 +317,10 @@ class Tags(commands.Cog):
             desc += "\n"
             categories.append(desc)
 
-        pages = menus.ButtonMenuPages(
+        pages = PyroPag(
             source=TagsPageSource(self.bot, categories, ctx.prefix),
             clear_buttons_after=True,
+            author=ctx.author,
         )
         await pages.start(ctx)
 
@@ -404,9 +405,10 @@ class Tags(commands.Cog):
             for tag in all_tags
         ]
 
-        pages = menus.ButtonMenuPages(
+        pages = PyroPag(
             source=TagUsagePageSource(self.bot, tag_lists, ctx.prefix),
             clear_buttons_after=True,
+            author=ctx.author,
         )
         await pages.start(ctx)
 

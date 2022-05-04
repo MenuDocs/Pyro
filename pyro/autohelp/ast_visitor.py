@@ -181,7 +181,18 @@ class ClientIsNotBot(BaseHelpTransformer):
         for target in node.targets:
             if hasattr(target, "attr"):
                 continue
+
+            """
+            TODO Fix this better
             if target.target.value == self.VAR_NAME:
+            AttributeError: 'Tuple' object has no attribute 'value'
+            """
+            try:
+                target_value = target.target.value
+            except AttributeError:
+                continue
+
+            if target_value == self.VAR_NAME:
                 found_client = True
 
                 def possible_fix(module: libcst.Module):

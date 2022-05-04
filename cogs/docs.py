@@ -180,7 +180,7 @@ class Docs(commands.Cog, name="Documentation"):
 
     @commands.command(
         name="doc",
-        description="Gives you a documentation link for a d.py entity.",
+        description="Gives you a documentation link for a given entity.",
         aliases=["rtfd", "rtfm", "docs"],
     )
     async def rtfm(self, ctx, key: str = None, *, query: str = None):

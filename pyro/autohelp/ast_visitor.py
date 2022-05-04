@@ -86,23 +86,27 @@ class EventListenerVisitor(BaseHelpTransformer):
         return False
 
     def visit_Decorator(self, node: libcst.Decorator) -> None:
-        if (
-            isinstance(node.decorator, libcst.Call)
-            and node.decorator.func.attr.value == "event"
-        ):
-            self.found_errors.append(Actions.DECORATOR_EVENT_CALLED)
-            # switch the event to not be called
-            self.updates[node] = lambda node: node.with_changes(
-                decorator=node.decorator.func
-            )
-        elif (
-            isinstance(node.decorator, libcst.Attribute)
-            and node.decorator.attr.value == "listen"
-        ):
-            self.found_errors.append(Actions.DECORATOR_LISTEN_NOT_CALLED)
-            self.updates[node] = lambda node: node.with_changes(
-                decorator=libcst.Call(node.decorator)
-            )
+        try:
+            # TODO Actually fix this
+            if (
+                isinstance(node.decorator, libcst.Call)
+                and node.decorator.func.attr.value == "event"
+            ):
+                self.found_errors.append(Actions.DECORATOR_EVENT_CALLED)
+                # switch the event to not be called
+                self.updates[node] = lambda node: node.with_changes(
+                    decorator=node.decorator.func
+                )
+            elif (
+                isinstance(node.decorator, libcst.Attribute)
+                and node.decorator.attr.value == "listen"
+            ):
+                self.found_errors.append(Actions.DECORATOR_LISTEN_NOT_CALLED)
+                self.updates[node] = lambda node: node.with_changes(
+                    decorator=libcst.Call(node.decorator)
+                )
+        except:
+            pass
 
     def visit_FunctionDef_params(self, node: libcst.FunctionDef) -> Optional[bool]:
         if not node.params.params or not node.decorators:

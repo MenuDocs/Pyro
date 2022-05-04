@@ -93,4 +93,13 @@ class Pyro(BotBase):
         elif isinstance(err, (commands.CheckFailure, commands.CheckAnyFailure)):
             await ctx.send("You do not have permission to run this command.")
 
+        elif isinstance(err, commands.NotOwner):
+            await ctx.send("Nope.")
+            log.warning(
+                "Member(id=%s, username=%s) attempted to run Command(name='%s')",
+                ctx.author.id,
+                ctx.author.display_name,
+                ctx.command.qualified_name,
+            )
+
         log.error("".join(format_exception(err, err, err.__traceback__)))

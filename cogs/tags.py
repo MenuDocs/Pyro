@@ -4,13 +4,13 @@ from typing import Dict, List, Optional
 import disnake
 from bot_base import PrefixNotFound, BotContext
 from bot_base.db import Document
+from bot_base.paginators.disnake_paginator import DisnakePaginator
 from bot_base.wraps import WrappedMember
 from disnake import Interaction
 from disnake.ext import commands
 
 from pyro import Pyro, checks
 from pyro.db import Tag
-from pyro.utils.pagination import TagsPageSource, TagUsagePageSource, PyroPag
 
 log = logging.getLogger(__name__)
 
@@ -317,12 +317,19 @@ class Tags(commands.Cog):
             desc += "\n"
             categories.append(desc)
 
-        pages = PyroPag(
-            source=TagsPageSource(self.bot, categories, ctx.prefix),
-            clear_buttons_after=True,
-            author=ctx.author,
+        async def format_page(pages, page_number):
+            embed = disnake.Embed(title=f"Pyro tags - `{ctx.prefix}<tag>`")
+            embed.description = "".join(pages)
+
+            embed.set_footer(text=f"Page {page_number}")
+            return embed
+
+        paginator: DisnakePaginator = DisnakePaginator(
+            1,
+            categories,
         )
-        await pages.start(ctx)
+        paginator.format_page = format_page
+        await paginator.start(context=ctx)
 
     @tags.command(aliases=["sd", "setdescription", "set_description", "setdesc"])
     @commands.check_any(checks.can_eval(), checks.ensure_is_menudocs_staff())
@@ -405,12 +412,19 @@ class Tags(commands.Cog):
             for tag in all_tags
         ]
 
-        pages = PyroPag(
-            source=TagUsagePageSource(self.bot, tag_lists, ctx.prefix),
-            clear_buttons_after=True,
-            author=ctx.author,
+        async def format_page(pages, page_number):
+            embed = disnake.Embed(title=f"Pyro tags - `{ctx.prefix}<tag>`")
+            embed.description = "".join(pages)
+
+            embed.set_footer(text=f"Page {page_number}")
+            return embed
+
+        paginator: DisnakePaginator = DisnakePaginator(
+            10,
+            tag_lists,
         )
-        await pages.start(ctx)
+        paginator.format_page = format_page
+        await paginator.start(context=ctx)
 
 
 def setup(bot):

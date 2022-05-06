@@ -145,7 +145,6 @@ async def main():
             [result[i : i + 2000] for i in range(0, len(result), 2000)],
         )
         paginator.format_page = format_page
-
         await paginator.start(context=ctx)
 
     @bot.command()

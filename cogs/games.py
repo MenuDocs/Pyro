@@ -6,10 +6,10 @@ from itertools import islice
 from string import Template
 
 import disnake
+from bot_base.paginators.disnake_paginator import DisnakePaginator
 from disnake.ext import commands
 
 from pyro.utils import Winner, TicTacToe, InvalidMove, PlayerStats
-from pyro.utils.pagination import TicTacToePageSource, PyroPag
 
 
 class Games(commands.Cog):
@@ -238,12 +238,19 @@ class Games(commands.Cog):
             if page:
                 pages.append(page)
 
-        pages = PyroPag(
-            source=TicTacToePageSource(self.bot, stat_type, pages),
-            clear_buttons_after=True,
-            author=ctx.author,
+        async def format_page(page, page_number):
+            embed = disnake.Embed(title=f"TicTacToe leaderboard for `{stat_type}`")
+            embed.description = page
+
+            embed.set_footer(text=f"Page {page_number}")
+            return embed
+
+        paginator: DisnakePaginator = DisnakePaginator(
+            1,
+            pages,
         )
-        await pages.start(ctx)
+        paginator.format_page = format_page
+        await paginator.start(context=ctx)
 
 
 def setup(bot):

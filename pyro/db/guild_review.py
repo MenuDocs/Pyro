@@ -1,6 +1,6 @@
 from typing import Optional
 
-import nextcord
+import disnake
 
 
 class GuildReview:
@@ -56,8 +56,8 @@ class GuildReview:
 
         return data
 
-    def as_embed(self, requester_name: str) -> nextcord.Embed:
-        embed = nextcord.Embed(
+    def as_embed(self, requester_name: str) -> disnake.Embed:
+        embed = disnake.Embed(
             title=f"Guild review request for: `{requester_name}`",
             description=f"Guild name: `{self.name}`\n---\nPurpose: {self.purpose}\n---\n"
             f"Review specifics: {self.specifics}\n---\n"

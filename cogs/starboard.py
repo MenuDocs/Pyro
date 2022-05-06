@@ -1,7 +1,7 @@
 import logging
 
-import nextcord
-from nextcord.ext import commands
+import disnake
+from disnake.ext import commands
 
 
 class Starboard(commands.Cog, name="Starboard"):
@@ -40,7 +40,7 @@ class Starboard(commands.Cog, name="Starboard"):
                     msg = await channel.fetch_message(payload.message_id)
                     reacts = msg.reactions
                     reacts = list(filter(lambda r: str(r.emoji) == emoji, reacts))
-                except nextcord.HTTPException:
+                except disnake.HTTPException:
                     return await channel.send(
                         "An error occurred while fetching the message"
                     )
@@ -84,7 +84,7 @@ class Starboard(commands.Cog, name="Starboard"):
                             # Don't allow starboarding starboards, #37
                             return
 
-                        embed = nextcord.Embed(
+                        embed = disnake.Embed(
                             description=msg.content,
                             color=msg.author.color,
                             timestamp=msg.created_at,
@@ -161,8 +161,10 @@ class Starboard(commands.Cog, name="Starboard"):
                     msg = await channel.fetch_message(payload.message_id)
                     reacts = msg.reactions
                     reacts = list(filter(lambda r: str(r.emoji) == emoji, reacts))
-                except nextcord.HTTPException:
-                    await channel.send("An error occurred while fetching the message")
+                except disnake.HTTPException:
+                    return await channel.send(
+                        "An error occurred while fetching the message"
+                    )
 
                 if reacts:
                     react = list(map(lambda u: u.id, await reacts[0].users().flatten()))

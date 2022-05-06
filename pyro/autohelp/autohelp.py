@@ -1,13 +1,11 @@
 import asyncio
 import datetime
 import difflib
-import itertools
 import logging
-import time
-from typing import Callable, List, Optional, Tuple, Type, TypedDict
+from typing import List, Optional, Tuple, Type, TypedDict
 
 import libcst
-import nextcord
+import disnake
 from bot_base.caches import TimedCache
 from pyro import checks
 from pyro.autohelp import AUTO_HELP_CONF, CodeBinExtractor, Conf
@@ -35,32 +33,32 @@ class Field(TypedDict):
     inline: bool
 
 
-class CloseButton(nextcord.ui.View):
+class CloseButton(disnake.ui.View):
     def __init__(
         self,
-        message: nextcord.Message,
-        actual_author: nextcord.Member,
+        message: disnake.Message,
+        actual_author: disnake.Member,
     ) -> None:
         super().__init__(timeout=None)
         self._message = message
         self._author_id = actual_author.id
         self._allowed_roles = {role.id for role in actual_author.roles}
 
-    @nextcord.ui.button(label="🚮 Delete this message", style=nextcord.ButtonStyle.red)
+    @disnake.ui.button(label="🚮 Delete this message", style=disnake.ButtonStyle.red)
     async def close_button(
-        self, button: nextcord.Button, interaction: nextcord.Interaction
+        self, button: disnake.Button, interaction: disnake.Interaction
     ):
         await self._message.delete()
 
-    async def interaction_check(self, interaction: nextcord.Interaction) -> bool:
+    async def interaction_check(self, interaction: disnake.Interaction) -> bool:
         return (
             bool(
                 self._allowed_roles.intersection(
                     checks.AUTO_HELP_ROLES.get(interaction.guild_id) or set()
                 )
             )
-            or interaction.user.id == self._author_id
-            or interaction.user.id in checks.COMBINED_ACCOUNTS
+            or interaction.author.id == self._author_id
+            or interaction.author.id in checks.COMBINED_ACCOUNTS
         )
 
 
@@ -102,11 +100,11 @@ class AutoHelp:
 
     def build_embed(
         self,
-        message: nextcord.Message,
+        message: disnake.Message,
         original_code: List[str],
         updated_code: List[str],
-    ) -> Tuple[nextcord.Embed, Tuple[Field, Field]]:
-        embed = nextcord.Embed(
+    ) -> Tuple[disnake.Embed, Tuple[Field, Field]]:
+        embed = disnake.Embed(
             timestamp=message.created_at,
             color=self.color,
         )
@@ -123,7 +121,7 @@ class AutoHelp:
             Field(name="New | Fixed", value=updated_code),
         )
 
-    async def find_code(self, message: nextcord.Message) -> Optional[List[str]]:
+    async def find_code(self, message: disnake.Message) -> Optional[List[str]]:
         """
         Parses the code out of the passed message.
 
@@ -146,8 +144,8 @@ class AutoHelp:
         return code or None
 
     async def process_message(
-        self, message: nextcord.Message
-    ) -> Optional[nextcord.Embed]:
+        self, message: disnake.Message
+    ) -> Optional[disnake.Embed]:
 
         contents = await self.find_code(message)
         if not contents:
@@ -252,7 +250,7 @@ class AutoHelp:
 
         return embed
 
-    async def events_dont_use_brackets(self, message: nextcord.Message) -> Field:
+    async def events_dont_use_brackets(self, message: disnake.Message) -> Field:
         return Field(
             name="Events don't use brackets",
             value="When defining an event you do not need to use `()`.\n"
@@ -260,7 +258,7 @@ class AutoHelp:
         )
 
     async def on_message_without_process_commands(
-        self, message: nextcord.Message
+        self, message: disnake.Message
     ) -> Field:
         conf: Conf = self.get_conf(message.guild.id)
         return Field(
@@ -274,7 +272,7 @@ class AutoHelp:
             ),
         )
 
-    async def invalid_ctx_typehint(self, message: nextcord.Message) -> Field:
+    async def invalid_ctx_typehint(self, message: disnake.Message) -> Field:
 
         conf: Conf = self.get_conf(message.guild.id)
 
@@ -287,7 +285,7 @@ class AutoHelp:
             ),
         )
 
-    async def invalid_interaction_typehint(self, message: nextcord.Message) -> Field:
+    async def invalid_interaction_typehint(self, message: disnake.Message) -> Field:
         conf: Conf = self.get_conf(message.guild.id)
 
         return Field(
@@ -299,14 +297,14 @@ class AutoHelp:
             ),
         )
 
-    async def client_bot(self, message: nextcord.Message) -> Field:
+    async def client_bot(self, message: disnake.Message) -> Field:
         """Checks good naming conventions"""
         return Field(
             name="Calling a `Bot` `client` is not recommended.",
             value="Read [here](https://tutorial.vcokltfre.dev/tips/clientbot/) for more detail.\n\n",
         )
 
-    async def pass_context(self, message: nextcord.Message) -> Field:
+    async def pass_context(self, message: disnake.Message) -> Field:
         """Checks, and notifies if people use pass_context"""
         # Lol, cmon
         return Field(

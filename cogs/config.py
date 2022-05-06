@@ -6,8 +6,8 @@ import logging
 import asyncio
 
 import emojis
-import nextcord
-from nextcord.ext import commands
+import disnake
+from disnake.ext import commands
 
 
 class Config(commands.Cog, name="Configuration"):
@@ -41,7 +41,7 @@ class Config(commands.Cog, name="Configuration"):
     async def reload(self, ctx, cog=None):
         if not cog:
             async with ctx.typing():
-                embed = nextcord.Embed(
+                embed = disnake.Embed(
                     title="Reloading all cogs!",
                     color=0x808080,
                     timestamp=ctx.message.created_at,
@@ -64,7 +64,7 @@ class Config(commands.Cog, name="Configuration"):
                 await ctx.send(embed=embed)
         else:
             async with ctx.typing():
-                embed = nextcord.Embed(
+                embed = disnake.Embed(
                     title=f"Reloading {cog}!",
                     color=0x808080,
                     timestamp=ctx.message.created_at,
@@ -129,7 +129,7 @@ class Config(commands.Cog, name="Configuration"):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
-    async def sb_channel(self, ctx, channel: nextcord.TextChannel = None):
+    async def sb_channel(self, ctx, channel: disnake.TextChannel = None):
         if channel is None:
             await ctx.send(
                 "I will attempt to set this guilds starboard channel to this channel as you failed to give me another "
@@ -139,7 +139,7 @@ class Config(commands.Cog, name="Configuration"):
         channel = channel or ctx.channel
         try:
             await channel.send("test", delete_after=0.05)
-        except nextcord.HTTPException:
+        except disnake.HTTPException:
             await ctx.send(
                 "I can not send a message to that channel! Please give me permissions and try again."
             )
@@ -164,11 +164,11 @@ class Config(commands.Cog, name="Configuration"):
     )
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
-    async def sb_emoji(self, ctx, emoji: typing.Union[nextcord.Emoji, str] = None):
+    async def sb_emoji(self, ctx, emoji: typing.Union[disnake.Emoji, str] = None):
         if not emoji:
             await self.bot.db.config.upsert({"_id": ctx.guild.id, "emoji": None})
             await ctx.send("Reset your server's custom emoji.")
-        elif isinstance(emoji, nextcord.Emoji):
+        elif isinstance(emoji, disnake.Emoji):
             if not emoji.is_usable():
                 await ctx.send("I can't use that emoji.")
                 return
@@ -208,7 +208,7 @@ class Config(commands.Cog, name="Configuration"):
     )
     @commands.has_permissions(manage_channels=True)
     async def guild_config(self, ctx):
-        embed = nextcord.Embed(
+        embed = disnake.Embed(
             title=f"Configuration of {ctx.guild.name}",
             color=random.randint(0, 0xFFFFFF),
         )

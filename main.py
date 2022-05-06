@@ -8,10 +8,11 @@ import contextlib
 from traceback import format_exception
 
 import aiohttp
-import nextcord
+import disnake
 from bot_base import BotContext
-from nextcord.ext import commands
-from nextcord.ext import tasks
+from bot_base.paginators.disnake_paginator import DisnakePaginator
+from disnake.ext import commands
+from disnake.ext import tasks
 
 from pyro import checks
 from pyro.bot import Pyro
@@ -34,7 +35,7 @@ gateway_logger.setLevel(logging.WARNING)
 client_logger = logging.getLogger("nextcord.client")
 client_logger.setLevel(logging.WARNING)
 
-intents = nextcord.Intents.none()
+intents = disnake.Intents.none()
 intents.messages = True
 intents.reactions = True
 intents.guilds = True
@@ -64,12 +65,12 @@ async def main():
 
     @bot.event
     async def on_ready():
-        await bot.change_presence(activity=nextcord.Game(name="py.help"))
+        await bot.change_presence(activity=disnake.Game(name="py.help"))
 
         logger.info("I'm all up and ready like mom's spaghetti")
 
     @bot.event
-    async def on_message(message: nextcord.Message):
+    async def on_message(message: disnake.Message):
         if bot.is_debug_mode and message.author.id not in COMBINED_ACCOUNTS:
             # During dev only run commands from us so as to not impact the end user
             return
@@ -108,7 +109,7 @@ async def main():
         code = clean_code(code)
 
         local_variables = {
-            "nextcord": nextcord,
+            "disnake": disnake,
             "commands": commands,
             "bot": bot,
             "ctx": ctx,
@@ -133,19 +134,27 @@ async def main():
         except Exception as e:
             result = "".join(format_exception(e, e, e.__traceback__))
 
-        pages = PyroPag(
-            source=EvalPageSource(bot, result, ctx.author),
-            clear_buttons_after=True,
-            author=ctx.author,
+        async def format_page(pag: DisnakePaginator, code, page_number):
+            embed = disnake.Embed(title=f"Eval for {ctx.author.name}")
+            embed.description = f"```{code}```"
+
+            embed.set_footer(text=f"Page {page_number}/{pag.total_pages}")
+            return embed
+
+        paginator: DisnakePaginator = DisnakePaginator(
+            1,
+            [code[i : i + 2000] for i in range(0, len(code), 2000)],
         )
-        await pages.start(ctx)
+        paginator.format_page = format_page
+
+        await paginator.start(ctx)
 
     @bot.command()
     @checks.can_eval()
     async def note(ctx: BotContext, *, note: str):
         channel = await bot.get_or_fetch_channel(702862760052129822)
         await channel.send(
-            embed=nextcord.Embed(
+            embed=disnake.Embed(
                 title=f"Note for {ctx.author.name}",
                 description=f"{note}\n\n[Jump to]({ctx.message.jump_url})",
             )
@@ -166,7 +175,7 @@ async def main():
 
     @bot.command()
     @checks.can_eval()
-    async def process(ctx, msg: nextcord.Message):
+    async def process(ctx, msg: disnake.Message):
         msg.channel = ctx.channel
         await bot.auto_help.process_message(msg)
 

@@ -3,11 +3,11 @@ import os
 from traceback import format_exception
 from typing import Optional, TYPE_CHECKING
 
-import nextcord
+import disnake
 from aiohttp import ClientSession
 from bot_base import BotBase
-from nextcord.ext import commands
-from nextcord.ext.commands import CommandNotFound
+from disnake.ext import commands
+from disnake.ext.commands import CommandNotFound
 
 from pyro import MenuDocsOnly
 from pyro.autohelp import AutoHelp
@@ -15,7 +15,7 @@ from pyro.db import PyroMongoManager
 
 if TYPE_CHECKING:
     from bot_base import BotContext
-    from nextcord.errors import DiscordException
+    from disnake.errors import DiscordException
 
 log = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ class Pyro(BotBase):
         elif isinstance(err, commands.DisabledCommand):
             await ctx.send(f"`{ctx.command.qualified_name}` is currently disabled.")
 
-        elif isinstance(err, nextcord.HTTPException):
+        elif isinstance(err, disnake.HTTPException):
             await ctx.send(
                 "An error occurred while I was trying to execute a task. Are you sure I have the correct permissions?"
             )

@@ -1,5 +1,5 @@
-from nextcord import DiscordException
-from nextcord.ext.commands import CheckFailure
+from disnake import DiscordException
+from disnake.ext.commands import CheckFailure
 
 
 class BasePyroException(DiscordException):

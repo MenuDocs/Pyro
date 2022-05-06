@@ -1,8 +1,8 @@
 from io import BytesIO
 from typing import Dict
 
-import nextcord
-from nextcord import Message, abc, utils, AllowedMentions
+import disnake
+from disnake import Message, abc, utils, AllowedMentions
 
 
 class Tag:
@@ -62,9 +62,9 @@ class Tag:
 
         return data
 
-    def as_file(self) -> nextcord.File:
+    def as_file(self) -> disnake.File:
         buffer = BytesIO(self.content.encode("utf-8"))
-        return nextcord.File(buffer, filename="tag.md")
+        return disnake.File(buffer, filename="tag.md")
 
     async def send(self, target: abc.Messageable, invoked_with: str = None) -> Message:
         """Sends the given tag to the target"""
@@ -72,7 +72,7 @@ class Tag:
             invoked_with = self.name
 
         if self.is_embed:
-            embed = nextcord.Embed(
+            embed = disnake.Embed(
                 title=f"Tag: `{invoked_with}`", description=self.content
             )
             return await target.send(

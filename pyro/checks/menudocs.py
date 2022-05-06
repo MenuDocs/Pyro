@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from nextcord.ext import commands
+from disnake.ext import commands
 
 from pyro.checks import MENUDOCS_GUILD_IDS, COMBINED_ACCOUNTS
 from pyro import MenuDocsOnly

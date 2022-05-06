@@ -17,7 +17,6 @@ from disnake.ext import tasks
 from pyro import checks
 from pyro.bot import Pyro
 from pyro.checks import COMBINED_ACCOUNTS
-from pyro.utils.pagination import EvalPageSource, PyroPag
 from pyro.utils.util import clean_code
 
 mongo_url = os.getenv("MONGO")
@@ -134,20 +133,20 @@ async def main():
         except Exception as e:
             result = "".join(format_exception(e, e, e.__traceback__))
 
-        async def format_page(pag: DisnakePaginator, code, page_number):
+        async def format_page(code, page_number):
             embed = disnake.Embed(title=f"Eval for {ctx.author.name}")
             embed.description = f"```{code}```"
 
-            embed.set_footer(text=f"Page {page_number}/{pag.total_pages}")
+            embed.set_footer(text=f"Page {page_number}")
             return embed
 
         paginator: DisnakePaginator = DisnakePaginator(
             1,
-            [code[i : i + 2000] for i in range(0, len(code), 2000)],
+            [result[i : i + 2000] for i in range(0, len(result), 2000)],
         )
         paginator.format_page = format_page
 
-        await paginator.start(ctx)
+        await paginator.start(context=ctx)
 
     @bot.command()
     @checks.can_eval()

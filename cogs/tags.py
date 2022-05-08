@@ -1,56 +1,56 @@
 import logging
 from typing import Dict, List, Optional
 
-import nextcord
+import disnake
 from bot_base import PrefixNotFound, BotContext
 from bot_base.db import Document
+from bot_base.paginators.disnake_paginator import DisnakePaginator
 from bot_base.wraps import WrappedMember
-from nextcord import Interaction
-from nextcord.ext import commands
+from disnake import Interaction
+from disnake.ext import commands
 
 from pyro import Pyro, checks
 from pyro.db import Tag
-from pyro.utils.pagination import TagsPageSource, TagUsagePageSource, PyroPag
 
 log = logging.getLogger(__name__)
 
 
-class Dropdown(nextcord.ui.Select):
+class Dropdown(disnake.ui.Select):
     def __init__(self):
         options = [
-            nextcord.SelectOption(
+            disnake.SelectOption(
                 label="Python",
                 description="Anything Python related except bots.",
             ),
-            nextcord.SelectOption(
+            disnake.SelectOption(
                 label="Python discord bots",
                 description="Anything todo with Python discord bots.",
             ),
-            nextcord.SelectOption(
+            disnake.SelectOption(
                 label="Javascript",
                 description="Anything Javascript related except bots.",
             ),
-            nextcord.SelectOption(
+            disnake.SelectOption(
                 label="Javascript discord bots",
                 description="Anything todo with Javascript discord bots.",
             ),
-            nextcord.SelectOption(
+            disnake.SelectOption(
                 label="Java",
                 description="Anything Java related except bots.",
             ),
-            nextcord.SelectOption(
+            disnake.SelectOption(
                 label="Java discord bots",
                 description="Anything todo with Java discord bots.",
             ),
-            nextcord.SelectOption(
+            disnake.SelectOption(
                 label="Coding",
                 description="Anything general and coding related.",
             ),
-            nextcord.SelectOption(
+            disnake.SelectOption(
                 label="Misc",
                 description="Anything not covered above.",
             ),
-            nextcord.SelectOption(
+            disnake.SelectOption(
                 label="Discord",
                 description="Backwards compatibility.",
             ),
@@ -62,7 +62,7 @@ class Dropdown(nextcord.ui.Select):
         )
 
 
-class DropdownView(nextcord.ui.View):
+class DropdownView(disnake.ui.View):
     def __init__(self, author: WrappedMember):
         super().__init__(timeout=60)
         self._author: WrappedMember = author
@@ -119,7 +119,7 @@ class Tags(commands.Cog):
         await self.update_tags()
 
     @commands.Cog.listener()
-    async def on_message(self, message: nextcord.Message):
+    async def on_message(self, message: disnake.Message):
         try:
             prefix = await self.bot.get_guild_prefix(message.guild.id)
         except (PrefixNotFound, AttributeError):
@@ -226,7 +226,7 @@ class Tags(commands.Cog):
         if not tag:
             return await ctx.send_basic_embed("No tag found with that name.")
 
-        file: nextcord.File = tag.as_file()
+        file: disnake.File = tag.as_file()
         await ctx.send(f"Raw tag for `{tag_name}`", file=file)
 
     @tags.command()
@@ -317,12 +317,19 @@ class Tags(commands.Cog):
             desc += "\n"
             categories.append(desc)
 
-        pages = PyroPag(
-            source=TagsPageSource(self.bot, categories, ctx.prefix),
-            clear_buttons_after=True,
-            author=ctx.author,
+        async def format_page(pages, page_number):
+            embed = disnake.Embed(title=f"Pyro tags - `{ctx.prefix}<tag>`")
+            embed.description = "".join(pages)
+
+            embed.set_footer(text=f"Page {page_number}")
+            return embed
+
+        paginator: DisnakePaginator = DisnakePaginator(
+            1,
+            categories,
         )
-        await pages.start(ctx)
+        paginator.format_page = format_page
+        await paginator.start(context=ctx)
 
     @tags.command(aliases=["sd", "setdescription", "set_description", "setdesc"])
     @commands.check_any(checks.can_eval(), checks.ensure_is_menudocs_staff())
@@ -386,7 +393,7 @@ class Tags(commands.Cog):
         tag_desc = f"'{tag.description}'\n---\n" if tag.description else ""
         tag_aliases = ", ".join(tag.aliases) if tag.aliases else "No aliases"
 
-        embed = nextcord.Embed(
+        embed = disnake.Embed(
             title=f"Viewing tag `{tag.name}`",
             description=f"{tag_desc}Aliases: {tag_aliases}"
             f"\nCategory: {tag.category}\nCreated by: <@{tag.creator_id}>\n"
@@ -405,12 +412,19 @@ class Tags(commands.Cog):
             for tag in all_tags
         ]
 
-        pages = PyroPag(
-            source=TagUsagePageSource(self.bot, tag_lists, ctx.prefix),
-            clear_buttons_after=True,
-            author=ctx.author,
+        async def format_page(pages, page_number):
+            embed = disnake.Embed(title=f"Pyro tags - `{ctx.prefix}<tag>`")
+            embed.description = "".join(pages)
+
+            embed.set_footer(text=f"Page {page_number}")
+            return embed
+
+        paginator: DisnakePaginator = DisnakePaginator(
+            10,
+            tag_lists,
         )
-        await pages.start(ctx)
+        paginator.format_page = format_page
+        await paginator.start(context=ctx)
 
 
 def setup(bot):

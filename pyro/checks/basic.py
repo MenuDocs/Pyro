@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
-import nextcord
-from nextcord.ext import commands
+import disnake
+from disnake.ext import commands
 
 if TYPE_CHECKING:
     from pyro import Pyro
@@ -102,13 +102,13 @@ def ensure_is_menudocs_project_guild():
 def ensure_is_menudocs_staff():
     async def check(ctx: "BotContext"):
         bot: "Pyro" = ctx.bot  # type: ignore
-        guild: nextcord.Guild = await bot.get_or_fetch_guild(MAIN_GUILD)
+        guild: disnake.Guild = await bot.get_or_fetch_guild(MAIN_GUILD)
 
         try:
             main_guild_member: "WrappedMember" = await bot.get_or_fetch_member(
                 MAIN_GUILD, ctx.author.id
             )
-        except nextcord.DiscordException:
+        except disnake.DiscordException:
             return False
 
         team = guild.get_role(TEAM)

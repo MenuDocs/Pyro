@@ -4,8 +4,8 @@ import logging
 import random
 
 import aiohttp
-import nextcord
-from nextcord.ext import commands
+import disnake
+from disnake.ext import commands
 
 from pyro.checks import MenuDocsCog
 from pyro.utils.util import clean_code
@@ -27,7 +27,7 @@ class Choices:
         self.result = None
 
     async def start(self, ctx):
-        embed = nextcord.Embed(
+        embed = disnake.Embed(
             title=self.question,
             description="\n".join(f"{i+1}: {q}" for i, q in enumerate(self.answers)),
         )
@@ -168,7 +168,7 @@ class Quiz(MenuDocsCog, name="Quiz"):
         await ctx.send("Quiz started in your DMs!")
         try:
             msg = await ctx.author.send("Do you still want to take the quiz? [yes/no]")
-        except nextcord.HTTPException:
+        except disnake.HTTPException:
             return await ctx.send(
                 f"I cannot dm you {ctx.author.mention}, so I cannot do the quiz with you."
             )
@@ -216,7 +216,7 @@ class Quiz(MenuDocsCog, name="Quiz"):
             else:
                 wrong_questions[item["_id"]] = [item, ans]
 
-        embed = nextcord.Embed(
+        embed = disnake.Embed(
             title="Python choices quiz",
             description=f"Starting stage 2.\nYou answered {total_correct} questions out "
             + f"of {len(questions)} correctly.\n"
@@ -264,7 +264,7 @@ class Quiz(MenuDocsCog, name="Quiz"):
         if all(correct_answers.values()) and correct_choices:
             try:
                 member = await guild.fetch_member(ctx.author.id)
-            except nextcord.HTTPException:
+            except disnake.HTTPException:
                 self.logger.error(
                     f"Failed to fetch {ctx.author.display_name}({ctx.author.id}) from guild {guild.name}{guild.id}"
                 )
@@ -290,7 +290,7 @@ class Quiz(MenuDocsCog, name="Quiz"):
     @commands.guild_only()
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
-    async def role(self, ctx, role: nextcord.Role):
+    async def role(self, ctx, role: disnake.Role):
         if (
             role.is_default()
             or role.managed

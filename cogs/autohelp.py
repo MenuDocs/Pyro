@@ -1,8 +1,7 @@
 import logging
-from typing import List
 
-import nextcord
-from nextcord.ext import commands
+import disnake
+from disnake.ext import commands
 
 from pyro.bot import Pyro
 from pyro.checks import ALLOWED_HELP_CHANNELS
@@ -19,18 +18,13 @@ class Autohelp(commands.Cog):
         log.info(f"{self.__class__.__name__}: Ready")
 
     @commands.Cog.listener()
-    async def on_message(self, message: nextcord.Message):
-        # We don't technically need this here anymore
-        # if not message.guild or message.guild.id not in AUTOHELP_ALLOWED_DISCORDS:
-        #     # Not in an allowed discord
-        #     return
-
+    async def on_message(self, message: disnake.Message):
         if message.author.bot:
             return
 
         # Only process in python help channels
         if message.channel.id not in ALLOWED_HELP_CHANNELS:
-            if not isinstance(message.channel, nextcord.Thread):
+            if not isinstance(message.channel, disnake.Thread):
                 return
 
             if message.channel.parent_id not in ALLOWED_HELP_CHANNELS:

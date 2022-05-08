@@ -1,12 +1,12 @@
 import logging
-from typing import List, Union
+from typing import List
 
-import nextcord
+import disnake
 from bot_base import BotContext
 from bot_base.wraps import WrappedMember
-from nextcord import AllowedMentions, Interaction
-from nextcord.ext import commands
-from nextcord.ext.commands import BucketType
+from disnake import AllowedMentions, Interaction
+from disnake.ext import commands
+from disnake.ext.commands import BucketType
 
 from pyro.bot import Pyro
 from pyro.checks import MenuDocsCog
@@ -15,21 +15,21 @@ from pyro.db import GuildReview, BotReview
 log = logging.getLogger(__name__)
 
 
-class Dropdown(nextcord.ui.Select):
+class Dropdown(disnake.ui.Select):
     def __init__(self, is_guild=True):
         if is_guild:
             options = [
-                nextcord.SelectOption(
+                disnake.SelectOption(
                     label="Clubs",
                     description="Coding, Gaming etc",
                     # emoji="🟥",
                 ),
-                nextcord.SelectOption(
+                disnake.SelectOption(
                     label="Social",
                     description="Twitch, YouTube etc",
                     # emoji="🟩",
                 ),
-                nextcord.SelectOption(
+                disnake.SelectOption(
                     label="Misc",
                     description="Support server, Development support etc",
                     # emoji="🟦",
@@ -37,24 +37,24 @@ class Dropdown(nextcord.ui.Select):
             ]
         else:
             options = [
-                nextcord.SelectOption(
+                disnake.SelectOption(
                     label="Memes",
                     description="A bot devoted to the funnier side of life",
                     # emoji="🟥",
                 ),
-                nextcord.SelectOption(
+                disnake.SelectOption(
                     label="Multi Purpose",
                     # emoji="🟩",
                 ),
-                nextcord.SelectOption(
+                disnake.SelectOption(
                     label="Moderation",
                     # emoji="🟦",
                 ),
-                nextcord.SelectOption(
+                disnake.SelectOption(
                     label="Reaction roles",
                     # emoji="🟦",
                 ),
-                nextcord.SelectOption(
+                disnake.SelectOption(
                     label="Misc",
                     description="Anything not listed",
                     # emoji="🟦",
@@ -67,7 +67,7 @@ class Dropdown(nextcord.ui.Select):
         )
 
 
-class DropdownView(nextcord.ui.View):
+class DropdownView(disnake.ui.View):
     def __init__(self, author: WrappedMember, is_guild=True):
         super().__init__(timeout=60)
         self._author: WrappedMember = author
@@ -134,7 +134,7 @@ class Review(MenuDocsCog):
                 "Hey, we have closed your review request. "
                 f"Please find your summary below.\n---\n{summary}"
             )
-        except nextcord.Forbidden:
+        except disnake.Forbidden:
             await ctx.author.send(
                 "Couldn't tell that person about closing there review, sorry!"
             )
@@ -222,10 +222,10 @@ class Review(MenuDocsCog):
         chan = await guild.create_text_channel(
             name=f"{ctx.author.display_name} - Guild Review",
             overwrites={
-                guild.default_role: nextcord.PermissionOverwrite(read_messages=False),
-                guild.me: nextcord.PermissionOverwrite(read_messages=True),
-                ctx.author: nextcord.PermissionOverwrite(read_messages=True),
-                team: nextcord.PermissionOverwrite(read_messages=True),
+                guild.default_role: disnake.PermissionOverwrite(read_messages=False),
+                guild.me: disnake.PermissionOverwrite(read_messages=True),
+                ctx.author: disnake.PermissionOverwrite(read_messages=True),
+                team: disnake.PermissionOverwrite(read_messages=True),
             },
             category=category,
         )
@@ -317,10 +317,10 @@ class Review(MenuDocsCog):
         chan = await guild.create_text_channel(
             name=f"{ctx.author.display_name} - Bot Review",
             overwrites={
-                guild.default_role: nextcord.PermissionOverwrite(read_messages=False),
-                guild.me: nextcord.PermissionOverwrite(read_messages=True),
-                ctx.author: nextcord.PermissionOverwrite(read_messages=True),
-                team: nextcord.PermissionOverwrite(read_messages=True),
+                guild.default_role: disnake.PermissionOverwrite(read_messages=False),
+                guild.me: disnake.PermissionOverwrite(read_messages=True),
+                ctx.author: disnake.PermissionOverwrite(read_messages=True),
+                team: disnake.PermissionOverwrite(read_messages=True),
             },
             category=category,
         )

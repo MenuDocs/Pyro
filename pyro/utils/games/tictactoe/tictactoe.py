@@ -2,7 +2,7 @@ import math
 import random
 from math import inf as infinity
 
-import nextcord
+import disnake
 
 from pyro.utils.enums import Winner, Piece
 
@@ -20,14 +20,14 @@ class TicTacToe:
 
     def __init__(
         self,
-        player_one: nextcord.Member,
-        player_two: nextcord.Member,
+        player_one: disnake.Member,
+        player_two: disnake.Member,
         *,
         is_agaisnt_computer: bool = False,
         difficulty: int = 1
     ) -> None:
-        self.player_one: nextcord.Member = player_one
-        self.player_two: nextcord.Member = player_two
+        self.player_one: disnake.Member = player_one
+        self.player_two: disnake.Member = player_two
 
         self.board = [[Piece.NULL for _ in range(3)] for _ in range(3)]
         self.difficulty = difficulty

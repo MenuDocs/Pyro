@@ -5,11 +5,11 @@ import random
 from itertools import islice
 from string import Template
 
-import nextcord
-from nextcord.ext import commands
+import disnake
+from bot_base.paginators.disnake_paginator import DisnakePaginator
+from disnake.ext import commands
 
 from pyro.utils import Winner, TicTacToe, InvalidMove, PlayerStats
-from pyro.utils.pagination import TicTacToePageSource, PyroPag
 
 
 class Games(commands.Cog):
@@ -33,7 +33,7 @@ class Games(commands.Cog):
         ```
         """
 
-        embed = nextcord.Embed(
+        embed = disnake.Embed(
             title=f"TicTacToe ({game.player_one.display_name} VS {game.player_two.display_name})",
             description=desc,
         )
@@ -85,7 +85,7 @@ class Games(commands.Cog):
 
     @commands.command(aliases=["ttt"])
     @commands.max_concurrency(1, commands.BucketType.channel)
-    async def tictactoe(self, ctx, player_two: nextcord.Member = None):
+    async def tictactoe(self, ctx, player_two: disnake.Member = None):
         def check(m):
             return m.channel == ctx.channel and m.author == current_player
 
@@ -103,7 +103,7 @@ class Games(commands.Cog):
             player_two = ctx.guild.me
             is_bot = True
 
-            embed = nextcord.Embed(
+            embed = disnake.Embed(
                 title="Please pick a difficulty",
                 description=":one: - Easy\n:two: - Hard",
             )
@@ -196,13 +196,13 @@ class Games(commands.Cog):
         await self.update_stats(player_two, winner, False)
 
     @commands.command()
-    async def stats(self, ctx, player: nextcord.Member = None):
+    async def stats(self, ctx, player: disnake.Member = None):
         """Returns your TicTacToe stats"""
         player = player or ctx.author
         if not (player_stats := self.stats.get(player.id)):
             return await ctx.send(f"I have no stats for `{player.display_name}`")
 
-        embed = nextcord.Embed(
+        embed = disnake.Embed(
             title=f"TicTacToe stats for: `{player.display_name}`",
             description=f"Wins: **{player_stats.wins}**\n"
             f"Losses: **{player_stats.losses}**\n"
@@ -238,12 +238,19 @@ class Games(commands.Cog):
             if page:
                 pages.append(page)
 
-        pages = PyroPag(
-            source=TicTacToePageSource(self.bot, stat_type, pages),
-            clear_buttons_after=True,
-            author=ctx.author,
+        async def format_page(page, page_number):
+            embed = disnake.Embed(title=f"TicTacToe leaderboard for `{stat_type}`")
+            embed.description = page
+
+            embed.set_footer(text=f"Page {page_number}")
+            return embed
+
+        paginator: DisnakePaginator = DisnakePaginator(
+            1,
+            pages,
         )
-        await pages.start(ctx)
+        paginator.format_page = format_page
+        await paginator.start(context=ctx)
 
 
 def setup(bot):

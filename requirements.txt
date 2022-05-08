@@ -1,4 +1,4 @@
-disnake
+disnake==2.5.0
 bot-base
 aiofiles==0.8.0
 emojis==0.6.0

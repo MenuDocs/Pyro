@@ -34,12 +34,7 @@ gateway_logger.setLevel(logging.WARNING)
 client_logger = logging.getLogger("nextcord.client")
 client_logger.setLevel(logging.WARNING)
 
-intents = disnake.Intents.none()
-intents.messages = True
-intents.reactions = True
-intents.guilds = True
-intents.members = True
-intents.emojis = True
+intents = disnake.Intents.all()
 
 
 async def main():

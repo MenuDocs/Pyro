@@ -168,7 +168,10 @@ class Games(commands.Cog):
             else:
                 content = msg.content
 
-                await msg.delete()
+                try:
+                    await msg.delete()
+                except disnake.HTTPException:
+                    pass
 
                 if not len(content) == 3:
                     await ctx.send(

@@ -29,9 +29,9 @@ logging.basicConfig(
     datefmt="%I:%M:%S %p %d/%m/%Y",
     level=logging.INFO,
 )
-gateway_logger = logging.getLogger("nextcord.gateway")
+gateway_logger = logging.getLogger("disnake.gateway")
 gateway_logger.setLevel(logging.WARNING)
-client_logger = logging.getLogger("nextcord.client")
+client_logger = logging.getLogger("disnake.client")
 client_logger.setLevel(logging.WARNING)
 
 intents = disnake.Intents.all()

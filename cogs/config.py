@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import random
 import traceback
@@ -9,10 +11,13 @@ import emojis
 import disnake
 from disnake.ext import commands
 
+if typing.TYPE_CHECKING:
+    from pyro import Pyro
+
 
 class Config(commands.Cog, name="Configuration"):
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: Pyro = bot
         self.logger = logging.getLogger(__name__)
 
     @commands.Cog.listener()
@@ -27,6 +32,7 @@ class Config(commands.Cog, name="Configuration"):
     )
     @commands.has_guild_permissions(manage_guild=True)
     async def prefix(self, ctx, *, prefix="py."):
+        self.bot.prefix_cache.delete_entry(ctx.guild.id)
         await self.bot.db.config.upsert({"_id": ctx.guild.id, "prefix": prefix})
         await ctx.send(
             f"The guild prefix has been set to `{prefix}`. Use `{prefix}prefix [prefix]` to change it again!"

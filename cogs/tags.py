@@ -2,8 +2,8 @@ import logging
 from typing import Dict, List, Optional
 
 import disnake
+from alaric import Document
 from bot_base import PrefixNotFound, BotContext
-from bot_base.db import Document
 from bot_base.paginators.disnake_paginator import DisnakePaginator
 from bot_base.wraps import WrappedMember
 from disnake import Interaction
@@ -139,7 +139,7 @@ class Tags(commands.Cog):
         log.info("Sending tag '%s'", tag.name)
 
         tag.uses += 1
-        await self.tags_db.increment_by_custom({"name": tag.name}, 1, "uses")
+        await self.tags_db.increment({"name": tag.name}, "uses", 1)
 
         await tag.send(message.channel, invoked_with=tag_name)
 
@@ -207,7 +207,7 @@ class Tags(commands.Cog):
             category=view.result,
         )
         self.tags[tag_name.casefold()] = tag
-        await self.tags_db.upsert_custom({"name": tag.name}, tag.to_dict())
+        await self.tags_db.upsert({"name": tag.name}, tag.to_dict())
         await ctx.send_basic_embed(
             f"I have created the tag `{tag_name}` for you.\n"
             f"`{ctx.prefix}{tag_name}` to invoke it."
@@ -252,13 +252,13 @@ class Tags(commands.Cog):
         tag: Tag = self.tags.pop(tag_name.casefold())
         if is_alias:
             tag.aliases.discard(tag_name)
-            await self.tags_db.update_by_custom({"name": tag.name}, tag.to_dict())
+            await self.tags_db.update({"name": tag.name}, tag.to_dict())
 
         else:
             # Primary tag
             for alias in tag.aliases:
                 self.tags.pop(alias, None)
-            await self.tags_db.delete_by_custom({"name": tag_name})
+            await self.tags_db.delete({"name": tag_name})
 
         await ctx.send_basic_embed(
             f"Deleted that tag {'alias ' if is_alias else ''}for you!"
@@ -291,7 +291,7 @@ class Tags(commands.Cog):
 
         tag.aliases.add(new_alias)
         self.tags[new_alias] = tag
-        await self.tags_db.update_by_custom({"name": tag.name}, tag.to_dict())
+        await self.tags_db.update({"name": tag.name}, tag.to_dict())
 
         await ctx.send_basic_embed(
             f"Created an alias '`{new_alias}`' to pre-existing tag `{tag.name}`"
@@ -374,7 +374,7 @@ class Tags(commands.Cog):
             )
 
         tag.description = tag_description
-        await self.tags_db.upsert_custom({"name": tag.name}, tag.to_dict())
+        await self.tags_db.upsert({"name": tag.name}, tag.to_dict())
         await ctx.send_basic_embed(
             "I have changed the description of that tag for you."
         )

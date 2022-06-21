@@ -1,6 +1,7 @@
 disnake==2.5.0
-bot-base
+bot-base==1.5.3
 aiofiles==0.8.0
 emojis==0.6.0
 libcst==0.4.1
 axew
+alaric==1.0.1

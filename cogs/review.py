@@ -116,11 +116,11 @@ class Review(MenuDocsCog):
                 "You do not have permission to run this command."
             )
 
-        review: GuildReview = await self.bot.db.guild_reviews.find_by_custom(
+        review: GuildReview = await self.bot.db.guild_reviews.find(
             {"channel_id": ctx.channel.id}
         )
         if not review:
-            review: BotReview = await self.bot.db.bot_reviews.find_by_custom(
+            review: BotReview = await self.bot.db.bot_reviews.find(
                 {"channel_id": ctx.channel.id}
             )
             if not review:
@@ -141,11 +141,11 @@ class Review(MenuDocsCog):
 
         review.closing_summary = summary
         if isinstance(review, GuildReview):
-            await self.bot.db.guild_reviews.upsert_custom(
+            await self.bot.db.guild_reviews.upsert(
                 {"channel_id": ctx.channel.id}, review.to_dict()
             )
         else:
-            await self.bot.db.bot_reviews.upsert_custom(
+            await self.bot.db.bot_reviews.upsert(
                 {"channel_id": ctx.channel.id}, review.to_dict()
             )
 
@@ -178,7 +178,7 @@ class Review(MenuDocsCog):
             "that are based on previous and current knowledge of server ownership?",
         ]
 
-        if await self.bot.db.guild_reviews.find_by_custom(
+        if await self.bot.db.guild_reviews.find(
             {"requester_id": ctx.author.id, "pending": True}
         ):
             return await ctx.send(
@@ -231,7 +231,7 @@ class Review(MenuDocsCog):
         )
         guild_review.channel_id = chan.id
 
-        await self.bot.db.guild_reviews.upsert_custom(
+        await self.bot.db.guild_reviews.upsert(
             {"requester_id": ctx.author.id}, guild_review.to_dict()
         )
 
@@ -275,7 +275,7 @@ class Review(MenuDocsCog):
             "that are based on previous and current knowledge of bot development?",
         ]
 
-        if await self.bot.db.bot_reviews.find_by_custom(
+        if await self.bot.db.bot_reviews.find(
             {"requester_id": ctx.author.id, "pending": True}
         ):
             return await ctx.send(
@@ -326,7 +326,7 @@ class Review(MenuDocsCog):
         )
         bot_review.channel_id = chan.id
 
-        await self.bot.db.bot_review.upsert_custom(
+        await self.bot.db.bot_reviews.upsert(
             {"requester_id": ctx.author.id}, bot_review.to_dict()
         )
 

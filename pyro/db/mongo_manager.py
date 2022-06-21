@@ -1,5 +1,5 @@
 from bot_base.db import MongoManager
-from bot_base.db.document import Document
+from alaric import Document
 
 from pyro.db import GuildReview, BotReview, Tag
 

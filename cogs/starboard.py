@@ -57,7 +57,7 @@ class Starboard(commands.Cog, name="Starboard"):
                         # and if it is, update the message rather then make a new one
                         starboard = self.bot.get_channel(guild["starboard_channel"])
 
-                        existing_star = await self.bot.db.starboard.find_by_custom(
+                        existing_star = await self.bot.db.starboard.find(
                             {
                                 "_id": payload.message_id,
                                 "guildId": payload.guild_id,
@@ -125,13 +125,14 @@ class Starboard(commands.Cog, name="Starboard"):
                             await starboard.send(embed=msg_embed)
 
                         await self.bot.db.starboard.upsert(
+                            {"_id": payload.message_id},
                             {
                                 "_id": payload.message_id,
                                 "guildId": payload.guild_id,
                                 "authorId": payload.user_id,
                                 "channelId": payload.channel_id,
                                 "starboard_message_id": starboard_message.id,
-                            }
+                            },
                         )
 
     @commands.Cog.listener()
@@ -178,7 +179,7 @@ class Starboard(commands.Cog, name="Starboard"):
                         # and if it is, update the message rather then make a new one
                         starboard = self.bot.get_channel(guild["starboard_channel"])
 
-                        existing_star = await self.bot.db.starboard.find_by_custom(
+                        existing_star = await self.bot.db.starboard.find(
                             {
                                 "_id": payload.message_id,
                                 "guildId": payload.guild_id,

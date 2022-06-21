@@ -9,6 +9,8 @@ from traceback import format_exception
 
 import aiohttp
 import disnake
+from alaric import AQ
+from alaric.comparison import EQ
 from bot_base import BotContext
 from bot_base.paginators.disnake_paginator import DisnakePaginator
 from disnake.ext import commands
@@ -76,7 +78,7 @@ async def main():
         # Whenever the bot is tagged, respond with its prefix
         if match := mention.match(message.content):
             if int(match.group("id")) == bot.user.id:
-                data = await bot.db.config.find(message.guild.id)
+                data = await bot.db.config.find(AQ(EQ("_id", message.guild.id)))
                 if not data or "prefix" not in data:
                     prefix = bot.DEFAULT_PREFIX
                 else:

@@ -6,6 +6,8 @@ from itertools import islice
 from string import Template
 
 import disnake
+from alaric import AQ
+from alaric.comparison import EQ
 from bot_base.paginators.disnake_paginator import DisnakePaginator
 from disnake.ext import commands
 
@@ -61,7 +63,7 @@ class Games(commands.Cog):
 
         data = dataclasses.asdict(player)
         data["_id"] = data.pop("player_id")
-        await self.bot.db.tictactoe.upsert(data)
+        await self.bot.db.tictactoe.upsert(AQ(EQ("_id", data["_id"])), data)
 
     async def populate_stats(self):
         # Handle on_ready being called multiple times

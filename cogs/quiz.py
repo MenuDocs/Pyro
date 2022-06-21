@@ -5,6 +5,8 @@ import random
 
 import aiohttp
 import disnake
+from alaric import AQ
+from alaric.comparison import EQ
 from disnake.ext import commands
 
 from pyro.checks import MenuDocsCog
@@ -161,7 +163,7 @@ class Quiz(MenuDocsCog, name="Quiz"):
     async def quiz(self, ctx):
         """Quiz yourself on relevant Python knowledge!"""
         guild = ctx.guild
-        quiz_role = await self.bot.db.config.find(ctx.guild.id)
+        quiz_role = await self.bot.db.config.find(AQ(EQ("_id", ctx.guild.id)))
         if quiz_role:
             quiz_role = quiz_role.get("quiz_role")
 
@@ -302,7 +304,9 @@ class Quiz(MenuDocsCog, name="Quiz"):
             )
             return
 
-        await self.bot.db.config.upsert({"_id": ctx.guild.id, "quiz_role": role.id})
+        await self.bot.db.config.upsert(
+            AQ(EQ("_id", ctx.guild.id)), {"_id": ctx.guild.id, "quiz_role": role.id}
+        )
         await ctx.send("Role added as a quiz role.")
 
 

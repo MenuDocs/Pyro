@@ -9,6 +9,8 @@ import asyncio
 
 import emojis
 import disnake
+from alaric import AQ
+from alaric.comparison import EQ
 from disnake.ext import commands
 
 if typing.TYPE_CHECKING:
@@ -33,7 +35,9 @@ class Config(commands.Cog, name="Configuration"):
     @commands.has_guild_permissions(manage_guild=True)
     async def prefix(self, ctx, *, prefix="py."):
         self.bot.prefix_cache.delete_entry(ctx.guild.id)
-        await self.bot.db.config.upsert({"_id": ctx.guild.id, "prefix": prefix})
+        await self.bot.db.config.change_field_to(
+            AQ(EQ("_id", ctx.guild.id)), "prefix", prefix
+        )
         await ctx.send(
             f"The guild prefix has been set to `{prefix}`. Use `{prefix}prefix [prefix]` to change it again!"
         )
@@ -115,19 +119,21 @@ class Config(commands.Cog, name="Configuration"):
     @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
     async def sb_toggle(self, ctx):
-        data = await self.bot.db.config.find(ctx.guild.id)
+        data = await self.bot.db.config.find(AQ(EQ("_id", ctx.guild.id)))
         if not data:
             return await ctx.send(
                 "You have not setup the starboard for this guild, please use the `starboard channel` command to do so."
             )
 
         if not data.get("starboard_toggle"):
-            data = {"_id": ctx.guild.id, "starboard_toggle": True}
+            data = True
             await ctx.send("I have turned the starboard `on` for you.")
         else:
-            data = {"_id": ctx.guild.id, "starboard_toggle": False}
+            data = False
             await ctx.send("I have turned the starboard `off` for you.")
-        await self.bot.db.config.upsert(data)
+        await self.bot.db.config.change_field_to(
+            AQ(EQ("_id", ctx.guild.id)), "starboard_toggle", data
+        )
 
     @starboard.command(
         name="channel",
@@ -151,7 +157,7 @@ class Config(commands.Cog, name="Configuration"):
             )
             return
 
-        data = await self.bot.db.config.find(ctx.guild.id)
+        data = await self.bot.db.config.find(AQ(EQ("_id", ctx.guild.id)))
 
         if not data:
             data = {
@@ -161,7 +167,7 @@ class Config(commands.Cog, name="Configuration"):
 
         data["starboard_channel"] = channel.id
 
-        await self.bot.db.config.upsert(data)
+        await self.bot.db.config.upsert(AQ(EQ("_id", ctx.guild.id)), data)
         await ctx.send("I have set the starboard channel for this guild!")
 
     @starboard.command(
@@ -172,20 +178,26 @@ class Config(commands.Cog, name="Configuration"):
     @commands.has_permissions(manage_messages=True)
     async def sb_emoji(self, ctx, emoji: typing.Union[disnake.Emoji, str] = None):
         if not emoji:
-            await self.bot.db.config.upsert({"_id": ctx.guild.id, "emoji": None})
+            await self.bot.db.config.upsert(
+                AQ(EQ("_id", ctx.guild.id)), {"_id": ctx.guild.id, "emoji": None}
+            )
             await ctx.send("Reset your server's custom emoji.")
         elif isinstance(emoji, disnake.Emoji):
             if not emoji.is_usable():
                 await ctx.send("I can't use that emoji.")
                 return
 
-            await self.bot.db.config.upsert({"_id": ctx.guild.id, "emoji": str(emoji)})
+            await self.bot.db.config.upsert(
+                AQ(EQ("_id", ctx.guild.id)), {"_id": ctx.guild.id, "emoji": str(emoji)}
+            )
 
             await ctx.send("Added your emoji.")
         else:
             emos = emojis.get(emoji)
             if emos:
-                await self.bot.db.config.upsert({"_id": ctx.guild.id, "emoji": emoji})
+                await self.bot.db.config.upsert(
+                    AQ(EQ("_id", ctx.guild.id)), {"_id": ctx.guild.id, "emoji": emoji}
+                )
 
                 await ctx.send("Added your emoji.")
             else:
@@ -197,12 +209,14 @@ class Config(commands.Cog, name="Configuration"):
     async def sb_thresh(self, ctx, thresh: int = None):
         if not thresh:
             await self.bot.db.config.upsert(
-                {"_id": ctx.guild.id, "emoji_threshold": None}
+                AQ(EQ("_id", ctx.guild.id)),
+                {"_id": ctx.guild.id, "emoji_threshold": None},
             )
             await ctx.send("Reset your server's custom emoji threshold.")
         else:
             await self.bot.db.config.upsert(
-                {"_id": ctx.guild.id, "emoji_threshold": thresh}
+                AQ(EQ("_id", ctx.guild.id)),
+                {"_id": ctx.guild.id, "emoji_threshold": thresh},
             )
 
             await ctx.send("Added your threshold.")
@@ -219,7 +233,9 @@ class Config(commands.Cog, name="Configuration"):
             color=random.randint(0, 0xFFFFFF),
         )
 
-        data = await self.bot.db.config.find(ctx.guild.id)
+        data = await self.bot.db.config.find(
+            AQ(EQ("_id", ctx.guild.id)),
+        )
 
         if not data:
             return await ctx.send("This guild does not have anything saved.")

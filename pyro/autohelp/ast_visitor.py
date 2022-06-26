@@ -54,7 +54,10 @@ class _FindNeedsSelfDecorator(libcst.CSTVisitor):
 
     def visit_Decorator(self, node):
         if isinstance(node.decorator, libcst.Call):
-            root = node.decorator.func.value.value
+            try:
+                root = node.decorator.func.value.value
+            except AttributeError:
+                return
             meth = node.decorator.func.attr.value
         elif isinstance(node.decorator, libcst.Attribute):
             root = node.decorator.attr.value

@@ -241,10 +241,18 @@ class AutoHelp:
 
             embed.add_field(**field)
 
-        auto_message = await message.reply(
-            f"{message.author.mention} {'this' if len(fields) == 1 else 'these'} might help.",
-            embed=embed,
-        )
+        try:
+            auto_message = await message.reply(
+                f"{message.author.mention} {'this' if len(fields) == 1 else 'these'} might help.",
+                embed=embed,
+            )
+        except disnake.Forbidden:
+            log.warning(
+                "Failed to send a message to Channel(id=%s, name=%s) as I lack permissions",
+                message.channel.id,
+                message.channel.name,
+            )
+            return
 
         await auto_message.edit(view=CloseButton(auto_message, message.author))
 

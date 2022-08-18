@@ -32,7 +32,8 @@ class Autohelp(commands.Cog):
 
             # Process shit in threads if its parent is an allowed channel
 
-        await self.bot.auto_help.process_message(message)
+        # Disable this for now as the outputted 'fixed' code is munted
+        # await self.bot.auto_help.process_message(message)
 
 
 def setup(bot):

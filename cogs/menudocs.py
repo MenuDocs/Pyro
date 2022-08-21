@@ -1,21 +1,21 @@
 import logging
+import random
+from string import Template
 import re
 from typing import List
 
 import disnake
-from axew import AxewClient, BaseAxewException
 from bot_base import BotContext
 from bot_base.wraps import WrappedChannel
 from disnake.ext import commands
-from disnake.ext.commands import Greedy
 
 from pyro.bot import Pyro
 from pyro.checks import (
+    MAIN_GUILD,
+    MENUDOCS_PROJECTIONS_CHANNEL,
     MENUDOCS_GUILD_IDS,
     MENUDOCS_SUGGESTIONS_CHANNEL,
     PYTHON_HELP_CHANNEL_IDS,
-    ensure_is_menudocs_guild,
-    ensure_is_menudocs_staff,
     MenuDocsCog,
     ensure_is_menudocs_project_guild,
 )
@@ -43,8 +43,6 @@ class MenuDocs(MenuDocsCog):
     def __init__(self, bot):
         self.bot: Pyro = bot
         self.logger = logging.getLogger(__name__)
-
-        self.axew = AxewClient()
 
         self.issue_regex = re.compile(r"##(?P<number>[0-9]+)\s?(?P<repo>[a-zA-Z0-9]*)")
         self.pr_regex = re.compile(r"\$\$(?P<number>[0-9]+)\s?(?P<repo>[a-zA-Z0-9]*)")
@@ -96,6 +94,56 @@ class MenuDocs(MenuDocsCog):
             return
 
         await thread.join()
+
+    @commands.Cog.listener()
+    async def on_member_join(self, member: disnake.Member) -> None:
+        if member.guild.id != MAIN_GUILD:
+            # Not in menudocs
+            return
+
+        welcome_messages = [
+            "$MEMBER just showed up. Hold my beer.",
+            "Where's $MEMBER? In the server!",
+            "Welcome, $MEMBER. Stay awhile and listen.",
+            "We've been expecting you, $MEMBER.",
+            "$MEMBER just joined. Can I get a heal?",
+            "$MEMBER just joined the server - glhf!",
+            "Ermagherd. $MEMBER has joined us!",
+            "Mission Control! $MEMBER has successfully landed!"
+        ]
+
+        message = Template(random.choice(welcome_messages)).safe_substitute(
+            {"MEMBER": f"**{member}**"}
+        )
+        projections = member.guild.get_channel(MENUDOCS_PROJECTIONS_CHANNEL)
+        embed = disnake.Embed(description=message, colour=disnake.Colour.green())
+
+        await projections.send(embed=embed)
+
+    @commands.Cog.listener()
+    async def on_member_remove(self, member: disnake.Member) -> None:
+        if member.guild.id != MAIN_GUILD:
+            # Not in menudocs
+            return
+
+        leave_messages  = [
+            "$MEMBER has quit. Party's over.",
+            "Ermagherd. $MEMBER has just left us here.",
+            "Brace yourselves. $MEMBER just abandoned the server.",
+            "$MEMBER just left. Can you come back?",
+            "Whoopsies! $MEMBER left us!",
+            "Nooooooo, $MEMBER closed the door.",
+            "Commander, we've lost $MEMBER!",
+            "Is this a loss? $MEMBER left."
+        ]
+
+        message = Template(random.choice(leave_messages)).safe_substitute(
+            {"MEMBER": f"**{member}**"}
+        )
+        projections = member.guild.get_channel(MENUDOCS_PROJECTIONS_CHANNEL)
+        embed = disnake.Embed(description=message, colour=disnake.Colour.red())
+
+        await projections.send(embed=embed)
 
     def extract_code(self, message: disnake.Message) -> List[str]:
         """Extracts all codeblocks to str"""

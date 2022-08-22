@@ -116,7 +116,7 @@ class MenuDocs(MenuDocsCog):
         )
         embed = disnake.Embed(description=message, colour=disnake.Colour.green())
 
-        if unverified_role in before.roles:
+        if unverified_role in before.roles and not after.roles:
             await projections.send(embed=embed)
 
     @commands.Cog.listener()

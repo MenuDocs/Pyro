@@ -1,7 +1,7 @@
 import logging
 import random
-from string import Template
 import re
+from string import Template
 from typing import List
 
 import disnake
@@ -12,9 +12,10 @@ from disnake.ext import commands
 from pyro.bot import Pyro
 from pyro.checks import (
     MAIN_GUILD,
-    MENUDOCS_PROJECTIONS_CHANNEL,
     MENUDOCS_GUILD_IDS,
+    MENUDOCS_PROJECTIONS_CHANNEL,
     MENUDOCS_SUGGESTIONS_CHANNEL,
+    MENUDOCS_UNVERIFIED_ROLE,
     PYTHON_HELP_CHANNEL_IDS,
     MenuDocsCog,
     ensure_is_menudocs_project_guild,
@@ -23,14 +24,6 @@ from pyro.checks import (
 log = logging.getLogger(__name__)
 
 BASE_MENUDOCS_URL = "https://github.com/menudocs"
-
-
-def replied_reference(message):
-    ref = message.reference
-    if ref and isinstance(ref.resolved, disnake.Message):
-        return ref.resolved.to_reference()
-
-    return None
 
 
 def extract_repo(regex):
@@ -96,9 +89,13 @@ class MenuDocs(MenuDocsCog):
         await thread.join()
 
     @commands.Cog.listener()
-    async def on_member_join(self, member: disnake.Member) -> None:
-        if member.guild.id != MAIN_GUILD:
+    async def on_member_update(self, before: disnake.Member, after: disnake.Member):
+        if after.guild.id != MAIN_GUILD:
             # Not in menudocs
+            return
+
+        if before.roles == after.roles:
+            # If roles are the same
             return
 
         welcome_messages = [
@@ -112,13 +109,15 @@ class MenuDocs(MenuDocsCog):
             "Mission Control! $MEMBER has successfully landed!"
         ]
 
+        projections = after.guild.get_channel(MENUDOCS_PROJECTIONS_CHANNEL)
+        unverified_role = after.guild.get_role(MENUDOCS_UNVERIFIED_ROLE)
         message = Template(random.choice(welcome_messages)).safe_substitute(
-            {"MEMBER": f"**{member}**"}
+            {"MEMBER": f"**{after}**"}
         )
-        projections = member.guild.get_channel(MENUDOCS_PROJECTIONS_CHANNEL)
         embed = disnake.Embed(description=message, colour=disnake.Colour.green())
 
-        await projections.send(embed=embed)
+        if unverified_role in before.roles:
+            await projections.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: disnake.Member) -> None:
@@ -140,7 +139,7 @@ class MenuDocs(MenuDocsCog):
         message = Template(random.choice(leave_messages)).safe_substitute(
             {"MEMBER": f"**{member}**"}
         )
-        projections = member.guild.get_channel(MENUDOCS_PROJECTIONS_CHANNEL)
+        projections = member.guild.get_channel(1003987467612991508)
         embed = disnake.Embed(description=message, colour=disnake.Colour.red())
 
         await projections.send(embed=embed)

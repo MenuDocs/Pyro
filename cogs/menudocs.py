@@ -139,7 +139,7 @@ class MenuDocs(MenuDocsCog):
         message = Template(random.choice(leave_messages)).safe_substitute(
             {"MEMBER": f"**{member}**"}
         )
-        projections = member.guild.get_channel(1003987467612991508)
+        projections = member.guild.get_channel(MENUDOCS_PROJECTIONS_CHANNEL)
         embed = disnake.Embed(description=message, colour=disnake.Colour.red())
 
         await projections.send(embed=embed)

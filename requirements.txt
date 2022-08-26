@@ -4,4 +4,4 @@ aiofiles==0.8.0
 emojis==0.6.0
 axew
 alaric==1.0.1
-aegir-parser==0.1.1
+aegir-parser==0.1.2

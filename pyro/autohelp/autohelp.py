@@ -71,6 +71,7 @@ class AutoHelp:
         self.bot = bot
         self._help_cache: TimedCache = TimedCache()
 
+        # TODO Finish the rest of these
         self.actions = {
             Actions.CLIENT_IS_NOT_BOT: self.client_bot,
             Actions.USING_SELF_ON_BOT_COMMAND: self.requires_self_removal,

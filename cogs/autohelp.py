@@ -19,9 +19,6 @@ class Autohelp(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: disnake.Message):
-        if message.channel.id == 703233204605419562:
-            await self.bot.auto_help.process_message(message)
-
         if message.author.bot:
             return
 
@@ -35,8 +32,7 @@ class Autohelp(commands.Cog):
 
             # Process shit in threads if its parent is an allowed channel
 
-        # Disable this for now as the outputted 'fixed' code is munted
-        # await self.bot.auto_help.process_message(message)
+        await self.bot.auto_help.process_message(message)
 
 
 def setup(bot):

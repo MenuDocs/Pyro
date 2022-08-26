@@ -73,12 +73,8 @@ class AutoHelp:
 
         self.actions = {
             Actions.CLIENT_IS_NOT_BOT: self.client_bot,
-            Actions.DECORATOR_EVENT_CALLED: self.events_dont_use_brackets,
             Actions.USING_SELF_ON_BOT_COMMAND: self.requires_self_removal,
-            Actions.PROCESS_COMMANDS_NOT_CALLED: self.on_message_without_process_commands,
             Actions.MISSING_SELF_IN_EVENT_OR_COMMAND: self.requires_self_addition,
-            Actions.INCORRECT_CTX_TYPEHINT: self.invalid_ctx_typehint,
-            Actions.INCORRECT_INTERACTION_TYPEHINT: self.invalid_interaction_typehint,
             Actions.USED_PASS_CONTEXT: self.pass_context,
         }
 
@@ -195,11 +191,11 @@ class AutoHelp:
         if not contents or key in self._help_cache:
             return None
 
-        # self._help_cache.add_entry(
-        #     key,
-        #     None,
-        #     ttl=datetime.timedelta(minutes=5),
-        # )
+        self._help_cache.add_entry(
+            key,
+            None,
+            ttl=datetime.timedelta(minutes=5),
+        )
 
         sources: List[FormatError] = []
         for code in contents:
@@ -217,67 +213,22 @@ class AutoHelp:
 
         try:
             auto_message = await message.reply(
-                f"{message.author.mention} {'this' if len(sources) == 1 else 'these'} might help.",
+                f"{message.author.mention} this might help.",
                 embed=embed,
             )
         except disnake.Forbidden:
             log.warning(
-                "Failed to send a message to Channel(id=%s, name=%s) as I lack permissions",
+                "Failed to send a message to Channel(id=%s, name=%s, guild_id=%s, guild_name=%s) as I lack permissions",
                 message.channel.id,
                 message.channel.name,
+                message.guild.id,
+                message.guild.name,
             )
             return
 
         await auto_message.edit(view=CloseButton(auto_message, message.author))
 
         return embed
-
-    async def events_dont_use_brackets(self, message: disnake.Message) -> Field:
-        return Field(
-            name="Events don't use brackets",
-            value="When defining an event you do not need to use `()`.\n"
-            "See below for how to fix this.",
-        )
-
-    async def on_message_without_process_commands(
-        self, message: disnake.Message
-    ) -> Field:
-        conf: Conf = self.get_conf(message.guild.id)
-        return Field(
-            name="Overriding on_message without process_commands",
-            value=(
-                "Looks like you override the `on_message` event "
-                "without processing commands.\n This means your commands "
-                "will not get called at all, you should change your event to the below.\n"
-                "*Note: This may not be in the right place so double check it is.*\n"
-                f"You can read more about it [here]({conf.on_message_process_commands_link})"
-            ),
-        )
-
-    async def invalid_ctx_typehint(self, message: disnake.Message) -> Field:
-
-        conf: Conf = self.get_conf(message.guild.id)
-
-        return Field(
-            name="Incorrect context typehint",
-            value=(
-                "Looks like you're using a prefix command, but type-hinted the main parameter "
-                "incorrectly! This won't lead to errors but will seriously hinder your "
-                f"development. See more about contexts [here]({conf.context_link})"
-            ),
-        )
-
-    async def invalid_interaction_typehint(self, message: disnake.Message) -> Field:
-        conf: Conf = self.get_conf(message.guild.id)
-
-        return Field(
-            name="Incorrect interaction typehint",
-            value=(
-                "Looks like you're using a application command, but type-hinted the main parameter "
-                "incorrectly! This won't lead to errors but will seriously hinder your "
-                f"development. See more about interactions [here]({conf.interaction_link})"
-            ),
-        )
 
     async def client_bot(self, message: disnake.Message) -> Field:
         """Checks good naming conventions"""

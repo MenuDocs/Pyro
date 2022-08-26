@@ -19,6 +19,9 @@ class Autohelp(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: disnake.Message):
+        if message.channel.id == 703233204605419562:
+            await self.bot.auto_help.process_message(message)
+
         if message.author.bot:
             return
 

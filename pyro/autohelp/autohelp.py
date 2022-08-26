@@ -2,11 +2,15 @@ import asyncio
 import datetime
 import difflib
 import logging
+import os
 from typing import List, Optional, Tuple, Type, TypedDict
 
 import libcst
 import disnake
+from aegir import Aegir, ParsedData, FormatError
 from bot_base.caches import TimedCache
+from libcst import ParserSyntaxError
+
 from pyro import checks
 from pyro.autohelp import AUTO_HELP_CONF, CodeBinExtractor, Conf
 from pyro.autohelp.regexes import (
@@ -91,6 +95,16 @@ class AutoHelp:
         self.color = 0x26F7FD
         self._code_bin: CodeBinExtractor = CodeBinExtractor(bot)
 
+    async def upload_to_workbin(self, ast: libcst.CSTNode) -> str:
+        code = libcst.Module([]).code_for_node(ast)
+        res = await self.bot.session.post(  # type: ignore
+            url="https://workbin.dev//api/new",
+            json={"content": str(code), "language": "python"},
+            headers={"Content-Type": "application/json"},
+        )
+        paste_id = (await res.json())["key"]
+        return f"https://workbin.dev//?id={paste_id}&language=python"
+
     @staticmethod
     def get_conf(guild_id: int) -> Conf:
         try:
@@ -98,12 +112,9 @@ class AutoHelp:
         except KeyError:
             return AUTO_HELP_CONF[-1]
 
-    def build_embed(
-        self,
-        message: disnake.Message,
-        original_code: List[str],
-        updated_code: List[str],
-    ) -> Tuple[disnake.Embed, Tuple[Field, Field]]:
+    async def build_embed(
+        self, message: disnake.Message, errors: List[FormatError]
+    ) -> disnake.Embed:
         embed = disnake.Embed(
             timestamp=message.created_at,
             color=self.color,
@@ -114,12 +125,44 @@ class AutoHelp:
         embed.set_footer(
             text="Believe this is incorrect? Let Skelmis know in discord.gg/menudocs"
         )
-        original_code = "```py\n" + "\n``````py\n".join(original_code) + "\n```"
-        updated_code = "```py\n" + "\n``````py\n".join(updated_code) + "\n```"
-        return embed, (
-            Field(name="Old code", value=original_code),
-            Field(name="New | Fixed", value=updated_code),
+
+        data = {
+            "created_for": {
+                "user_id": message.author.id,
+                "last_known_name": message.author.display_name,
+            },
+            "errors": [],
+        }
+
+        for error in errors:
+            old_code_link = await self.upload_to_workbin(error.old_cst)
+            fixed_code_link = await self.upload_to_workbin(error.fixed_cst)
+            data["errors"].append(
+                {
+                    "title": error.title,
+                    "description": error.description,
+                    "old_code_link": old_code_link,
+                    "fixed_code_link": fixed_code_link,
+                }
+            )
+
+        r: ClientResponse = await self.bot.session.post(  # type: ignore
+            url="https://pyro.koldfusion.xyz/api/cases",
+            json=data,
+            headers={
+                "Content-Type": "application/json",
+                "X-API-KEY": os.environ["PYRO_API_KEY"],
+            },
         )
+        assert r.status == 201, "Failed to create new auto-help resource"
+        response_data = await r.json()
+
+        embed.description = (
+            f"I've noticed this code has some issues and fixed them for you.\n\n"
+            f"You can find the fixed code [here]({response_data['view_url']})."
+        )
+
+        return embed
 
     async def find_code(self, message: disnake.Message) -> Optional[List[str]]:
         """
@@ -147,103 +190,34 @@ class AutoHelp:
         self, message: disnake.Message
     ) -> Optional[disnake.Embed]:
 
+        key = f"{message.author.id}|{message.channel.id}"
         contents = await self.find_code(message)
-        if not contents:
+        if not contents or key in self._help_cache:
             return None
 
-        # parse the contents
-        # test the first valid code snippet for now
-        total_old = ""
-        total_new = ""
-        errors = []
-        # attempt to parse the full code
-        for num, code in enumerate(["\n".join(contents), *contents]):
+        # self._help_cache.add_entry(
+        #     key,
+        #     None,
+        #     ttl=datetime.timedelta(minutes=5),
+        # )
+
+        sources: List[FormatError] = []
+        for code in contents:
             try:
-                parsed = libcst.parse_module(code)
-            except libcst.ParserSyntaxError:
+                parsed_data: ParsedData = Aegir.convert_source(code)
+            except ParserSyntaxError:
                 continue
-            results = parsed
-            total_old += parsed.code + "\n"
-            visitors: list[libcst.CSTTransformer] = []
-            local_errors = []
-            for visitor in self.visitors:
-                visitor = visitor()
-                visitors.append(visitor)
-                results = results.visit(visitor)
-                if visitor.found_errors:
-                    local_errors.extend(visitor.found_errors)
 
-            total_new += results.code + "\n"
-            if local_errors:
-                errors.extend(local_errors)
+            sources.extend(parsed_data.errors)
 
-            if num == 0:
-                # stop short if we're running all code blocks successfully
-                break
-
-        if not errors:
+        if not sources:
             return None
 
-        errors = set(errors)
-        actions = []
-        original_code = parsed.code
-        new_code = total_new
-
-        original_code_split = original_code.splitlines(keepends=True)
-        new_code_split = new_code.splitlines(keepends=True)
-        original_code = []
-        new_code = []
-
-        for diff in difflib.unified_diff(original_code_split, new_code_split, n=1):
-            if diff.startswith("@@"):
-                original_code.append("")
-                new_code.append("")
-            elif diff.strip() in ("+++", "---"):
-                continue
-            elif diff.startswith("+"):
-                new_code[-1] += diff[1:]
-            elif diff.startswith("-"):
-                original_code[-1] += diff[1:]
-            elif diff.startswith(" "):
-                original_code[-1] += diff[1:]
-                new_code[-1] += diff[1:]
-
-        # Don't help people who have been helped in the last 5 minutes
-        base_key = f"{message.author.id}|{message.channel.id}"
-        for error, action in self.actions.items():
-            if (
-                error in errors
-                and (key := base_key + f"|{error.value}") not in self._help_cache
-            ):
-                actions.append(action(message))
-                self._help_cache.add_entry(
-                    key,
-                    None,
-                    ttl=datetime.timedelta(minutes=30),
-                )
-
-        # everything was sent in the last 30 minutes
-        if not actions:
-            return None
-
-        embed, last_fields = self.build_embed(message, original_code, new_code)
-
-        fields = list(filter(None, await asyncio.gather(*actions)))
-
-        if original_code != new_code:
-            all_fields = [*fields, *last_fields]
-        else:
-            all_fields = [*fields]
-
-        for field in all_fields:
-            if field.get("inline") is None:
-                field["inline"] = False
-
-            embed.add_field(**field)
+        embed = await self.build_embed(message, sources)
 
         try:
             auto_message = await message.reply(
-                f"{message.author.mention} {'this' if len(fields) == 1 else 'these'} might help.",
+                f"{message.author.mention} {'this' if len(sources) == 1 else 'these'} might help.",
                 embed=embed,
             )
         except disnake.Forbidden:

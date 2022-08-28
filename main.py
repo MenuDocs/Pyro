@@ -189,7 +189,6 @@ async def main():
 
     # Load all extensions
     update_uptime.start()
-
     for ext in os.listdir("./cogs/"):
         if ext.endswith(".py") and not ext.startswith("_"):
             try:

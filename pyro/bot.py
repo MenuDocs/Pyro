@@ -22,7 +22,6 @@ log = logging.getLogger(__name__)
 
 class Pyro(BotBase):
     def __init__(self, *args, **kwargs):
-        # DB
         self.db: PyroMongoManager = PyroMongoManager(kwargs.pop("mongo_url"))
         self.session: Optional[ClientSession] = None
 

@@ -2,7 +2,8 @@ import re
 
 """Pastebin Regexs"""
 vco_cf_worker_boi: re.Pattern = re.compile(
-    r"https://(?P<url>paste.((nextcord|disnake|vcokltfre).dev)|vcokltf.re)/?\?(language=python&)?(id=(?P<id>[0-9]*))?"
+    r"https://(?P<url>(paste\.((nextcord|disnake|vcokltfre)\.dev)"
+    r"|vcokltf\.re)|workbin\.dev|p.vco.sh)/?\?(language=python&)?(id=(?P<id>[0-9]*))?"
 )
 
 # codeblock extractor

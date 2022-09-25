@@ -15,6 +15,8 @@ class CodeBinExtractor:
             "paste.disnake.dev": self._extract_vco_bois,
             "paste.vcokltfre.dev": self._extract_vco_bois,
             "paste.vcokltf.re": self._extract_vco_bois,
+            "workbin.dev": self._extract_vco_bois,
+            "p.vco.sh": self._extract_vco_bois,
         }
 
         # REGEX

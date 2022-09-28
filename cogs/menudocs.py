@@ -67,16 +67,6 @@ class MenuDocs(MenuDocsCog):
             await message.channel.send(url)
 
     @commands.Cog.listener()
-    async def on_message(self, message: disnake.Message) -> None:
-        if message.channel.id != MENUDOCS_SUGGESTIONS_CHANNEL:
-            # Not in suggestions channel
-            return
-
-        reactions = {"\U0001f44d", "\U0001f44e", "\U0001f937"}  # 👍👎🤷
-        for reaction in reactions:
-            await message.add_reaction(reaction)
-
-    @commands.Cog.listener()
     async def on_thread_join(self, thread) -> None:
         if not thread.guild or thread.guild.id not in MENUDOCS_GUILD_IDS:
             # Not in menudocs
@@ -106,7 +96,7 @@ class MenuDocs(MenuDocsCog):
             "$MEMBER just joined. Can I get a heal?",
             "$MEMBER just joined the server - glhf!",
             "Ermagherd. $MEMBER has joined us!",
-            "Mission Control! $MEMBER has successfully landed!"
+            "Mission Control! $MEMBER has successfully landed!",
         ]
 
         projections = after.guild.get_channel(MENUDOCS_PROJECTIONS_CHANNEL)
@@ -125,7 +115,7 @@ class MenuDocs(MenuDocsCog):
             # Not in menudocs
             return
 
-        leave_messages  = [
+        leave_messages = [
             "$MEMBER has quit. Party's over.",
             "Ermagherd. $MEMBER has just left us here.",
             "Brace yourselves. $MEMBER just abandoned the server.",
@@ -133,7 +123,7 @@ class MenuDocs(MenuDocsCog):
             "Whoopsies! $MEMBER left us!",
             "Nooooooo, $MEMBER closed the door.",
             "Commander, we've lost $MEMBER!",
-            "Is this a loss? $MEMBER left."
+            "Is this a loss? $MEMBER left.",
         ]
 
         message = Template(random.choice(leave_messages)).safe_substitute(

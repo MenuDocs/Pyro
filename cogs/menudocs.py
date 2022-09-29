@@ -67,7 +67,7 @@ class MenuDocs(MenuDocsCog):
             await message.channel.send(url)
 
     @commands.Cog.listener()
-    async def on_thread_join(self, thread) -> None:
+    async def on_thread_create(self, thread) -> None:
         if not thread.guild or thread.guild.id not in MENUDOCS_GUILD_IDS:
             # Not in menudocs
             return

@@ -29,6 +29,7 @@ PYTHON_HELP_CHANNEL_IDS = {
     702862760052129822,  # pyro
     416522595958259713,  # commands (main dc)
     888614043835830300,  # Auxtal testing channel
+    1024801821857939476,  # test-forum
 }
 CODE_REVIEWER, PROFICIENT, TEAM = {
     850330300595699733,  # Code Reviewer

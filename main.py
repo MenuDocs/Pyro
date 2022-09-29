@@ -2,6 +2,7 @@ import asyncio
 import io
 import os
 import re
+import dotenv
 import logging
 import textwrap
 import contextlib
@@ -20,6 +21,8 @@ from pyro import checks
 from pyro.bot import Pyro
 from pyro.checks import COMBINED_ACCOUNTS
 from pyro.utils.util import clean_code
+
+dotenv.load_dotenv()
 
 mongo_url = os.getenv("MONGO")
 token = os.getenv("TOKEN")

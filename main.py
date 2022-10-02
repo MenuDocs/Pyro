@@ -177,12 +177,12 @@ async def main():
         msg.channel = ctx.channel
         await bot.auto_help.process_message(msg)
 
-    @tasks.loop(minutes=10)
+    @tasks.loop(seconds=30)
     async def update_uptime():
         if patch:
             async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    url=f"https://betteruptime.com/api/v1/heartbeat/{patch}"
+                async with session.get(
+                    url=f"https://status.koldfusion.xyz/api/push/{patch}?status=up&msg=OK&ping="
                 ):
                     pass
 

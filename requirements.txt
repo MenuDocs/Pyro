@@ -4,5 +4,4 @@ axew==1.0.7
 bot-base==1.7.1
 disnake==2.5.0
 emojis==0.7.0
-pip-chill==1.0.1
 python-dotenv==0.21.0

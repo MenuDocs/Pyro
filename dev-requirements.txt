@@ -1,2 +1,3 @@
 pytest
 pytest-asyncio
+pip-chill==1.0.1

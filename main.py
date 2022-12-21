@@ -2,6 +2,8 @@ import asyncio
 import io
 import os
 import re
+import signal
+
 import dotenv
 import logging
 import textwrap
@@ -53,6 +55,7 @@ async def main():
         leave_db=True,
         command_prefix="py.",
         load_builtin_commands=True,
+        activity=disnake.Game(name="All new and improved"),
     )
 
     logger = logging.getLogger(__name__)
@@ -64,9 +67,7 @@ async def main():
 
     @bot.event
     async def on_ready():
-        await bot.change_presence(activity=disnake.Game(name="py.help"))
-
-        logger.info("I'm all up and ready like mom's spaghetti")
+        logger.info("I'm all up and ready like mom's spaghetti %s")
 
     @bot.event
     async def on_message(message: disnake.Message):
@@ -97,7 +98,7 @@ async def main():
     @commands.is_owner()
     async def logout(ctx):
         await ctx.send("Cya :wave:")
-        await bot.close()
+        await bot.graceful_shutdown()
 
     @bot.command(name="eval", aliases=["exec"])
     @checks.can_eval()
@@ -131,7 +132,7 @@ async def main():
                 result = f"{stdout.getvalue()}\n-- {obj}\n"
 
         except Exception as e:
-            result = "".join(format_exception(e, e, e.__traceback__))
+            result = "".join(format_exception(type(e), e, e.__traceback__))
 
         async def format_page(code, page_number):
             embed = disnake.Embed(title=f"Eval for {ctx.author.name}")
@@ -159,18 +160,6 @@ async def main():
         )
         await ctx.send("Made a note of it.")
 
-    @bot.command(aliases=["dbb", "dbbackup"])
-    @commands.is_owner()
-    @commands.cooldown(1, 60 * 60)
-    async def db_backup(ctx: BotContext):
-        """Back up the database"""
-        initial = await ctx.send("Starting to backup the database.")
-        async with ctx.typing():
-            await bot.db.run_backup()
-
-        await initial.delete()
-        await ctx.send_basic_embed("All backed up for you.")
-
     @bot.command()
     @checks.can_eval()
     async def process(ctx, msg: disnake.Message):
@@ -190,21 +179,23 @@ async def main():
     async def before_update_uptime():
         await bot.wait_until_ready()
 
-    # Load all extensions
-    update_uptime.start()
-    for ext in os.listdir("./cogs/"):
-        if ext.endswith(".py") and not ext.startswith("_"):
-            try:
-                bot.load_extension(f"cogs.{ext[:-3]}")
-            except Exception as e:
-                logger.error(
-                    "An error occurred while loading ext cogs.{}: {}".format(
-                        ext[:-3], e
-                    )
-                )
+    async def graceful_shutdown(b: Pyro, sig_name):
+        await b.graceful_shutdown()
 
+    # https://github.com/gearbot/GearBot/blob/live/GearBot/GearBot.py#L206-L212
+    try:
+        for signature in ("SIGINT", "SIGTERM", "SIGKILL"):
+            asyncio.get_event_loop().add_signal_handler(
+                getattr(signal, signature),
+                lambda: asyncio.ensure_future(graceful_shutdown(bot, signature)),
+            )
+    except Exception as e:
+        pass  # doesn't work on Windows
+
+    update_uptime.start()
     async with aiohttp.ClientSession() as session:
         bot.session = session
+        await bot.load()
         await bot.start(token)
 
 

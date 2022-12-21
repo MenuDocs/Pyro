@@ -1,5 +1,6 @@
 import logging
 import os
+from pathlib import Path
 from traceback import format_exception
 from typing import Optional, TYPE_CHECKING
 
@@ -101,4 +102,23 @@ class Pyro(BotBase):
                 ctx.command.qualified_name,
             )
 
-        log.error("".join(format_exception(err, err, err.__traceback__)))
+        log.error("".join(format_exception(type(err), err, err.__traceback__)))
+
+    async def load_cogs(self):
+        count = 0
+        extensions = Path("./pyro/cogs").rglob("*.py")
+        for ext in extensions:
+            _path = ".".join(ext.parts)
+            self.load_extension(_path[:-3])
+            count += 1
+
+        log.debug("Loaded %s cogs", count)
+
+    async def load(self):
+        """An async entrypoint for the bot."""
+        await self.load_cogs()
+
+    async def graceful_shutdown(self) -> None:
+        """Gracefully shutdown the bot."""
+        log.info("Shutting down")
+        await self.close()

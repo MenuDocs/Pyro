@@ -55,7 +55,6 @@ class Docs(commands.Cog, name="Documentation"):
             "nextcord": "https://nextcord.readthedocs.io/en/latest",
             "disnake": "https://docs.disnake.dev/en/latest",
             "levelling": "https://discord-ext-levelling.readthedocs.io/en/latest",
-            "py": "https://docs.python.org/3",
             "python": "https://docs.python.org/3",
         }
 
@@ -180,6 +179,9 @@ class Docs(commands.Cog, name="Documentation"):
                 )
             )
 
+        elif obj not in self.page_types:
+            return await interaction.send("Unsupported category.", ephemeral=True)
+
         if not hasattr(self, "_rtfm_cache"):
             await self.build_rtfm_lookup_table(page_types)
 
@@ -220,13 +222,14 @@ class Docs(commands.Cog, name="Documentation"):
                 "Disnake": "disnake",
                 "Discord.py": "discord.py",
                 "Python": "python",
+                "Levelling": "levelling",
             },
             default="Nextcord",
             description="Which package to perform the lookup on",
         ),
     ):
         """Gives you a documentation link for an entity."""
-        if key not in {"Nextcord", "Disnake", "Discord.py", "Python"}:
+        if key not in {"Nextcord", "Disnake", "Discord.py", "Python", "Levelling"}:
             return await interaction.send(
                 ephemeral=True, content="Invalid documentation key provided."
             )

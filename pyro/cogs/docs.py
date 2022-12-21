@@ -154,6 +154,32 @@ class Docs(commands.Cog, name="Documentation"):
             await interaction.send(page_types[key])
             return
 
+        elif obj.lower() == "rtfm":
+            return await interaction.send(
+                embed=disnake.Embed.from_dict(
+                    {
+                        "title": "Read The Fucking Manual",
+                        "description": "You expect me to know?",
+                        "footer": {"text": "Imagine including easter eggs"},
+                    }
+                )
+            )
+
+        elif obj.lower() in {"developers", "devs"}:
+            return await interaction.send(
+                embed=disnake.Embed.from_dict(
+                    {
+                        "title": "'It'll be finished before Mandroc still Connor' ~ Kindly, Pyro Devs",
+                        "description": "Devs:\n"
+                        "<@271612318947868673>\n<@327745755789918208>\n<@717983911824588862>\n\n"
+                        "Initial bot:\n<@330566541156417536>",
+                        "footer": {
+                            "text": "Fun fact, the initial bot was coded on a phone."
+                        },
+                    }
+                )
+            )
+
         if not hasattr(self, "_rtfm_cache"):
             await self.build_rtfm_lookup_table(page_types)
 

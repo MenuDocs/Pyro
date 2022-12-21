@@ -56,6 +56,7 @@ async def main():
         command_prefix="py.",
         load_builtin_commands=True,
         activity=disnake.Game(name="All new and improved"),
+        test_guilds=[500525882226769931],
     )
 
     logger = logging.getLogger(__name__)

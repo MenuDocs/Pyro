@@ -183,7 +183,7 @@ class Docs(commands.Cog, name="Documentation"):
             "This command has been removed, please use the new slash command equivalent."
         )
 
-    @commands.slash_command(guild_ids=[500525882226769931])
+    @commands.slash_command()
     async def docs(
         self,
         interaction: disnake.ApplicationCommandInteraction,

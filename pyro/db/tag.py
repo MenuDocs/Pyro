@@ -1,8 +1,9 @@
 from io import BytesIO
-from typing import Dict
+from typing import Dict, Union
 
 import disnake
 from disnake import Message, abc, utils, AllowedMentions
+from disnake.ext import commands
 
 
 class Tag:
@@ -66,7 +67,11 @@ class Tag:
         buffer = BytesIO(self.content.encode("utf-8"))
         return disnake.File(buffer, filename="tag.md")
 
-    async def send(self, target: abc.Messageable, invoked_with: str = None) -> Message:
+    async def send(
+        self,
+        target: Union[disnake.ApplicationCommandInteraction, abc.Messageable],
+        invoked_with: str = None,
+    ):
         """Sends the given tag to the target"""
         if not invoked_with:
             invoked_with = self.name

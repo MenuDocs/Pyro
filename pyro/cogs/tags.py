@@ -115,7 +115,6 @@ class Tags(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         log.info(f"{self.__class__.__name__}: Ready")
-
         await self.update_tags()
 
     @commands.Cog.listener()
@@ -143,162 +142,159 @@ class Tags(commands.Cog):
 
         await tag.send(message.channel, invoked_with=tag_name)
 
-    @commands.group(aliases=["tag"], invoke_without_command=True)
-    async def tags(self, ctx: BotContext):
+    @commands.slash_command()
+    async def tag(self, inter):
         """Entry level tag intro."""
-        await ctx.send_help(ctx.command)
+        pass
 
-    @tags.command()
+    @tag.sub_command(name="view")
     @commands.check_any(checks.can_eval(), checks.ensure_is_menudocs_staff())
-    async def create(self, ctx: BotContext, *, tag_name: str = None):
+    async def tag_view(
+        self,
+        inter: disnake.ApplicationCommandInteraction,
+        tag: str = commands.Param(description="The tag you wish to view."),
+    ):
+        """View the provided tag."""
+        tag: Optional[Tag] = self.tags.get(tag.casefold())
+        if not tag:
+            # No tag found with this name
+            return await inter.send(
+                ephemeral=True, content="The provided tag does not exist."
+            )
+
+        log.info("Sending tag '%s'", tag.name)
+
+        tag.uses += 1
+        await self.tags_db.increment({"name": tag.name}, "uses", 1)
+        await tag.send(inter, invoked_with=tag.name)
+
+    @tag.sub_command(name="create")
+    @commands.check_any(checks.can_eval(), checks.ensure_is_menudocs_staff())
+    async def tag_create(
+        self,
+        inter: disnake.ApplicationCommandInteraction,
+        name: str = commands.Param(description="What should this tag be called?"),
+        description: str = commands.Param(
+            description="A 75 character or less description"
+        ),
+        content: str = commands.Param(description="This tags content."),
+        override_existing: bool = commands.Param(
+            description="Should this tag replace an existing one?", default=False
+        ),
+        should_embed: bool = commands.Param(
+            description="Should this tag be sent in an embed?", default=False
+        ),
+    ):
         """Create a new tag."""
-        if not tag_name:
-            tag_name = await ctx.get_input(
-                description="What should this tag be called?"
-            )
-            if not tag_name:
-                return await ctx.send_basic_embed("Cancelling tag creation.")
+        if len(name.split(" ")) != 1:
+            return await inter.send("Tag names cannot contain spaces.", ephemeral=True)
 
-        if len(tag_name.split(" ")) != 1:
-            return await ctx.send_basic_embed("Tag names cannot contain spaces.")
-
-        if self.bot.get_command(tag_name):
-            return await ctx.send_basic_embed(
-                f"You cannot create a tag called `{tag_name}` "
-                f"as a command with that name already exists."
+        if name in self.tags and not override_existing:
+            return await inter.send(
+                "A tag with this name already exists and you did not ask to override it, cancelling..",
+                ephemeral=True,
             )
 
-        if tag_name in self.tags:
-            wants_to_override = await ctx.prompt(
-                "A tag with this name already exists, are you sure you wish to override it?"
-            )
-            if not wants_to_override:
-                return await ctx.send_basic_embed("Cancelling tag creation.")
-
-        tag_description = await ctx.get_input(
-            description="Provide a description of 75 characters or less."
-        )
-        if not tag_description:
-            return await ctx.send_basic_embed("Cancelling tag creation.")
-        elif len(tag_description) > 75:
-            return await ctx.send_basic_embed(
-                "Description should be 75 characters or less."
+        if len(description) > 75:
+            return await inter.send(
+                "Description should be 75 characters or less. Cancelling.",
+                ephemeral=True,
             )
 
-        tag_content = await ctx.get_input(
-            description="What should the content for this tag be?"
-        )
-        if not tag_content:
-            return await ctx.send_basic_embed("Cancelling tag creation.")
-
-        view: DropdownView = DropdownView(ctx.author)  # type: ignore
-        m = await ctx.send("Please choose your tag category", view=view)
+        view: DropdownView = DropdownView(inter.author)
+        await inter.send("Please choose your tag category", view=view, ephemeral=True)
         await view.wait()
-        await m.delete()
-
-        should_embed = await ctx.prompt("Should this tag be sent in an embed?")
 
         tag: Tag = Tag(
-            name=tag_name,
-            content=tag_content,
-            creator_id=ctx.author.id,
-            description=tag_description,  # type: ignore
-            is_embed=bool(should_embed),
+            name=name,
+            content=content,
+            creator_id=inter.author.id,
+            description=description,
+            is_embed=should_embed,
             category=view.result,
         )
-        self.tags[tag_name.casefold()] = tag
+        self.tags[name.casefold()] = tag
         await self.tags_db.upsert({"name": tag.name}, tag.to_dict())
-        await ctx.send_basic_embed(
-            f"I have created the tag `{tag_name}` for you.\n"
-            f"`{ctx.prefix}{tag_name}` to invoke it."
+        await inter.edit_original_message(
+            f"I have created the tag `{name}` for you.", view=None
         )
 
-    @tags.command()
+    @tag.sub_command(name="repr")
     @commands.check_any(checks.can_eval(), checks.ensure_is_menudocs_staff())
-    async def repr(self, ctx: BotContext, *, tag_name: str = None):
+    async def tag_repr(
+        self,
+        inter: disnake.ApplicationCommandInteraction,
+        tag: str = commands.Param(description="The tag you wish to view."),
+    ):
         """Send the raw tag."""
-        if not tag_name:
-            return await ctx.send_basic_embed(
-                "Please provide a tag name when calling this command."
-            )
-
-        tag: Optional[Tag] = self.tags.get(tag_name.casefold())
+        tag: Optional[Tag] = self.tags.get(tag.casefold())
         if not tag:
-            return await ctx.send_basic_embed("No tag found with that name.")
+            return await inter.send("No tag found with that name.", ephemeral=True)
 
         file: disnake.File = tag.as_file()
-        await ctx.send(f"Raw tag for `{tag_name}`", file=file)
+        await inter.send(f"Raw tag for `{tag}`", file=file, ephemeral=True)
 
-    @tags.command()
+    @tag.sub_command(name="delete")
     @commands.check_any(checks.can_eval(), checks.ensure_is_menudocs_staff())
-    async def delete(self, ctx: BotContext, *, tag_name: str = None):
+    async def tag_delete(
+        self,
+        inter: disnake.ApplicationCommandInteraction,
+        tag: str = commands.Param(description="The tag you wish to view."),
+    ):
         """Delete the given tag or tag alias."""
-        if not tag_name:
-            return await ctx.send_basic_embed(
-                "Please provide a tag name when calling this command."
-            )
-
+        tag_name = tag
         if tag_name not in self.tags:
-            return await ctx.send_basic_embed("Invalid tag provided.")
-
-        check_delete = await ctx.prompt(
-            f"Are you sure you want to delete the tag `{tag_name}`?"
-        )
-        if not check_delete:
-            return await ctx.send_basic_embed("That was close, cancelling deletion.")
+            return await inter.send("Invalid tag provided.", ephemeral=True)
 
         is_alias = self.is_tag_alias(tag_name)
 
-        tag: Tag = self.tags.pop(tag_name.casefold())
+        tag_obj: Tag = self.tags.pop(tag_name.casefold())
         if is_alias:
-            tag.aliases.discard(tag_name)
-            await self.tags_db.update({"name": tag.name}, tag.to_dict())
+            tag_obj.aliases.discard(tag_name)
+            await self.tags_db.update({"name": tag_obj.name}, tag_obj.to_dict())
 
         else:
             # Primary tag
-            for alias in tag.aliases:
+            for alias in tag_obj.aliases:
                 self.tags.pop(alias, None)
             await self.tags_db.delete({"name": tag_name})
 
-        await ctx.send_basic_embed(
-            f"Deleted that tag {'alias ' if is_alias else ''}for you!"
+        await inter.send(
+            f"Deleted that tag {'alias ' if is_alias else ''}for you!", ephemeral=True
         )
 
-    @tags.command()
+    @tag.sub_command(name="alias")
     @commands.check_any(checks.can_eval(), checks.ensure_is_menudocs_staff())
-    async def alias(self, ctx: BotContext, tag_name: str = None, new_alias: str = None):
+    async def tag_alias(
+        self,
+        inter: disnake.ApplicationCommandInteraction,
+        existing_tag: str = commands.Param(description="The name of the existing tag."),
+        new_alias: str = commands.Param(description="The new alias for the tag."),
+    ):
         """Create tag aliases."""
-        if not tag_name:
-            tag_name = await ctx.get_input(
-                description="What is the name of the tag to be aliased?"
+        if len(new_alias.split(" ")) != 1:
+            return await inter.send("Tag names cannot contain spaces.", ephemeral=True)
+
+        if new_alias in self.tags:
+            return await inter.send(
+                "Tag alias would override an existing tag, cancelling.", ephemeral=True
             )
-            if not tag_name:
-                return await ctx.send_basic_embed("Cancelling alias creation.")
 
-        if len(tag_name.split(" ")) != 1:
-            return await ctx.send_basic_embed("Tag names cannot contain spaces.")
-
-        tag: Optional[Tag] = self.tags.get(tag_name)
+        tag: Optional[Tag] = self.tags.get(existing_tag)
         if not tag:
-            return await ctx.send_basic_embed("No tag found with this name.")
-
-        if not new_alias:
-            new_alias = await ctx.get_input(
-                description="What is the name of the alias?"
-            )
-            if not new_alias:
-                return await ctx.send_basic_embed("Cancelling alias creation.")
+            return await inter.send("No tag found with this name.", ephemeral=True)
 
         tag.aliases.add(new_alias)
         self.tags[new_alias] = tag
         await self.tags_db.update({"name": tag.name}, tag.to_dict())
 
-        await ctx.send_basic_embed(
-            f"Created an alias '`{new_alias}`' to pre-existing tag `{tag.name}`"
+        await inter.send(
+            f"Created an alias '`{new_alias}`' to pre-existing tag `{tag.name}`",
+            ephemeral=True,
         )
 
-    @tags.command(aliases=["all"])
-    async def list(self, ctx: BotContext):
+    @tag.sub_command(name="list")
+    async def tag_list(self, inter: disnake.ApplicationCommandInteraction):
         """List all current tags."""
         categories: list[str] = []
         tag_category_splits: dict[str, list[Tag]] = {}
@@ -318,7 +314,7 @@ class Tags(commands.Cog):
             categories.append(desc)
 
         async def format_page(pages, page_number):
-            embed = disnake.Embed(title=f"Pyro tags - `{ctx.prefix}<tag>`")
+            embed = disnake.Embed(title=f"Pyro tags")
             embed.description = "".join(pages)
 
             embed.set_footer(text=f"Page {page_number}")
@@ -329,66 +325,61 @@ class Tags(commands.Cog):
             categories,
         )
         paginator.format_page = format_page
-        await paginator.start(context=ctx)
+        await paginator.start(interaction=inter)
 
-    @tags.command(aliases=["sd", "setdescription", "set_description", "setdesc"])
+    @tag.sub_command(name="set_description")
     @commands.check_any(checks.can_eval(), checks.ensure_is_menudocs_staff())
-    async def set_desc(
+    async def tag_set_desc(
         self,
-        ctx: BotContext,
-        tag_name: str = None,
-        *,
-        tag_description: str = None,
+        inter: disnake.ApplicationCommandInteraction,
+        tag: str = commands.Param(description="The tag you wish to view."),
+        description: str = commands.Param(
+            description="The new description for this tag."
+        ),
+        override_existing: bool = commands.Param(
+            description="Should this description replace an existing one?",
+            default=False,
+        ),
     ):
         """Modify the description for a tag."""
-        if not tag_name:
-            tag_name = await ctx.get_input(
-                description="Whats the name of the tag to modify?"
-            )
-            if not tag_name:
-                return await ctx.send_basic_embed("Cancelling tag modification.")
-
         try:
-            tag: Tag = self.tags[tag_name]
+            tag: Tag = self.tags[tag]
         except KeyError:
-            return await ctx.send_basic_embed("A tag with that name does not exist.")
-
-        if tag.description:
-            wants_to_override = await ctx.prompt(
-                "This tag already has a description, are you sure you wish to override it?"
-            )
-            if not wants_to_override:
-                return await ctx.send_basic_embed("Cancelling tag modification.")
-
-        if not tag_description:
-            tag_description = await ctx.get_input(
-                description="Provide a description of 75 characters or less."
+            return await inter.send(
+                "A tag with that name does not exist.", ephemeral=True
             )
 
-        # Validate desc
-        if not tag_description:
-            return await ctx.send_basic_embed("Cancelling tag modification.")
-        elif len(tag_description) > 75:
-            return await ctx.send_basic_embed(
-                "Description should be 75 characters or less. Please run the command again."
+        if tag.description and not override_existing:
+            return await inter.send(
+                "Cancelling tag modification as you do not want to override the existing description.",
+                ephemeral=True,
             )
 
-        tag.description = tag_description
+        if len(description) > 75:
+            return await inter.send(
+                "Description should be 75 characters or less. Please run the command again.",
+                ephemeral=True,
+            )
+
+        tag.description = description
         await self.tags_db.upsert({"name": tag.name}, tag.to_dict())
-        await ctx.send_basic_embed(
-            "I have changed the description of that tag for you."
+        await inter.send(
+            "I have changed the description of that tag for you.", ephemeral=True
         )
 
-    @tags.command(aliases=["detail", "details"])
-    async def show(self, ctx: BotContext, tag_name: str = None):
+    @tag.sub_command(name="details")
+    async def tag_details(
+        self,
+        inter: disnake.ApplicationCommandInteraction,
+        tag: str = commands.Param(description="The tag you wish to view."),
+    ):
         """Show a specific tags details."""
-        if not tag_name:
-            return await ctx.send("The name of the tag to view is a required argument.")
-
         try:
-            tag: Tag = self.tags[tag_name]
+            tag: Tag = self.tags[tag]
         except KeyError:
-            return await ctx.send_basic_embed("A tag with that name does not exist.")
+            return await inter.send(
+                "A tag with that name does not exist.", ephemeral=True
+            )
 
         tag_desc = f"'{tag.description}'\n---\n" if tag.description else ""
         tag_aliases = ", ".join(tag.aliases) if tag.aliases else "No aliases"
@@ -400,10 +391,10 @@ class Tags(commands.Cog):
             f"Sent as embed? {tag.is_embed}\nUses: **{tag.uses}**\n"
             f"Content:\n{tag.content}",
         )
-        await ctx.send(embed=embed)
+        await inter.send(embed=embed, ephemeral=True)
 
-    @tags.command(aliases=["usages"])
-    async def usage(self, ctx: "BotContext"):
+    @tag.sub_command(name="usage")
+    async def tag_usage(self, inter: disnake.ApplicationCommandInteraction):
         """Show tags, sorted by usage."""
         all_tags: List[Tag] = await self.tags_db.get_all()
         all_tags: List[Tag] = sorted(all_tags, key=lambda x: x.uses, reverse=True)
@@ -413,7 +404,7 @@ class Tags(commands.Cog):
         ]
 
         async def format_page(pages, page_number):
-            embed = disnake.Embed(title=f"Pyro tags - `{ctx.prefix}<tag>`")
+            embed = disnake.Embed(title=f"Pyro tags")
             embed.description = "".join(pages)
 
             embed.set_footer(text=f"Page {page_number}")
@@ -424,7 +415,27 @@ class Tags(commands.Cog):
             tag_lists,
         )
         paginator.format_page = format_page
-        await paginator.start(context=ctx)
+        await paginator.start(interaction=inter)
+
+    @tag_view.autocomplete("tag")
+    @tag_repr.autocomplete("tag")
+    @tag_delete.autocomplete("tag")
+    @tag_details.autocomplete("tag")
+    @tag_set_desc.autocomplete("tag")
+    @tag_alias.autocomplete("existing_tag")
+    async def get_tag_for(
+        self,
+        _,
+        user_input: str,
+    ):
+        possible_choices = [
+            v for v in self.tags.keys() if user_input.lower() in v.lower()
+        ]
+
+        if len(possible_choices) > 25:
+            return []
+
+        return possible_choices
 
 
 def setup(bot):

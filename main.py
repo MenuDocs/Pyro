@@ -67,7 +67,7 @@ async def main():
 
     @bot.event
     async def on_ready():
-        logger.info("I'm all up and ready like mom's spaghetti %s")
+        logger.info("I'm all up and ready like mom's spaghetti")
 
     @bot.event
     async def on_message(message: disnake.Message):

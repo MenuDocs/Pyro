@@ -1,16 +1,19 @@
+import datetime
 import io
+import logging
 import os
 import re
 import zlib
-import logging
 
 import aiohttp
 import disnake
 from disnake.ext import commands
 
+log = logging.getLogger(__name__)
 
-# Sphinx reader object because d.py docs
-# are written in sphinx.
+
+# Sphinx reader object because
+# docs are written in sphinx.
 class SphinxObjectFileReader:
     # Inspired by Sphinx's InventoryFileReader
     BUFSIZE = 16 * 1024
@@ -47,13 +50,10 @@ class SphinxObjectFileReader:
 class Docs(commands.Cog, name="Documentation"):
     def __init__(self, bot):
         self.bot = bot
-        self.logger = logging.getLogger(__name__)
-
         self.page_types = {
             "discord.py": "https://discordpy.readthedocs.io/en/latest",
             "nextcord": "https://nextcord.readthedocs.io/en/latest",
             "disnake": "https://docs.disnake.dev/en/latest",
-            # "pycord": "https://docs.pycord.dev/en/latest",
             "levelling": "https://discord-ext-levelling.readthedocs.io/en/latest",
             "py": "https://docs.python.org/3",
             "python": "https://docs.python.org/3",
@@ -146,15 +146,15 @@ class Docs(commands.Cog, name="Documentation"):
 
         self._rtfm_cache = cache
 
-    async def do_rtfm(self, ctx, key, obj):
+    async def do_rtfm(self, interaction, key, obj):
         page_types = self.page_types
+        key = key.lower()
 
         if obj is None:
-            await ctx.send(page_types[key])
+            await interaction.send(page_types[key])
             return
 
         if not hasattr(self, "_rtfm_cache"):
-            await ctx.trigger_typing()
             await self.build_rtfm_lookup_table(page_types)
 
         cache = list(self._rtfm_cache[key].items())
@@ -162,64 +162,51 @@ class Docs(commands.Cog, name="Documentation"):
         self.matches = self.finder(obj, cache, key=lambda t: t[0], lazy=False)[:8]
 
         e = disnake.Embed(
+            description=f"**Query:** `{obj}`\n\n",
             colour=0xCE2029,
-            timestamp=ctx.message.created_at,
+            timestamp=datetime.datetime.now(),
         )
         if len(self.matches) == 0:
-            return await ctx.send("Could not find anything. Sorry.")
+            return await interaction.send("Could not find anything. Sorry.")
 
-        e.description = "\n".join(f"[`{key}`]({url})" for key, url in self.matches)
-        e.set_footer(
-            text=ctx.author.display_name, icon_url=ctx.author.display_avatar.url
-        )
-        await ctx.send(embed=e)
+        e.description += "\n".join(f"[`{key}`]({url})" for key, url in self.matches)
+        e.set_footer(text=f"Requested by: {interaction.author.display_name}")
+        await interaction.send(embed=e)
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.logger.info("I'm ready!")
+        log.info(f"{self.__class__.__name__} Cog has been loaded")
 
-    @commands.command(
-        name="doc",
-        description="Gives you a documentation link for a given entity.",
-        aliases=["rtfd", "rtfm", "docs"],
-    )
-    async def rtfm(self, ctx, key: str = None, *, query: str = None):
-        if not key or key.lower() not in self.page_types.keys():
-            # Avoid nonetypes
-            query = query or ""
-            key = key or ""
+    @commands.command(name="docs")
+    async def deprecated_docs(self, context: commands.Context):
+        await context.send(
+            "This command has been removed, please use the new slash command equivalent."
+        )
 
-            query = key + query
-            key = "nextcord"
+    @commands.slash_command(guild_ids=[500525882226769931])
+    async def docs(
+        self,
+        interaction: disnake.ApplicationCommandInteraction,
+        query=commands.Param(description="The documentation query to lookup"),
+        key=commands.Param(
+            choices={
+                "Nextcord": "nextcord",
+                "Disnake": "disnake",
+                "Discord.py": "discord.py",
+                "Python": "python",
+            },
+            default="Nextcord",
+            description="Which package to perform the lookup on",
+        ),
+    ):
+        """Gives you a documentation link for an entity."""
+        if key not in {"Nextcord", "Disnake", "Discord.py", "Python"}:
+            return await interaction.send(
+                ephemeral=True, content="Invalid documentation key provided."
+            )
 
-        if query is not None:
-            if query.lower() == "rtfm":
-                await ctx.send(
-                    embed=disnake.Embed.from_dict(
-                        {
-                            "title": "Read The Fucking Manual",
-                            "description": "You expect me to know?",
-                            "footer": {"text": "Imagine including easter eggs"},
-                        }
-                    )
-                )
-
-            elif query.lower() in {"developers", "devs"}:
-                await ctx.send(
-                    embed=disnake.Embed.from_dict(
-                        {
-                            "title": "'It'll be finished before Mandroc still Connor' ~ Kindly, Pyro Devs",
-                            "description": "Devs:\n"
-                            "<@271612318947868673>\n<@327745755789918208>\n<@717983911824588862>\n\n"
-                            "Initial bot:\n<@330566541156417536>",
-                            "footer": {
-                                "text": "Fun fact, the initial bot was coded on a phone."
-                            },
-                        }
-                    )
-                )
-
-        await self.do_rtfm(ctx, key, query)
+        await interaction.response.defer()
+        await self.do_rtfm(interaction, key, query)
 
 
 def setup(bot):

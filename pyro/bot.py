@@ -104,6 +104,73 @@ class Pyro(BotBase):
 
         log.error("".join(format_exception(type(err), err, err.__traceback__)))
 
+    async def on_slash_command_error(
+        self, inter: disnake.ApplicationCommandInteraction, err: "DiscordException"
+    ) -> None:
+        err = getattr(err, "original", err)
+        if isinstance(err, MenuDocsOnly):
+            await inter.send(
+                f"I'm sorry, the command `{err.command_name}` can only be used in MenuDocs guilds.",
+                ephemeral=True,
+            )
+        elif isinstance(err, CommandNotFound):
+            log.debug(str(err))
+            return
+
+        elif isinstance(err, commands.MissingRequiredArgument):
+            await inter.send(
+                f"Missing required argument: `{err.param}`", ephemeral=True
+            )
+
+        elif isinstance(err, commands.PrivateMessageOnly):
+            await inter.send("This command can only be used in PMs.", ephemeral=True)
+
+        elif isinstance(err, commands.NoPrivateMessage):
+            await inter.send("This command can only be used in Guilds.", ephemeral=True)
+
+        elif isinstance(err, commands.MissingPermissions):
+            perms = ", ".join(
+                f"`{perm.replace('_', ' ').title()}`"
+                for perm in err.missing_permissions
+            )
+            await inter.send(f"You're missing the permissions: {perms}", ephemeral=True)
+
+        elif isinstance(err, commands.BotMissingPermissions):
+            perms = ", ".join(
+                f"`{perm.replace('_', ' ').title()}`"
+                for perm in err.missing_permissions
+            )
+            await inter.send(f"I'm missing the permissions: {perms}", ephemeral=True)
+
+        elif isinstance(err, disnake.HTTPException):
+            await inter.send(
+                "An error occurred while I was trying to execute a task. Are you sure I have the correct permissions?",
+                ephemeral=True,
+            )
+
+        elif isinstance(err, commands.MaxConcurrencyReached):
+            await inter.send(
+                f"`{inter.application_command.name}` can only be used "
+                f"{err.number} command at a time under {str(err.per)}",
+                ephemeral=True,
+            )
+
+        elif isinstance(err, (commands.CheckFailure, commands.CheckAnyFailure)):
+            await inter.send(
+                "You do not have permission to run this command.", ephemeral=True
+            )
+
+        elif isinstance(err, commands.NotOwner):
+            await inter.send("Nope.", ephemeral=True)
+            log.warning(
+                "Member(id=%s, username=%s) attempted to run Command(name='%s')",
+                inter.author.id,
+                inter.author.display_name,
+                inter.application_command.qualified_name,
+            )
+
+        log.error("".join(format_exception(type(err), err, err.__traceback__)))
+
     async def load_cogs(self):
         count = 0
         extensions = Path("./pyro/cogs").rglob("*.py")

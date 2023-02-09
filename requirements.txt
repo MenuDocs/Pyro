@@ -7,7 +7,6 @@ async-timeout==4.0.2
 attrs==21.4.0
 axew==1.0.7
 Bot-Base==1.5.3
-certifi==2022.12.7
 charset-normalizer==2.1.0
 disnake==2.8.0
 dnspython==2.2.1
